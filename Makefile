@@ -10,7 +10,7 @@ build:
 	python setup.py sdist bdist_wheel --dist-dir $(OUTPUT_DIR)
 	mv build $(OUTPUT_DIR)
 	mv dist $(OUTPUT_DIR)
-	mv nape_eval.egg-info $(OUTPUT_DIR)
+	mv nape.egg-info $(OUTPUT_DIR)
 	@echo "\n\033[1;96m NAPE Evaluator - Release Build COMPLETE! \033[0m\n"
 
 dist: build

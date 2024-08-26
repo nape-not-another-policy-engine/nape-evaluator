@@ -1,0 +1,93 @@
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project.scripts]
+nape-eval = "main:main"
+
+[tool.setuptools]
+py-modules = ["main"]
+
+[project]
+name = "nape"
+version = "1.0.0"
+description = "The NAPE Evaluator (nape-eval) is a CLI used by the NAPE CLI to apply Test of Details against a given piece of evidence to assess if a Control Action passes, failes, or is inconclusive."
+authors = [
+    { name = "Bill Bensing", email = "bill@napecentral.com"}
+]
+maintainers = [
+    {name = "Bill Bensing", email = "bill@napecentral.com"}
+]
+license = {file = "LICENSE"}
+keywords = [
+    "nape", "autonomous assurance", "automated assurance",
+    "governance", "governance engineering", "goveng",
+    "audit", "assurance", "grc", "internal audit",
+    "audit management", "audit software", "audit tools",
+    "assurnace software", "assurance tools", "grc software",
+    "compliance", "cicd", "ci", "continuous integration", "cd",
+    "continuous deployment", "continuous delivery", "devops",
+    "devsecops", "security", "infosec", "information security",
+    "not another policy engine", "policy engine", "policy",
+]
+readme = "README.md"
+requires-python = ">=3.0"
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Intended Audience :: End Users/Desktop",
+    "Intended Audience :: Financial and Insurance Industry",
+    "Intended Audience :: Healthcare Industry",
+    "Intended Audience :: Information Technology",
+    "Intended Audience :: Legal Industry",
+    "Intended Audience :: Other Audience",
+    "Intended Audience :: System Administrators",
+    "Intended Audience :: Telecommunications Industry",
+    "License :: OSI Approved :: Apache Software License",
+    "Natural Language :: English",
+    "Operating System :: MacOS",
+    "Operating System :: OS Independent",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Topic :: File Formats :: JSON",
+    "Topic :: Office/Business :: Financial",
+    "Topic :: Security",
+    "Topic :: Software Development",
+    "Topic :: Software Development :: Build Tools",
+    "Topic :: Software Development :: Embedded Systems",
+    "Topic :: Software Development :: Pre-processors",
+    "Topic :: Software Development :: Quality Assurance",
+    "Topic :: Software Development :: Testing",
+    "Topic :: Software Development :: Testing :: Acceptance",
+    "Topic :: Software Development :: Testing :: BDD",
+    "Topic :: Software Development :: Testing :: Unit",
+    "Topic :: Software Development :: Version Control",
+    "Topic :: Software Development :: Version Control :: Git",
+    "Topic :: System",
+    "Topic :: System :: Benchmark",
+    "Topic :: System :: Filesystems",
+    "Topic :: System :: Distributed Computing",
+    "Topic :: System :: Logging",
+    "Topic :: System :: Monitoring",
+    "Topic :: System :: Networking",
+    "Topic :: System :: Networking :: Monitoring",
+    "Topic :: System :: Operating System",
+    "Topic :: System :: Software Distribution",
+    "Topic :: System :: Systems Administration",
+    "Topic :: System :: Systems Administration :: Authentication/Directory",
+    "Topic :: System :: Systems Administration :: Authentication/Directory :: LDAP",
+    "Topic :: System :: Systems Administration :: Authentication/Directory :: NIS",
+    "Topic :: Text Processing",
+    "Topic :: Text Processing :: General",
+    "Topic :: Text Processing :: Linguistic",
+    "Topic :: Utilities",
+]
+
+[project.urls]
+Homepage = "https://napecentral.com"
+Documentation = "https://docs.napecentral.com"
+Repository = "https://github.com/nape-not-another-policy-engine/nape-evaluator"
+Issues = "https://github.com/nape-not-another-policy-engine/nape-evaluator/issues"
+Changelog = "https://github.com/nape-not-another-policy-engine/nape-evaluator/blob/main/CHANGELOG.md"

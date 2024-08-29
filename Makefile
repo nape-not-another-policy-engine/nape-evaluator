@@ -1,7 +1,6 @@
 .PHONY: build-release clean install
 
 PROJECT_NAME = nape
-CLI_NAME = nape-eval
 BINARY_OUTPUT_DIR = binary-output
 BUILD_OUTPUT_DIR = build-output
 PYPI_DIST_DIR = $(BUILD_OUTPUT_DIR)/dist

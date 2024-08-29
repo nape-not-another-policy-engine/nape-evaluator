@@ -1,4 +1,4 @@
-.PHONY: build-release clean install
+.PHONY: build-release pip-install pypi-publish clean install
 
 PROJECT_NAME = nape
 BINARY_OUTPUT_DIR = binary-output
@@ -22,6 +22,11 @@ pip-uninstall:
 	@echo "\n\033[1;96m Uninstalling the NAPE Evaluator with PIP \033[0m\n"
 	pip uninstall -y $(PROJECT_NAME)
 	@echo "\n\033[1;96m NAPE Evaluator - PIP Uninstallation - COMPLETE! \033[0m\n"
+
+pypi-publish: build-release
+	@echo "\n\033[1;96m Publishing the NAPE Evaluator to PyPI - [ $PYPI_URL ] \033[0m\n"
+	twine upload --repository-url $PYPI_URL $(PYPI_DIST_DIR)/*
+	@echo "\n\033[1;96m NAPE Evaluator - PyPI Publish - COMPLETE! \033[0m\n"
 
 clean:
 	@echo "\n\033[1;96m Cleaning all NAPE Evaluator files \033[0m\n"

@@ -14,5 +14,5 @@ jobs:
   release:
     uses: nape-not-another-policy-engine/nape-build-deploy-release/.github/workflows/pypi-standard-release-workflow.yaml@main
     environment: release
-    with:
-      pypi_url: "https://test.pypi.org/legacy/"
+    env:
+      PYPI_URL: "https://test.pypi.org/legacy/"

@@ -1,0 +1,13 @@
+name: NAPE Evaluator - Release Workflow
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  release:
+    uses: nape-not-another-policy-engine/nape-build-deploy-release/.github/workflows/pypi-standard-release-workflow@main
+    with:
+      pypi_url: 'https://test.pypi.org/legacy/'  # 'https://test.pypi.org/legacy/' for testing | 'https://pypi.org/legacy/' for production

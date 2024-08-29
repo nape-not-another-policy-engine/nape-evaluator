@@ -6,6 +6,10 @@ on:
     tags:
       - 'v*.*.*'
 
+permissions:
+  contents: read
+  id-token: write
+
 jobs:
   release:
     uses: nape-not-another-policy-engine/nape-build-deploy-release/.github/workflows/pypi-standard-release-workflow.yaml@main

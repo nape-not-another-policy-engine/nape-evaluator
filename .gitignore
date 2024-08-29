@@ -1,5 +1,6 @@
 .DS_Store
 .idea/
 .venv/
+build/
 build-output/
 test/__pycache__/

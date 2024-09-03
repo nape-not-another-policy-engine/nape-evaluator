@@ -25,7 +25,7 @@ pip-uninstall:
 
 pypi-publish:
 	@echo "\n\033[1;96m Publishing the NAPE Evaluator to PyPI - [ $$PYPI_URL ] \033[0m\n"
-	twine upload --repository-url $$PYPI_URL $(PYPI_DIST_DIR)/*
+	twine upload --verbose --repository-url $$PYPI_URL $(PYPI_DIST_DIR)/*
 	@echo "\n\033[1;96m NAPE Evaluator - PyPI Publish - COMPLETE! \033[0m\n"
 
 clean:

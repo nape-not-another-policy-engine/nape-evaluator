@@ -12,5 +12,6 @@ permissions:
 jobs:
   release:
     uses: nape-not-another-policy-engine/nape-build-deploy-release/.github/workflows/pypi-standard-release-workflow.yaml@main
+    secrets: inherit
     with:
       publish_target: "test"

@@ -1,44 +1,8 @@
 # Evidence Formats
 
-## V1 Baseline
+## Current Typed Loading
 
-Committed V1 treats every evidence file as text.
-
-Implementation behavior:
-
-```python
-with open(args.evidence, "r") as f:
-    text = f.readlines()
-```
-
-The test-of-detail receives a list of strings. Structured data parsing is the test author's responsibility.
-
-## V1 JSON Example
-
-Evidence:
-
-```json
-{
-  "status": "complete"
-}
-```
-
-Test:
-
-```python
-import json
-
-
-def evaluate(evidence):
-    data = json.loads("".join(evidence))
-    return "pass", data["status"]
-```
-
-## V2 Candidate Typed Loading
-
-The current worktree contains candidate typed loading behavior:
-
-| Extension | Candidate input to `evaluate(evidence)` |
+| Extension | Input to `evaluate(evidence)` |
 | --- | --- |
 | `.txt` | text lines |
 | `.json` | parsed JSON object |
@@ -47,8 +11,8 @@ The current worktree contains candidate typed loading behavior:
 | `.pdf` | extracted text lines |
 | unknown | text lines |
 
-This is not the V1 baseline. If accepted, it should be treated as a V2 contract change.
+Structured data parsing for JSON, XML, and YAML now happens in evaluator core rather than inside the test file.
 
-## Compatibility Risk
+## Historical V1 Contrast
 
-V1 tests often parse text lines manually. If V2 passes parsed objects, those tests may fail unless they are migrated or compatibility mode exists.
+Historical V1 treated every evidence file as text and passed `readlines()` into `evaluate(evidence)`. Tests written for that contract may fail until they are migrated to the current typed-evidence model.

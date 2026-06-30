@@ -51,9 +51,9 @@ python3 -m pip install .
 
 ## Version Notes
 
-Committed V1 package metadata reports version `1.0.0`.
+Current package metadata reports version `2.0.0`.
 
-The current worktree may contain uncommitted V2 candidate metadata, including a `2.0.0` version change. Treat that as unreleased until reviewed and committed.
+This version reflects the typed-evidence contract change from the historical V1 text-line evaluator.
 
 ## Troubleshooting
 

@@ -10,7 +10,7 @@ py-modules = ["main"]
 
 [project]
 name = "nape"
-version = "1.0.0"
+version = "2.0.0"
 description = "The NAPE Evaluator (nape-eval) is a CLI used by the NAPE CLI to apply Test of Details against a given piece of evidence to assess if a Control Action passes, failes, or is inconclusive."
 authors = [
     { name = "Bill Bensing", email = "bill@napecentral.com"}
@@ -32,6 +32,10 @@ keywords = [
 ]
 readme = "README.md"
 requires-python = ">=3.0"
+dependencies = [
+    "PyYAML~=6.0.2",
+    "PyPDF2~=5.4.0",
+]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Environment :: Console",

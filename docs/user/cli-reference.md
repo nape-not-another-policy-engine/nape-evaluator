@@ -56,11 +56,11 @@ Expected NAPE outcome values are:
 - `inconclusive`
 - `error`
 
-V1 does not validate this list before printing output.
+The current evaluator does not validate this list before printing output.
 
 ## Error Output
 
-When V1 catches a failure, it prints:
+When the evaluator catches a failure, it prints:
 
 ```json
 {"outcome": "error", "reason": "..."}
@@ -70,10 +70,11 @@ Common failures:
 
 - missing evidence file
 - missing test file
+- evidence parsing failure
 - import failure
 - exception raised while executing `evaluate(...)`
 
-Committed V1 may still exit successfully after printing JSON `error` output. Consumers should inspect the JSON `outcome` field instead of relying on process exit status alone.
+The evaluator may still exit successfully after printing JSON `error` output. Consumers should inspect the JSON `outcome` field instead of relying on process exit status alone.
 
 ## NAPE CLI Integration
 

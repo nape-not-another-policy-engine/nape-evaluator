@@ -2,7 +2,7 @@
 
 `nape-eval` is intentionally small. It is a process boundary between NAPE CLI report generation and Python test-of-detail execution.
 
-## V1 Execution Flow
+## Execution Flow
 
 ```text
 nape-eval
@@ -11,9 +11,9 @@ nape-eval
     print health message
     exit
   require --evidence and --test together
-  read evidence as text lines
+  load evidence by extension
   dynamically import test file
-  call evaluate(evidence_lines)
+  call evaluate(evidence)
   print {"outcome": ..., "reason": ...}
 ```
 
@@ -26,8 +26,8 @@ CLI boundary:
 
 Evidence boundary:
 
-- V1 reads all evidence as text lines.
-- V2 candidate work adds typed evidence loading by file extension.
+- The evaluator loads evidence by file extension.
+- Structured formats are parsed before `evaluate(evidence)` is called.
 
 Test execution boundary:
 
@@ -42,11 +42,11 @@ Output boundary:
 
 ## Error Model
 
-Committed V1 catches common failures and converts them to JSON `error` outcomes.
+The evaluator catches common failures and converts them to JSON `error` outcomes.
 
 This means an evaluation problem can still produce process output that NAPE CLI treats as an action-level evaluator result.
 
-V2 should decide whether any failure should produce a non-zero process exit instead.
+Future releases can still revisit whether some failures should produce a non-zero process exit instead.
 
 ## Packaging
 
@@ -56,13 +56,6 @@ The package name is `nape`; the console script is `nape-eval`.
 
 Release targets live in `Makefile`.
 
-## V2 Candidate Architecture Change
+## Historical Compatibility Risk
 
-Typed evidence loading moves evidence parsing from test-of-detail files into evaluator core. That improves consistency but changes the authoring contract.
-
-Before accepting it, decide:
-
-- Whether V1 text-line compatibility is required.
-- Whether tests can request raw versus parsed evidence.
-- Whether runtime dependencies are optional by file type or always installed.
-- How docs expose the input type passed to `evaluate(evidence)`.
+Typed evidence loading moved evidence parsing from test-of-detail files into evaluator core. That improves consistency but changes the authoring contract for older V1 tests that parsed JSON from text lines.

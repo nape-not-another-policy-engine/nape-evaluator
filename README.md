@@ -4,7 +4,7 @@ The NAPE Evaluator (`nape-eval`) applies a test-of-detail Python file to one evi
 
 ## Current Contract
 
-V1 evaluates one evidence file with one test file:
+`nape-eval` evaluates one evidence file with one test file:
 
 ```bash
 nape-eval --evidence ./author_verification.json --test ./verify_author_complete.py
@@ -16,7 +16,15 @@ Expected stdout:
 {"outcome": "pass", "reason": "The author has achieved the status of complete."}
 ```
 
-The committed V1 behavior reads evidence as text lines and passes those lines into the test file's `evaluate(evidence)` function. Typed evidence loading for JSON, XML, YAML, PDF, and text exists as V2 candidate work in the current worktree and should not be treated as released behavior until reviewed.
+The current evaluator loads evidence by file extension before calling `evaluate(evidence)`:
+
+- `.json`: parsed JSON object
+- `.xml`: XML root element
+- `.yaml`, `.yml`: parsed YAML object
+- `.pdf`: extracted text lines
+- `.txt` and unknown extensions: text lines
+
+This is a breaking change from the historical V1 contract, which passed raw text lines for every evidence file. The V1 baseline remains documented in `docs/product/v1-evaluator-baseline.md`.
 
 ## Start Here
 
@@ -26,7 +34,7 @@ The committed V1 behavior reads evidence as text lines and passes those lines in
 - Contract details: [Evaluator contract](docs/reference/evaluator-contract.md)
 - Evidence formats: [Evidence formats](docs/reference/evidence-formats.md)
 - Maintainers: [Architecture](docs/maintainers/architecture.md), then [Local development](docs/maintainers/local-development.md)
-- V2 planning: [V1 evaluator baseline](docs/product/v1-evaluator-baseline.md) and [source traceability](docs/reference/source-traceability.md)
+- Historical baseline and traceability: [V1 evaluator baseline](docs/product/v1-evaluator-baseline.md) and [source traceability](docs/reference/source-traceability.md)
 
 ## Install
 

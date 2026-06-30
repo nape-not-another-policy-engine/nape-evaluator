@@ -4,52 +4,44 @@ This reference maps documented evaluator behavior to source files.
 
 ## Traceability State
 
-V1 references in this document refer to committed `HEAD` behavior at the time of this documentation pass.
+Current references in this document point to the active typed-evidence evaluator implementation.
 
-V2 candidate references refer to observed uncommitted worktree behavior at the time of this documentation pass.
-
-After the current WIP is committed, reverted, or moved to a branch, update this document so it points to the new source-of-truth state rather than a generic dirty worktree.
+Historical V1 behavior remains documented in `../product/v1-evaluator-baseline.md` for migration and comparison.
 
 ## Source Roots
 
 | Source | Role |
 | --- | --- |
-| `HEAD:main.py` | V1 CLI parsing, install check, text-line evidence loading, dynamic import, `evaluate(...)` invocation, JSON output, error handling. |
-| dirty worktree `main.py` | V2 candidate typed-evidence loading and related error handling. |
-| `HEAD:pyproject.toml` | V1 package metadata and `nape-eval` console script. |
-| dirty worktree `pyproject.toml` | V2 candidate package version and dependency metadata changes. |
+| `main.py` | CLI parsing, install check, typed evidence loading, dynamic import, `evaluate(...)` invocation, JSON output, and error handling. |
+| `pyproject.toml` | package metadata, runtime dependencies, version, and `nape-eval` console script. |
 | `Makefile` | local build, install, publish, and clean targets. |
-| `test/` | legacy manual examples. |
-| `tests/` | candidate test package scaffolding in current worktree. |
+| `test/` | manual smoke examples, including the JSON dict-based V2 author example. |
+| `tests/` | automated loader and CLI validation. |
 
-## V1 Contract Source Map
+## Current Contract Source Map
 
 | Behavior | Source |
 | --- | --- |
-| `--check-install` flag | `HEAD:main.py` |
-| `--evidence` argument | `HEAD:main.py` |
-| `--test` argument | `HEAD:main.py` |
-| `--evidence` and `--test` paired validation | `HEAD:main.py` |
-| evidence read as text lines | `HEAD:main.py` |
-| dynamic test import | `HEAD:main.py` |
-| `evaluate(evidence)` invocation | `HEAD:main.py` |
-| stdout JSON serialization | `HEAD:main.py` |
-| caught error to JSON `error` output | `HEAD:main.py` |
-| package name `nape` | `HEAD:pyproject.toml` |
-| console script `nape-eval` | `HEAD:pyproject.toml` |
-| V1 manual author example | `test/verify_author_complete.py` |
+| `--check-install` flag | `main.py` |
+| `--evidence` argument | `main.py` |
+| `--test` argument | `main.py` |
+| `--evidence` and `--test` paired validation | `main.py` |
+| typed evidence loader by extension | `main.py` |
+| dynamic test import | `main.py` |
+| `evaluate(evidence)` invocation | `main.py` |
+| stdout JSON serialization | `main.py` |
+| caught error to JSON `error` output | `main.py` |
+| package name `nape` | `pyproject.toml` |
+| package version `2.0.0` | `pyproject.toml` |
+| runtime dependencies `PyYAML` and `PyPDF2` | `pyproject.toml` |
+| console script `nape-eval` | `pyproject.toml` |
+| manual JSON dict-based author example | `test/verify_author_complete_2.py` |
+| automated JSON CLI pass test | `tests/json/test_pass.py` |
+| automated loader coverage | `tests/test_load_evidence.py` |
 
-## V2 Candidate Source Map
+## Historical V1 Reference
 
-| Candidate behavior | Source |
-| --- | --- |
-| typed evidence loader by extension | observed dirty worktree `main.py` |
-| JSON evidence parsed with `json.load` | observed dirty worktree `main.py` |
-| XML evidence parsed with `xml.etree.ElementTree` | observed dirty worktree `main.py` |
-| YAML evidence parsed with `yaml.safe_load` | observed dirty worktree `main.py` |
-| PDF evidence parsed with `PyPDF2.PdfReader` | observed dirty worktree `main.py` |
-| package version changed to `2.0.0` | dirty worktree `pyproject.toml` |
-| typed JSON test example | dirty worktree `tests/json/test_of_detail/verify_author_complete.py` |
+Use `docs/product/v1-evaluator-baseline.md` when you need the old all-text evidence contract, historical examples, or the original V1-to-V2 compatibility analysis.
 
 ## Maintenance Rule
 

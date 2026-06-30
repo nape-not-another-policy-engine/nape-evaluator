@@ -11,4 +11,4 @@ Use this folder when installing `nape-eval`, running it directly, or writing tes
 
 ## Current Behavior Note
 
-These docs describe committed V1 behavior as the official baseline. Typed evidence loading is documented as V2 candidate behavior only.
+These docs describe the current typed-evidence evaluator contract. The V1 baseline remains available as historical reference in `../product/v1-evaluator-baseline.md`.

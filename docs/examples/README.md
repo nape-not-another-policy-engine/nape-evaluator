@@ -1,8 +1,8 @@
 # Examples
 
-This folder documents small evaluator examples. The examples are shown here as documentation snippets so they do not interfere with the current code WIP.
+This folder documents small evaluator examples. The examples are kept as documentation snippets so they do not interfere with the main implementation or automated tests.
 
-## V1 Text-Line JSON Example
+## Historical V1 Text-Line JSON Example
 
 Evidence file:
 
@@ -47,4 +47,4 @@ Add fixtures for:
 - inconclusive
 - error
 
-Keep V1 text-line fixtures separate from V2 typed-evidence fixtures if typed loading is accepted.
+Keep historical V1 text-line fixtures separate from current typed-evidence fixtures.

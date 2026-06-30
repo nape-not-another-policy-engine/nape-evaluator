@@ -40,11 +40,18 @@ def evaluate(evidence):
     ...
 ```
 
-## V1 Evidence Contract
+## Evidence Contract
 
-Committed V1 opens the evidence file as text and passes `readlines()` into `evaluate(...)`.
+The evaluator inspects the evidence file extension before calling `evaluate(...)`.
 
-The evaluator does not inspect file extension in committed V1.
+| Extension | Input to `evaluate(evidence)` |
+| --- | --- |
+| `.txt` | text lines |
+| `.json` | parsed JSON object |
+| `.xml` | XML root element |
+| `.yaml`, `.yml` | parsed YAML object |
+| `.pdf` | extracted text lines |
+| unknown | text lines |
 
 ## Return Contract
 
@@ -69,34 +76,35 @@ The expected NAPE outcome vocabulary is:
 - `inconclusive`
 - `error`
 
-Committed V1 does not validate the returned outcome before serializing JSON.
+The evaluator does not validate the returned outcome before serializing JSON.
 
 ## Failure Contract
 
-V1 catches these failures and prints JSON `error` output:
+The evaluator catches these failures and prints JSON `error` output:
 
 | Failure | JSON reason prefix |
 | --- | --- |
 | `FileNotFoundError` | `Unable to find the file(s) for evaluation.` |
 | `ImportError` | `Failed to import the necessary files.` |
+| evidence load failure | `Error loading evidence:` |
 | Other exception | `Failed to execute the evidence evaluation.` |
 
 Consumers should not infer success from exit status alone. For action evaluation, parse stdout JSON and inspect `outcome`.
 
-Example V1 behavior:
+Example current behavior:
 
 ```bash
 python main.py --evidence ./missing.json --test ./missing_test.py
 echo $?
 ```
 
-V1 can print JSON like this while still exiting successfully:
+The evaluator can print JSON like this while still exiting successfully:
 
 ```json
 {"outcome": "error", "reason": "Unable to find the file(s) for evaluation. ..."}
 ```
 
-Treat this as current V1 behavior, not necessarily the desired V2 behavior.
+Treat this as the current evaluator behavior unless and until exit-status handling changes.
 
 ## NAPE CLI Dependency
 

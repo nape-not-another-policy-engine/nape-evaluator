@@ -1,6 +1,6 @@
 # NAPE Evaluator Documentation
 
-This folder documents the `nape-eval` CLI, its contract with the NAPE CLI, and the current V1 baseline for V2 evaluator planning.
+This folder documents the `nape-eval` CLI, its contract with the NAPE CLI, the current typed-evidence behavior, and the historical V1 baseline.
 
 ## Start Here
 
@@ -9,18 +9,18 @@ This folder documents the `nape-eval` CLI, its contract with the NAPE CLI, and t
 - CLI users: read [CLI reference](user/cli-reference.md).
 - Contract readers: read [evaluator contract](reference/evaluator-contract.md), [evidence formats](reference/evidence-formats.md), and [source traceability](reference/source-traceability.md).
 - Maintainers: read [architecture](maintainers/architecture.md), then [local development](maintainers/local-development.md).
-- V2 planners: read [V1 evaluator baseline](product/v1-evaluator-baseline.md).
+- Historical and migration readers: read [V1 evaluator baseline](product/v1-evaluator-baseline.md).
 - Example readers: inspect [examples](examples/README.md).
 
 ## Current Documentation Position
 
-These docs treat committed `main` behavior as the V1 baseline. Current uncommitted typed-evidence changes are documented as V2 candidate behavior only.
+These docs treat committed `main` behavior as the current typed-evidence contract. The V1 baseline document is retained as a historical reference for migration and compatibility review.
 
 ## Folder Guide
 
 `product/`
 
-Product-level purpose, scope, V1 baseline, V2 planning inputs, and known limitations.
+Product-level purpose, current scope, historical V1 baseline, and known limitations.
 
 `user/`
 

@@ -20,18 +20,26 @@ NAPE CLI owns procedure orchestration, evidence collection, report generation, a
 - NAPE maintainers who depend on the evaluator process contract.
 - Release maintainers who package and publish the `nape` Python package.
 
-## Current V1 Capability
+## Current Capability
 
-Committed V1 behavior:
+Current behavior:
 
 - Provides the `nape-eval` console script from the `nape` Python package.
 - Supports `--check-install`.
 - Supports `--evidence <file>` and `--test <python-file>` together.
-- Reads evidence as text lines.
+- Loads evidence by file extension.
 - Dynamically imports the test file.
-- Calls `evaluate(evidence_lines)`.
+- Calls `evaluate(evidence)`.
 - Prints one JSON object to stdout with `outcome` and `reason`.
 - Converts common execution failures into JSON `error` outcomes.
+
+Supported evidence behavior:
+
+- `.txt` and unknown extensions: text lines
+- `.json`: parsed JSON object
+- `.xml`: XML root element
+- `.yaml` and `.yml`: parsed YAML
+- `.pdf`: extracted text lines
 
 ## V1 Non-Goals
 
@@ -45,17 +53,9 @@ V1 does not:
 - Upload output anywhere.
 - Provide a formal plugin sandbox for test files.
 
-## V2 Candidate Direction
+## Historical V1 Contrast
 
-The current worktree contains uncommitted V2 candidate behavior for typed evidence loading:
-
-- `.txt` and unknown extensions as text lines.
-- `.json` as parsed JSON.
-- `.xml` as an XML root element.
-- `.yaml` and `.yml` as parsed YAML.
-- `.pdf` as extracted text lines.
-
-This is a contract change because `evaluate(evidence)` may receive different Python object types. Treat this as candidate behavior until reviewed and released.
+Historical V1 passed every evidence file as text lines into `evaluate(evidence)`. The current product changes that contract for structured evidence and therefore requires migration for older JSON-parsing tests.
 
 ## Product Risks
 

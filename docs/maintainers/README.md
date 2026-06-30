@@ -15,4 +15,4 @@ Use this folder when changing evaluator code, package metadata, tests, or releas
 - `test/`
 - `tests/`
 
-The current docs treat committed behavior as V1 and current typed-evidence WIP as V2 candidate behavior.
+The current docs treat typed evidence loading as the active contract and preserve the V1 baseline as historical reference.

@@ -16,28 +16,30 @@ The function must return two values:
 - `outcome`
 - `reason`
 
-## V1 Evidence Input
+## Evidence Input
 
-Committed V1 passes evidence as text lines:
+The evaluator passes evidence into `evaluate(evidence)` based on the evidence file extension:
+
+- JSON: Python object from `json.load`
+- XML: `xml.etree.ElementTree` root element
+- YAML: Python object from `yaml.safe_load`
+- PDF: extracted text lines
+- TXT or unknown: text lines
+
+Example JSON input:
 
 ```python
-[
-    "{\n",
-    '  "author": "Bill Bensing",\n',
-    '  "status": "complete"\n',
-    "}\n",
-]
+{
+    "author": "Bill Bensing",
+    "status": "complete",
+}
 ```
 
-If the evidence is JSON, parse it inside the test:
+If the evidence is JSON, read it directly as a Python object:
 
 ```python
-import json
-
-
 def evaluate(evidence):
-    data = json.loads("".join(evidence))
-    if data.get("status") == "complete":
+    if evidence.get("status") == "complete":
         return "pass", "Status is complete."
     return "fail", "Status is not complete."
 ```
@@ -61,14 +63,6 @@ Use `error` when the test itself cannot run as intended.
 - Handle missing fields explicitly.
 - Treat test files as executable code; do not publish or run tests that perform unrelated filesystem, network, credential, or destructive operations.
 
-## V2 Candidate Evidence Input
+## Historical Note
 
-Typed evidence loading is candidate V2 behavior. If accepted, `evaluate(evidence)` may receive different object types based on evidence extension:
-
-- JSON: Python object from `json.load`
-- XML: `xml.etree.ElementTree` root element
-- YAML: Python object from `yaml.safe_load`
-- PDF: extracted text lines
-- TXT or unknown: text lines
-
-Tests written for V1 text lines may need migration if V2 typed loading becomes official.
+The V1 baseline passed every evidence file as text lines. Tests written for that older contract may need migration if they parse structured content inside `evaluate(...)`.

@@ -1,6 +1,6 @@
 # V1 Evaluator Baseline
 
-This document records committed V1 behavior for V2 evaluator planning.
+This document records the historical V1 behavior that preceded the current typed-evidence evaluator.
 
 ## Baseline Scope
 
@@ -12,7 +12,7 @@ The V1 baseline is derived from committed files:
 - `test/verify_author_complete.py`
 - `test/author_verification.json`
 
-Current uncommitted changes are treated as V2 candidate behavior, not the V1 baseline.
+Current committed behavior has moved beyond this baseline. Use this document for migration, compatibility review, and version-to-version comparison.
 
 ## V1 CLI Workflow
 
@@ -114,14 +114,14 @@ V2 should explicitly decide:
 
 ## V1 To V2 Compatibility Matrix
 
-| Area | V1 baseline | V2 candidate or decision pressure | Breaking impact | Recommendation | Status |
+| Area | V1 baseline | Current V2 behavior or decision pressure | Breaking impact | Recommendation | Status |
 | --- | --- | --- | --- | --- | --- |
-| Evidence input shape | `evaluate(evidence)` receives text lines from `readlines()`. | Candidate typed loader passes parsed objects for JSON/XML/YAML/PDF and text lines for TXT/unknown. | High: existing V1 tests that parse text lines can fail when receiving dicts or XML objects. | Preserve a raw text-lines mode or provide explicit migration guidance. | Pending V2 decision. |
-| Supported file types | File extension is ignored; every evidence file is opened as text. | Candidate behavior branches on `.txt`, `.json`, `.xml`, `.yaml`, `.yml`, `.pdf`, and unknown extensions. | High: behavior changes based on filename extension. | Define supported extensions and fallback behavior as a formal contract. | Pending V2 decision. |
-| Runtime dependencies | V1 requires only the standard library at runtime. | Candidate behavior imports `yaml` and `PyPDF2`. | Medium: users may install a package that starts but fails for typed loaders if runtime dependencies are missing. | Declare accepted typed-loader libraries as project runtime dependencies, not only build requirements. | Pending package metadata fix. |
+| Evidence input shape | `evaluate(evidence)` receives text lines from `readlines()`. | Current typed loader passes parsed objects for JSON/XML/YAML/PDF and text lines for TXT/unknown. | High: existing V1 tests that parse text lines can fail when receiving dicts or XML objects. | Preserve a raw text-lines mode or provide explicit migration guidance. | Open follow-up. |
+| Supported file types | File extension is ignored; every evidence file is opened as text. | Current behavior branches on `.txt`, `.json`, `.xml`, `.yaml`, `.yml`, `.pdf`, and unknown extensions. | High: behavior changes based on filename extension. | Define supported extensions and fallback behavior as a formal contract. | Implemented, keep documented. |
+| Runtime dependencies | V1 requires only the standard library at runtime. | Current behavior imports `yaml` and `PyPDF2`. | Medium: users may install a package that starts but fails for typed loaders if runtime dependencies are missing. | Declare accepted typed-loader libraries as project runtime dependencies, not only build requirements. | Implemented in package metadata. |
 | `--check-install` | Prints a health message if the CLI starts. | Typed loaders may introduce optional or required runtime dependencies. | Medium: install check could pass while YAML/PDF evaluation later fails. | Decide whether install check validates all enabled loaders or only the base CLI. | Pending V2 decision. |
 | Outcome validation | V1 prints whatever `evaluate(...)` returns as `outcome`. | V2 may validate expected NAPE outcomes before printing JSON. | Medium: invalid custom outcomes could become errors. | Validate against `pass`, `fail`, `inconclusive`, and `error`, or document that validation remains caller-owned. | Pending V2 decision. |
 | Failure and exit status | V1 catches failures, prints JSON `error`, and does not explicitly set non-zero exit status. | V2 may distinguish action-level errors from fatal process failures. | Medium: NAPE CLI and scripts may rely on stdout JSON rather than exit status. | Define when failures are JSON `error` versus non-zero process exits. | Pending V2 decision. |
 | Dynamic test execution | V1 dynamically imports and executes trusted Python test files. | V2 may keep trusted-code execution or introduce sandboxing restrictions. | Medium: sandboxing can break existing tests that import libraries or access local resources. | Document trusted-code execution for now; evaluate sandbox needs separately. | Pending security decision. |
-| Package version | V1 package metadata is `1.0.0`. | Dirty candidate metadata changes version to `2.0.0`. | Low to medium: version bump communicates breaking change if accepted. | Use a major version bump only when the typed-evidence contract is finalized. | Pending release decision. |
-| Docs smoke fixtures | V1 has manual examples but no executable docs smoke target. | V2 should validate examples across accepted evidence formats. | Low: docs can drift without executable checks. | Add local-only `make docs-smoke` after V1/V2 behavior is settled. | Planned follow-up. |
+| Package version | V1 package metadata is `1.0.0`. | Current package metadata is `2.0.0`. | Low to medium: version bump communicates breaking change. | Keep the major version signal aligned with contract changes. | Implemented. |
+| Docs smoke fixtures | V1 has manual examples but no executable docs smoke target. | Current implementation has automated unit tests, but docs examples are still not exercised by a dedicated docs smoke target. | Low: docs can drift without executable checks. | Add local-only `make docs-smoke` for the documented examples. | Planned follow-up. |

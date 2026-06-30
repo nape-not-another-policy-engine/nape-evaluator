@@ -1,4 +1,4 @@
-def evaluate(evidence_file):
+def evaluate(evidence_file, metadata):
     """
     Evaluates the author status from a JSON object.
 
@@ -11,6 +11,12 @@ def evaluate(evidence_file):
             reason: A string explaining the outcome.
     """
     try:
+        if metadata.get("evidence_type") != "json":
+            return "error", "The evidence metadata does not indicate JSON input."
+
+        if metadata.get("schema_version") != "2":
+            return "error", "The evaluator schema version is not supported by this test."
+
         status = evidence_file.get('status') #using .get() avoids key errors.
 
         if status is None:

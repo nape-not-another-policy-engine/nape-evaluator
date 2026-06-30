@@ -27,5 +27,8 @@ class TestJsonParsing(unittest.TestCase):
             check=True,
         )
         output_json = json.loads(result.stdout)
-        self.assertEqual(output_json["outcome"], "pass")
-        self.assertEqual(output_json["reason"], "The author has achieved the status of complete.")
+        self.assertEqual(output_json["evaluator"]["summary"]["count"], 1)
+        self.assertEqual(output_json["evaluator"]["summary"]["ran"], 1)
+        self.assertEqual(output_json["evaluator"]["summary"]["pass"], 1)
+        self.assertEqual(output_json["results"][0]["outcome"], "pass")
+        self.assertEqual(output_json["results"][0]["reason"], "The author has achieved the status of complete.")

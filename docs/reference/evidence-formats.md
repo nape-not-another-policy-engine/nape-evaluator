@@ -2,7 +2,7 @@
 
 ## Current Typed Loading
 
-| Extension | Input to `evaluate(evidence)` |
+| Extension | Input to `evaluate(evidence, metadata)` |
 | --- | --- |
 | `.txt` | text lines |
 | `.json` | parsed JSON object |
@@ -12,6 +12,27 @@
 | unknown | text lines |
 
 Structured data parsing for JSON, XML, and YAML now happens in evaluator core rather than inside the test file.
+
+## Known Unprocessable Extensions
+
+The evaluator does not attempt text fallback for these extensions and instead returns `unprocessable_evidence_type`:
+
+- `.png`
+- `.jpg`
+- `.jpeg`
+- `.gif`
+- `.bmp`
+- `.tiff`
+- `.webp`
+- `.zip`
+- `.gz`
+- `.tar`
+- `.mp3`
+- `.mp4`
+- `.mov`
+- `.avi`
+- `.exe`
+- `.bin`
 
 ## Historical V1 Contrast
 

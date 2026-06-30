@@ -43,24 +43,25 @@ From the repository root:
 
 ```bash
 python main.py --check-install
-cd test
-./author_test.sh
+make docs-smoke
 ```
 
-The current manual JSON smoke example is:
+If you want to run the current typed JSON path manually:
 
 ```bash
-cd test
-./author_test_2.sh
+cd tests/manual
+bash ./author_test_2.sh
 ```
 
-That command currently returns `inconclusive` because `test/author_verification.json` contains an empty `status` value.
+That command currently returns `inconclusive` because `tests/json/evidence/author_verification_empty_status.json` contains an empty `status` value.
 
-The older V1-style smoke remains available for historical comparison:
+## Historical Comparison Smoke
+
+The older V1-style smoke remains available only for historical comparison:
 
 ```bash
-cd test
-./author_test.sh
+cd tests/v1_baseline
+bash ./author_test.sh
 ```
 
 That older test expects text-line JSON parsing and is not compatible with the current typed JSON contract.
@@ -76,27 +77,38 @@ python -m unittest
 This covers:
 
 - install check
+- no-argument usage and non-zero exit behavior
+- `--check-install` exclusivity with evaluation arguments
+- CLI contract behavior through subprocess tests
+- direct CLI adapter behavior through unit tests
 - JSON CLI pass behavior
 - JSON inconclusive behavior
 - invalid JSON loader errors
 - JSON, YAML, XML, TXT, and unknown-extension loader behavior
+
+The current test ownership split is:
+
+- `tests/test_cli_contract.py`: end-to-end CLI contract via `main.py`
+- `tests/test_cli_adapter.py`: parser and transport behavior in `src/nape_evaluator/application/io/cli.py`
+- `tests/test_evaluator_use_case.py`: orchestration behavior
+- `tests/test_evidence_gateway_routing.py`: loader routing and metadata behavior
+- `tests/test_text_evidence_loading.py`: text loading and text fallback behavior
+- `tests/test_structured_evidence_loading.py`: JSON, XML, and YAML behavior
+- `tests/test_pdf_evidence_loading.py`: PDF behavior
+- `tests/test_unprocessable_evidence.py`: blocked binary-format behavior
+- `tests/test_test_execution.py`: test-of-detail gateway implementation behavior
+- `tests/test_output_contract.py`: output shaping behavior
 
 ## Documentation Verification
 
 When updating docs, verify:
 
 ```bash
+make docs-smoke
 rg -n "typed evidence|V1 baseline|historical" README.md docs
 rg -n "nape-eval --check-install|--evidence|--test" README.md docs
 git diff --check -- README.md docs .gitignore
 ```
-
-## Deferred Hardening Items
-
-- Add an executable `make docs-smoke` target for the documented examples. It should be local-only and fixture-based.
-- Decide whether JSON `error` output should still exit zero or should produce non-zero process status for fatal evaluator failures.
-- Decide whether the evaluator should validate `outcome` values before printing JSON.
-- Decide whether a raw text-lines compatibility mode is still needed for migrated V1 tests.
 
 ## Generated Files
 
@@ -112,3 +124,5 @@ These are ignored by `.gitignore`.
 ## Historical Note
 
 `docs/product/v1-evaluator-baseline.md` remains the source for the old all-text contract if you need to compare behavior or plan migrations.
+
+Recommended V2 contract-direction decisions are recorded in `docs/product/v2-policy-direction.md`.

@@ -6,7 +6,11 @@ build-backend = "setuptools.build_meta"
 nape-eval = "main:main"
 
 [tool.setuptools]
+package-dir = {"" = "src"}
 py-modules = ["main"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
 
 [project]
 name = "nape"
@@ -31,7 +35,7 @@ keywords = [
     "not another policy engine", "policy engine", "policy",
 ]
 readme = "README.md"
-requires-python = ">=3.0"
+requires-python = ">=3.6"
 dependencies = [
     "PyYAML~=6.0.2",
     "PyPDF2~=5.4.0",

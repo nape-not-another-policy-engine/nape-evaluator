@@ -8,7 +8,7 @@ This folder documents the `nape-eval` CLI, its contract with the NAPE CLI, the c
 - Test-of-detail authors: read [test-of-detail authoring](user/test-of-detail-authoring.md).
 - CLI users: read [CLI reference](user/cli-reference.md).
 - Contract readers: read [evaluator contract](reference/evaluator-contract.md), [evidence formats](reference/evidence-formats.md), and [source traceability](reference/source-traceability.md).
-- Maintainers: read [architecture](maintainers/architecture.md), then [local development](maintainers/local-development.md).
+- Maintainers: read [architecture](maintainers/architecture.md), [local development](maintainers/local-development.md), [Python engineering standards](maintainers/python-engineering-standards.md), then [software review](maintainers/software-review.md).
 - Historical and migration readers: read [V1 evaluator baseline](product/v1-evaluator-baseline.md).
 - Example readers: inspect [examples](examples/README.md).
 

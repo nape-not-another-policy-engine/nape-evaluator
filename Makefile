@@ -1,4 +1,4 @@
-.PHONY: build-release pip-install pypi-publish clean install
+.PHONY: build-release pip-install pip-uninstall pypi-publish clean docs-smoke
 
 PROJECT_NAME = nape
 BINARY_OUTPUT_DIR = binary-output
@@ -35,3 +35,8 @@ clean:
 	rm -rf build dist *.egg-info
 	rm *.spec
 	@echo "\n\033[1;96m NAPE Evaluator - All Cleaned Up - COMPLETE! \033[0m\n"
+
+docs-smoke:
+	@echo "\n\033[1;96m Running NAPE Evaluator docs smoke checks \033[0m\n"
+	bash ./scripts/docs_smoke.sh
+	@echo "\n\033[1;96m NAPE Evaluator - Docs Smoke - COMPLETE! \033[0m\n"

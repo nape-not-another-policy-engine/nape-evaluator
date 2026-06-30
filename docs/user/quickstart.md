@@ -18,8 +18,11 @@ Create `author_verification.json`:
 Create `verify_author_complete.py`:
 
 ```python
-def evaluate(evidence_file):
-    status = evidence_file.get("status")
+def evaluate(evidence, metadata):
+    if metadata.get("evidence_type") != "json":
+        return "error", "The evidence metadata does not indicate JSON input."
+
+    status = evidence.get("status")
 
     if status == "complete":
         return "pass", "The author has achieved the status of complete."
@@ -28,7 +31,7 @@ def evaluate(evidence_file):
     return "fail", f"The author has not achieved the status of complete, their current status is '{status}'."
 ```
 
-For `.json` evidence, `nape-eval` passes `evidence_file` as a parsed Python object.
+For `.json` evidence, `nape-eval` passes `evidence` as a parsed Python object and `metadata` with `evidence_type` and `schema_version`.
 
 ## 3. Run The Evaluator
 
@@ -39,8 +42,33 @@ nape-eval --evidence ./author_verification.json --test ./verify_author_complete.
 Expected output:
 
 ```json
-{"outcome": "pass", "reason": "The author has achieved the status of complete."}
+{
+  "results": [
+    {
+      "test": "./verify_author_complete.py",
+      "outcome": "pass",
+      "reason": "The author has achieved the status of complete."
+    }
+  ],
+  "evaluator": {
+    "messages": [],
+    "summary": {
+      "count": 1,
+      "ran": 1,
+      "pass": 1,
+      "fail": 0,
+      "inconclusive": 0,
+      "error": 0,
+      "message_count": 0,
+      "message_info": 0,
+      "message_warning": 0,
+      "message_error": 0
+    }
+  }
+}
 ```
+
+For full output rules, including blocked-test behavior and evaluator messages, see `cli-reference.md`.
 
 ## 4. Check Install
 

@@ -7,16 +7,17 @@
 NAPE CLI owns procedure orchestration, evidence collection, report generation, and report signing. NAPE Evaluator owns the action-level evaluation boundary:
 
 1. Receive one evidence file path.
-2. Receive one test-of-detail Python file path.
+2. Receive one or more test-of-detail Python file paths.
 3. Load the evidence.
-4. Dynamically import the test file.
-5. Call `evaluate(evidence)`.
-6. Print JSON containing `outcome` and `reason`.
+4. Build evaluation metadata.
+5. Dynamically import each test file.
+6. Call `evaluate(evidence, metadata)` for each test.
+7. Print one JSON object containing `results` and nested `evaluator.messages` and `evaluator.summary`.
 
 ## Primary Users
 
 - CLI users who need `nape-eval` installed so `nape collect report` can run.
-- Test-of-detail authors who write Python `evaluate(evidence)` functions.
+- Test-of-detail authors who write Python `evaluate(evidence, metadata)` functions.
 - NAPE maintainers who depend on the evaluator process contract.
 - Release maintainers who package and publish the `nape` Python package.
 
@@ -26,12 +27,15 @@ Current behavior:
 
 - Provides the `nape-eval` console script from the `nape` Python package.
 - Supports `--check-install`.
-- Supports `--evidence <file>` and `--test <python-file>` together.
+- Supports `--evidence <file>` and one or more `--test <python-file>` arguments together.
+- Treats `--check-install` as mutually exclusive with `--evidence` and `--test`.
+- Prints CLI usage and exits non-zero when invoked without arguments.
 - Loads evidence by file extension.
-- Dynamically imports the test file.
-- Calls `evaluate(evidence)`.
-- Prints one JSON object to stdout with `outcome` and `reason`.
-- Converts common execution failures into JSON `error` outcomes.
+- Builds minimal metadata for the test contract.
+- Dynamically imports each test file.
+- Calls `evaluate(evidence, metadata)` for each test.
+- Prints one JSON object to stdout containing `results` and nested `evaluator` status data.
+- Converts common execution failures into evaluator `error` messages rather than synthetic result items.
 
 Supported evidence behavior:
 
@@ -41,17 +45,67 @@ Supported evidence behavior:
 - `.yaml` and `.yml`: parsed YAML
 - `.pdf`: extracted text lines
 
-## V1 Non-Goals
+Known unprocessable extensions:
 
-V1 does not:
+- common image formats such as `.png`, `.jpg`, `.jpeg`, `.gif`, `.bmp`, `.tiff`, `.webp`
+- common archive formats such as `.zip`, `.gz`, `.tar`
+- common media formats such as `.mp3`, `.mp4`, `.mov`, `.avi`
+- executable or opaque binary formats such as `.exe`, `.bin`
+
+Current metadata behavior:
+
+- `evidence_type`: indicates the evaluator-selected evidence contract
+- `schema_version`: indicates the evaluator input contract version
+
+Current response behavior:
+
+- `results`: one item per test execution
+- `evaluator.messages`: evaluator-generated info, warning, and error notices
+- `evaluator.summary`: aggregate counts by result outcome and evaluator message level
+
+Current summary behavior:
+
+- `count`: requested test count
+- `ran`: test count that completed `evaluate(...)`
+- `pass`, `fail`, `inconclusive`, `error`: counts from returned test outcomes only
+- `message_count`, `message_info`, `message_warning`, `message_error`: counts from evaluator-generated notices
+
+Interpretation rules:
+
+- `evaluator.summary.error` means a test ran and returned `"error"`.
+- `evaluator.summary.message_error` means the evaluator/runtime reported an operational error.
+- If `evaluator.summary.ran` is less than `evaluator.summary.count`, one or more requested tests were blocked before completing execution.
+
+## Current Non-Goals
+
+The current evaluator does not:
 
 - Evaluate multiple evidence files in one invocation.
-- Evaluate multiple tests in one invocation.
-- Validate outcome values against the NAPE kernel.
 - Generate NAPE reports.
 - Sign files.
 - Upload output anywhere.
 - Provide a formal plugin sandbox for test files.
+
+## Future Enhancement Direction
+
+The current batch boundary is one evidence file plus one or more explicit `--test` arguments.
+
+Potential next expansions:
+
+- a directory or manifest of test files
+- multiple evidence files in one invocation
+- aggregate or summary outcome policies across multiple test results
+
+## V2 Policy Direction
+
+Recommended V2 contract-direction decisions are recorded in `v2-policy-direction.md`.
+
+The current recommended direction is:
+
+- keep typed evidence loading as the canonical contract
+- validate returned outcome vocabulary
+- keep exit status `0` when valid evaluator JSON is produced
+- keep trusted-code execution explicit unless a real sandbox is implemented
 
 ## Historical V1 Contrast
 
@@ -63,4 +117,4 @@ Historical V1 passed every evidence file as text lines into `evaluate(evidence)`
 - The evaluator stdout contract is small but critical to NAPE CLI report generation.
 - Runtime dependency metadata must match imported libraries.
 - Typed evidence loading can break existing tests that expect raw text lines.
-- Returning JSON `error` is different from failing the process, and NAPE CLI behavior depends on this distinction.
+- Returning evaluator `error` messages is different from returned test outcome `"error"`, and NAPE CLI behavior depends on this distinction.

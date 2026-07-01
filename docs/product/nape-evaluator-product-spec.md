@@ -37,7 +37,7 @@ Current behavior:
 - Dynamically imports each test file.
 - Calls `evaluate(evidence, test_parameters, metadata)` for each test.
 - Prints one JSON object to stdout containing `results` and nested `evaluator` status data.
-- Converts common execution failures into evaluator `error` messages rather than synthetic result items.
+- Converts common execution failures into evaluator `error` messages and blocked per-test result items.
 
 Supported evidence behavior:
 
@@ -112,6 +112,12 @@ Potential next expansions:
 - richer manifest-based or inline parameter binding beyond repeated parameter files
 
 Current exploration input for caller-supplied test parameters is recorded in `test-parameter-exploration.md`.
+
+Current implementation behavior is recorded in `current-evaluator-reference.md`.
+
+Current V2 structured-verification-input design exploration is recorded in `v2-structured-verification-input-proposal.md`.
+
+Current V2 structured-verification-output design exploration is recorded in `v2-structured-verification-result-proposal.md`.
 
 ## V2 Policy Direction
 

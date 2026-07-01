@@ -9,6 +9,7 @@ This folder documents the `nape-eval` CLI, its contract with the NAPE CLI, the c
 - CLI users: read [CLI reference](user/cli-reference.md).
 - Contract readers: read [evaluator contract](reference/evaluator-contract.md), [evidence formats](reference/evidence-formats.md), and [source traceability](reference/source-traceability.md).
 - Maintainers: read [architecture](maintainers/architecture.md), [local development](maintainers/local-development.md), [Python engineering standards](maintainers/python-engineering-standards.md), then [software review](maintainers/software-review.md).
+- Planning and handoff readers: start with [roadmap](1-plan/roadmap.md).
 - Historical and migration readers: read [V1 evaluator baseline](product/v1-evaluator-baseline.md).
 - Example readers: inspect [examples](examples/README.md).
 
@@ -38,6 +39,11 @@ Implementation flow, local development, packaging, release notes, and validation
 
 Small example fixtures and expected output shapes for docs and smoke validation planning.
 
-## Temporary Planning Documents
+`1-plan/`
 
-Temporary planning or review documents may appear in this folder with a `TEMP-` prefix. Delete them after their findings are resolved or moved into permanent docs/issues.
+Evaluator-specific roadmap, plan, and handoff material.
+
+## Planning Rule
+
+Keep evaluator planning and handoff documents under `docs/1-plan/`.
+Do not create new `TEMP-` planning files at the root of `docs/`.

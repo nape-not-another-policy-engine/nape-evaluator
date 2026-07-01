@@ -26,13 +26,14 @@ class TestOutputContract(unittest.TestCase):
                 "message": "Evidence file had no extension and was evaluated as text.",
                 "evidence_file": "./evidence",
                 "test_file": "./text_test.py",
+                "test_parameters_source": None,
             },
         )
 
     def test_build_summary_counts_results_and_messages_separately(self):
         results = [
-            {"outcome": "pass"},
-            {"outcome": "error"},
+            {"outcome": "pass", "executed": True},
+            {"outcome": "error", "executed": False},
         ]
         messages = [
             build_message("warning", "warning_code", "warning text"),
@@ -45,11 +46,11 @@ class TestOutputContract(unittest.TestCase):
             actual,
             {
                 "count": 3,
-                "ran": 2,
+                "ran": 1,
                 "pass": 1,
                 "fail": 0,
                 "inconclusive": 0,
-                "error": 1,
+                "error": 0,
                 "message_count": 2,
                 "message_info": 0,
                 "message_warning": 1,
@@ -77,7 +78,7 @@ class TestOutputContract(unittest.TestCase):
     def test_build_summary_counts_info_messages_separately_from_results(self):
         actual = build_summary(
             1,
-            [{"outcome": "inconclusive"}],
+            [{"outcome": "inconclusive", "executed": True}],
             [build_message("info", "info_code", "info text")],
         )
 
@@ -90,7 +91,7 @@ class TestOutputContract(unittest.TestCase):
     def test_build_summary_ignores_unknown_result_outcomes(self):
         actual = build_summary(
             1,
-            [{"outcome": "custom"}],
+            [{"outcome": "custom", "executed": True}],
             [],
         )
 
@@ -112,3 +113,15 @@ class TestOutputContract(unittest.TestCase):
         self.assertEqual(actual["message_info"], 0)
         self.assertEqual(actual["message_warning"], 0)
         self.assertEqual(actual["message_error"], 0)
+
+    def test_build_summary_does_not_count_blocked_result_as_ran(self):
+        actual = build_summary(
+            1,
+            [{"outcome": "error", "executed": False}],
+            [build_message("error", "test_execution_error", "boom")],
+        )
+
+        self.assertEqual(actual["count"], 1)
+        self.assertEqual(actual["ran"], 0)
+        self.assertEqual(actual["error"], 0)
+        self.assertEqual(actual["message_error"], 1)

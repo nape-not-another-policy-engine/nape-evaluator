@@ -1,4 +1,4 @@
-def evaluate(evidence_file, metadata):
+def evaluate(evidence_file, test_parameters, metadata):
     """
     Evaluates the author status from a JSON object.
 

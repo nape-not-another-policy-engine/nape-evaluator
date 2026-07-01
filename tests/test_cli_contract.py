@@ -52,7 +52,7 @@ class TestCli(unittest.TestCase):
         self.assertEqual(result.returncode, 2)
         self.assertEqual(result.stdout, "")
         self.assertIn(
-            "--check-install cannot be combined with --evidence or --test.",
+            "--check-install cannot be combined with --evidence, --test, or --test-parameters-file.",
             result.stderr,
         )
 
@@ -74,7 +74,11 @@ class TestCli(unittest.TestCase):
         self.assertEqual(output_json["evaluator"]["summary"]["count"], 1)
         self.assertEqual(output_json["evaluator"]["summary"]["ran"], 1)
         self.assertEqual(output_json["evaluator"]["summary"]["inconclusive"], 1)
+        self.assertTrue(output_json["results"][0]["executed"])
+        self.assertEqual(output_json["results"][0]["evidence_file"], str(self.empty_status_evidence))
+        self.assertEqual(output_json["results"][0]["test_parameters"], {})
         self.assertEqual(output_json["results"][0]["outcome"], "inconclusive")
+        self.assertIsNone(output_json["results"][0]["test_parameters_source"])
         self.assertEqual(
             output_json["results"][0]["reason"],
             "The expected data field 'status' does not contain a value.",
@@ -103,11 +107,17 @@ class TestCli(unittest.TestCase):
         self.assertEqual(output_json["evaluator"]["summary"]["count"], 1)
         self.assertEqual(output_json["evaluator"]["summary"]["ran"], 0)
         self.assertEqual(output_json["evaluator"]["summary"]["message_error"], 1)
+        self.assertEqual(len(output_json["results"]), 1)
+        self.assertFalse(output_json["results"][0]["executed"])
+        self.assertEqual(output_json["results"][0]["evidence_file"], str(evidence_path))
+        self.assertEqual(output_json["results"][0]["test"], str(self.json_test_file))
+        self.assertEqual(output_json["results"][0]["test_parameters"], {})
         self.assertEqual(output_json["evaluator"]["messages"][0]["level"], "error")
         self.assertEqual(output_json["evaluator"]["messages"][0]["code"], "evidence_load_error")
         self.assertIn("Error loading evidence:", output_json["evaluator"]["messages"][0]["message"])
         self.assertEqual(output_json["evaluator"]["messages"][0]["evidence_file"], str(evidence_path))
         self.assertEqual(output_json["evaluator"]["messages"][0]["test_file"], str(self.json_test_file))
+        self.assertIsNone(output_json["evaluator"]["messages"][0]["test_parameters_source"])
 
     def test_missing_evidence_returns_file_not_found_error(self):
         result = subprocess.run(
@@ -128,10 +138,16 @@ class TestCli(unittest.TestCase):
         self.assertEqual(output_json["evaluator"]["summary"]["count"], 1)
         self.assertEqual(output_json["evaluator"]["summary"]["ran"], 0)
         self.assertEqual(output_json["evaluator"]["summary"]["message_error"], 1)
+        self.assertEqual(len(output_json["results"]), 1)
+        self.assertFalse(output_json["results"][0]["executed"])
+        self.assertEqual(output_json["results"][0]["evidence_file"], str(self.manual_test_dir / "missing.json"))
+        self.assertEqual(output_json["results"][0]["test"], str(self.json_test_file))
+        self.assertEqual(output_json["results"][0]["test_parameters"], {})
         self.assertEqual(output_json["evaluator"]["messages"][0]["code"], "evidence_file_not_found")
         self.assertIn("Unable to find the file(s) for evaluation.", output_json["evaluator"]["messages"][0]["message"])
         self.assertEqual(output_json["evaluator"]["messages"][0]["evidence_file"], str(self.manual_test_dir / "missing.json"))
         self.assertEqual(output_json["evaluator"]["messages"][0]["test_file"], str(self.json_test_file))
+        self.assertIsNone(output_json["evaluator"]["messages"][0]["test_parameters_source"])
 
     def test_unhandled_test_exception_returns_json_error(self):
         with tempfile.TemporaryDirectory() as tmp_dir:
@@ -141,7 +157,7 @@ class TestCli(unittest.TestCase):
             test_path.write_text(
                 "\n".join(
                     [
-                        "def evaluate(evidence, metadata):",
+                        "def evaluate(evidence, test_parameters, metadata):",
                         "    raise RuntimeError('boom')",
                     ]
                 )
@@ -168,10 +184,15 @@ class TestCli(unittest.TestCase):
         self.assertEqual(output_json["evaluator"]["summary"]["ran"], 0)
         self.assertEqual(output_json["evaluator"]["summary"]["message_error"], 1)
         self.assertEqual(output_json["evaluator"]["summary"]["error"], 0)
-        self.assertEqual(output_json["results"], [])
+        self.assertEqual(len(output_json["results"]), 1)
+        self.assertFalse(output_json["results"][0]["executed"])
+        self.assertEqual(output_json["results"][0]["test"], str(test_path))
+        self.assertEqual(output_json["results"][0]["evidence_file"], str(evidence_path))
+        self.assertEqual(output_json["results"][0]["test_parameters"], {})
         self.assertEqual(output_json["evaluator"]["messages"][0]["code"], "test_execution_error")
         self.assertEqual(output_json["evaluator"]["messages"][0]["evidence_file"], str(evidence_path))
         self.assertEqual(output_json["evaluator"]["messages"][0]["test_file"], str(test_path))
+        self.assertIsNone(output_json["evaluator"]["messages"][0]["test_parameters_source"])
 
     def test_multiple_tests_return_results_array(self):
         result = subprocess.run(
@@ -194,6 +215,8 @@ class TestCli(unittest.TestCase):
         self.assertEqual(output_json["evaluator"]["summary"]["count"], 2)
         self.assertEqual(output_json["evaluator"]["summary"]["ran"], 2)
         self.assertEqual(len(output_json["results"]), 2)
+        self.assertTrue(all(result["executed"] for result in output_json["results"]))
+        self.assertTrue(all(result["test_parameters"] == {} for result in output_json["results"]))
         self.assertEqual(output_json["results"][0]["outcome"], "inconclusive")
         self.assertEqual(output_json["results"][1]["outcome"], "inconclusive")
         self.assertEqual(output_json["evaluator"]["summary"]["inconclusive"], 2)
@@ -206,7 +229,7 @@ class TestCli(unittest.TestCase):
             failing_test_path.write_text(
                 "\n".join(
                     [
-                        "def evaluate(evidence, metadata):",
+                        "def evaluate(evidence, test_parameters, metadata):",
                         "    raise RuntimeError('boom')",
                     ]
                 )
@@ -233,14 +256,21 @@ class TestCli(unittest.TestCase):
         output_json = json.loads(result.stdout)
         self.assertEqual(output_json["evaluator"]["summary"]["count"], 2)
         self.assertEqual(output_json["evaluator"]["summary"]["ran"], 1)
-        self.assertEqual(len(output_json["results"]), 1)
-        self.assertEqual(output_json["results"][0]["outcome"], "pass")
+        self.assertEqual(len(output_json["results"]), 2)
+        self.assertEqual(
+            sorted((result["test"], result["executed"], result["outcome"]) for result in output_json["results"]),
+            [
+                (str(self.json_test_file), True, "pass"),
+                (str(failing_test_path), False, "error"),
+            ],
+        )
         self.assertEqual(output_json["evaluator"]["messages"][0]["code"], "test_execution_error")
         self.assertEqual(output_json["evaluator"]["summary"]["error"], 0)
         self.assertEqual(output_json["evaluator"]["summary"]["pass"], 1)
         self.assertEqual(output_json["evaluator"]["summary"]["message_error"], 1)
         self.assertEqual(output_json["evaluator"]["messages"][0]["evidence_file"], str(evidence_path))
         self.assertEqual(output_json["evaluator"]["messages"][0]["test_file"], str(failing_test_path))
+        self.assertIsNone(output_json["evaluator"]["messages"][0]["test_parameters_source"])
 
     def test_missing_extension_emits_warning_message(self):
         with tempfile.TemporaryDirectory() as tmp_dir:
@@ -250,7 +280,7 @@ class TestCli(unittest.TestCase):
             test_path.write_text(
                 "\n".join(
                     [
-                        "def evaluate(evidence, metadata):",
+                        "def evaluate(evidence, test_parameters, metadata):",
                         "    if metadata.get('evidence_type') != 'text':",
                         "        return 'error', 'wrong type'",
                         "    return 'pass', 'Text evaluated.'",
@@ -277,10 +307,14 @@ class TestCli(unittest.TestCase):
         output_json = json.loads(result.stdout)
         self.assertEqual(output_json["evaluator"]["summary"]["count"], 1)
         self.assertEqual(output_json["evaluator"]["summary"]["ran"], 1)
+        self.assertTrue(output_json["results"][0]["executed"])
+        self.assertEqual(output_json["results"][0]["evidence_file"], str(evidence_path))
+        self.assertEqual(output_json["results"][0]["test_parameters"], {})
         self.assertEqual(output_json["results"][0]["outcome"], "pass")
         self.assertEqual(output_json["evaluator"]["messages"][0]["code"], "missing_extension_text_fallback")
         self.assertEqual(output_json["evaluator"]["messages"][0]["evidence_file"], str(evidence_path))
         self.assertEqual(output_json["evaluator"]["messages"][0]["test_file"], str(test_path))
+        self.assertIsNone(output_json["evaluator"]["messages"][0]["test_parameters_source"])
         self.assertEqual(output_json["evaluator"]["summary"]["message_warning"], 1)
 
     def test_unknown_extension_binary_file_emits_warning_and_error(self):
@@ -305,9 +339,15 @@ class TestCli(unittest.TestCase):
         output_json = json.loads(result.stdout)
         self.assertEqual(output_json["evaluator"]["summary"]["count"], 1)
         self.assertEqual(output_json["evaluator"]["summary"]["ran"], 0)
+        self.assertEqual(len(output_json["results"]), 1)
+        self.assertFalse(output_json["results"][0]["executed"])
+        self.assertEqual(output_json["results"][0]["evidence_file"], str(evidence_path))
+        self.assertEqual(output_json["results"][0]["test"], str(self.json_test_file))
+        self.assertEqual(output_json["results"][0]["test_parameters"], {})
         self.assertEqual(output_json["evaluator"]["messages"][0]["code"], "unprocessable_evidence_type")
         self.assertEqual(output_json["evaluator"]["messages"][0]["evidence_file"], str(evidence_path))
         self.assertEqual(output_json["evaluator"]["messages"][0]["test_file"], str(self.json_test_file))
+        self.assertIsNone(output_json["evaluator"]["messages"][0]["test_parameters_source"])
         self.assertEqual(len(output_json["evaluator"]["messages"]), 1)
         self.assertEqual(output_json["evaluator"]["summary"]["message_error"], 1)
 
@@ -319,7 +359,7 @@ class TestCli(unittest.TestCase):
             test_path.write_text(
                 "\n".join(
                     [
-                        "def evaluate(evidence, metadata):",
+                        "def evaluate(evidence, test_parameters, metadata):",
                         "    return 'custom_status', 'bad status'",
                     ]
                 )
@@ -346,5 +386,143 @@ class TestCli(unittest.TestCase):
         self.assertEqual(output_json["evaluator"]["summary"]["ran"], 1)
         self.assertEqual(output_json["evaluator"]["summary"]["error"], 1)
         self.assertEqual(output_json["evaluator"]["summary"]["message_error"], 0)
+        self.assertTrue(output_json["results"][0]["executed"])
+        self.assertEqual(output_json["results"][0]["evidence_file"], str(evidence_path))
+        self.assertEqual(output_json["results"][0]["test_parameters"], {})
         self.assertEqual(output_json["results"][0]["outcome"], "error")
+        self.assertIsNone(output_json["results"][0]["test_parameters_source"])
         self.assertIn("unsupported outcome", output_json["results"][0]["reason"])
+
+    def test_test_parameter_file_is_passed_to_test(self):
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            evidence_path = Path(tmp_dir) / "evidence.json"
+            test_path = Path(tmp_dir) / "threshold.py"
+            params_path = Path(tmp_dir) / "params.json"
+            evidence_path.write_text('{"coverage": 85}', encoding="utf-8")
+            params_path.write_text('{"minCoverage": 80}', encoding="utf-8")
+            test_path.write_text(
+                "\n".join(
+                    [
+                        "def evaluate(evidence, test_parameters, metadata):",
+                        "    if test_parameters.get('minCoverage') == 80:",
+                        "        return 'pass', 'Threshold matched.'",
+                        "    return 'fail', 'Threshold mismatch.'",
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(self.main_py),
+                    "--evidence",
+                    str(evidence_path),
+                    "--test",
+                    str(test_path),
+                    "--test-parameters-file",
+                    str(params_path),
+                ],
+                capture_output=True,
+                text=True,
+                check=True,
+            )
+
+        output_json = json.loads(result.stdout)
+        self.assertEqual(output_json["evaluator"]["summary"]["count"], 1)
+        self.assertEqual(output_json["evaluator"]["summary"]["ran"], 1)
+        self.assertEqual(output_json["results"][0]["outcome"], "pass")
+        self.assertTrue(output_json["results"][0]["executed"])
+        self.assertEqual(output_json["results"][0]["evidence_file"], str(evidence_path))
+        self.assertEqual(output_json["results"][0]["test_parameters"], {"minCoverage": 80})
+        self.assertEqual(output_json["results"][0]["test_parameters_source"], str(params_path))
+
+    def test_missing_test_parameter_file_blocks_only_that_invocation(self):
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            evidence_path = Path(tmp_dir) / "evidence.json"
+            test_path = Path(tmp_dir) / "threshold.py"
+            params_path = Path(tmp_dir) / "missing-params.json"
+            evidence_path.write_text('{"status": "complete"}', encoding="utf-8")
+            test_path.write_text(
+                "\n".join(
+                    [
+                        "def evaluate(evidence, test_parameters, metadata):",
+                        "    return 'pass', 'ok'",
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(self.main_py),
+                    "--evidence",
+                    str(evidence_path),
+                    "--test",
+                    str(test_path),
+                    "--test-parameters-file",
+                    str(params_path),
+                ],
+                capture_output=True,
+                text=True,
+                check=True,
+            )
+
+        output_json = json.loads(result.stdout)
+        self.assertEqual(output_json["evaluator"]["summary"]["count"], 1)
+        self.assertEqual(output_json["evaluator"]["summary"]["ran"], 0)
+        self.assertEqual(len(output_json["results"]), 1)
+        self.assertFalse(output_json["results"][0]["executed"])
+        self.assertEqual(output_json["results"][0]["evidence_file"], str(evidence_path))
+        self.assertEqual(output_json["results"][0]["test"], str(test_path))
+        self.assertIsNone(output_json["results"][0]["test_parameters"])
+        self.assertEqual(output_json["evaluator"]["messages"][0]["code"], "test_parameter_file_not_found")
+        self.assertEqual(output_json["evaluator"]["messages"][0]["test_parameters_source"], str(params_path))
+
+    def test_invalid_test_parameter_shape_blocks_only_that_invocation(self):
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            evidence_path = Path(tmp_dir) / "evidence.json"
+            test_path = Path(tmp_dir) / "threshold.py"
+            params_path = Path(tmp_dir) / "params.json"
+            evidence_path.write_text('{"status": "complete"}', encoding="utf-8")
+            params_path.write_text('["not-an-object"]', encoding="utf-8")
+            test_path.write_text(
+                "\n".join(
+                    [
+                        "def evaluate(evidence, test_parameters, metadata):",
+                        "    return 'pass', 'ok'",
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(self.main_py),
+                    "--evidence",
+                    str(evidence_path),
+                    "--test",
+                    str(test_path),
+                    "--test-parameters-file",
+                    str(params_path),
+                ],
+                capture_output=True,
+                text=True,
+                check=True,
+            )
+
+        output_json = json.loads(result.stdout)
+        self.assertEqual(output_json["evaluator"]["summary"]["count"], 1)
+        self.assertEqual(output_json["evaluator"]["summary"]["ran"], 0)
+        self.assertEqual(len(output_json["results"]), 1)
+        self.assertFalse(output_json["results"][0]["executed"])
+        self.assertEqual(output_json["results"][0]["evidence_file"], str(evidence_path))
+        self.assertEqual(output_json["results"][0]["test"], str(test_path))
+        self.assertIsNone(output_json["results"][0]["test_parameters"])
+        self.assertEqual(output_json["evaluator"]["messages"][0]["code"], "test_parameter_shape_error")
+        self.assertEqual(output_json["evaluator"]["messages"][0]["test_parameters_source"], str(params_path))

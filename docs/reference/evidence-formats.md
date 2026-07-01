@@ -2,7 +2,7 @@
 
 ## Current Typed Loading
 
-| Extension | Input to `evaluate(evidence, metadata)` |
+| Extension | Input to `evaluate(evidence, test_parameters, metadata)` |
 | --- | --- |
 | `.txt` | text lines |
 | `.json` | parsed JSON object |
@@ -12,6 +12,8 @@
 | unknown | text lines |
 
 Structured data parsing for JSON, XML, and YAML now happens in evaluator core rather than inside the test file.
+
+For `.txt` and unknown extensions, the evaluator sets `metadata["evidence_type"]` to `text`.
 
 ## Known Unprocessable Extensions
 
@@ -36,4 +38,4 @@ The evaluator does not attempt text fallback for these extensions and instead re
 
 ## Historical V1 Contrast
 
-Historical V1 treated every evidence file as text and passed `readlines()` into `evaluate(evidence)`. Tests written for that contract may fail until they are migrated to the current typed-evidence model.
+Historical V1 treated every evidence file as text and passed `readlines()` into `evaluate(evidence)`. Tests written for that contract may fail until they are migrated to the current typed-evidence model and three-argument test signature.

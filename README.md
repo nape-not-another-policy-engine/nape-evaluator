@@ -10,6 +10,15 @@ The NAPE Evaluator (`nape-eval`) applies one or more test-of-detail Python files
 nape-eval --evidence ./author_verification.json --test ./verify_author_complete.py
 ```
 
+It can also pair each repeated `--test` with an optional repeated `--test-parameters-file` in the same order:
+
+```bash
+nape-eval \
+  --evidence ./sonar_metrics.json \
+  --test ./code_cover_80.py \
+  --test-parameters-file ./code_cover_80.parameters.json
+```
+
 Expected stdout:
 
 ```json
@@ -17,8 +26,12 @@ Expected stdout:
   "results": [
     {
       "test": "./verify_author_complete.py",
+      "evidence_file": "./author_verification.json",
+      "test_parameters": {},
+      "executed": true,
       "outcome": "pass",
-      "reason": "The author has achieved the status of complete."
+      "reason": "The author has achieved the status of complete.",
+      "test_parameters_source": null
     }
   ],
   "evaluator": {
@@ -39,7 +52,7 @@ Expected stdout:
 }
 ```
 
-The current evaluator loads evidence by file extension before calling `evaluate(evidence, metadata)`:
+The current evaluator loads evidence by file extension before calling `evaluate(evidence, test_parameters, metadata)`:
 
 - `.json`: parsed JSON object
 - `.xml`: XML root element
@@ -54,9 +67,29 @@ The current metadata contract is intentionally small:
 - `metadata["evidence_type"]`
 - `metadata["schema_version"]`
 
+The current test-parameter contract is also intentionally small:
+
+- `test_parameters` is always a dict at the test call boundary
+- if no parameter file is supplied, `test_parameters` is `{}` at runtime
+- when a parameter file is supplied, it must decode to a top-level JSON object
+
+Per-test results include:
+
+- `test`
+- `evidence_file`
+- `test_parameters`
+- `test_parameters_source`
+- `executed`
+- `outcome`
+- `reason`
+
+Evaluator messages include `test_parameters_source`, which is either the supplied parameter-file path or `null`.
+
 Result and evaluator failures are reported separately:
 
-- `results[*].outcome == "error"` means a test ran and returned an `error` outcome
+- `results[*].executed == true` means the test function completed
+- `results[*].executed == false` means the requested invocation was blocked before the test completed
+- `results[*].outcome == "error"` with `executed == true` means a test ran and returned an `error` outcome
 - `evaluator.messages[*].level == "error"` means the evaluator/runtime hit an operational failure
 - if `evaluator.summary.ran` is less than `evaluator.summary.count`, one or more requested tests were blocked before completing execution
 

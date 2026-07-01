@@ -74,7 +74,7 @@ For this repository, that includes at minimum:
 
 - CLI argument behavior
 - typed evidence-loading behavior
-- metadata passed into `evaluate(evidence, metadata)`
+- metadata and caller-owned parameters passed into `evaluate(evidence, test_parameters, metadata)`
 - structured JSON output shape
 - evaluator/runtime failure representation
 - packaging expectations for supported file types
@@ -89,7 +89,7 @@ Current seams include:
 
 - command-line inputs into the evaluator process
 - file-extension-based evidence translation into Python objects
-- trusted test-of-detail execution through `evaluate(evidence, metadata)`
+- trusted test-of-detail execution through `evaluate(evidence, test_parameters, metadata)`
 - evaluator output through stdout JSON
 
 New features should preserve seam clarity rather than collapse behavior into hidden side effects or convenience shortcuts.

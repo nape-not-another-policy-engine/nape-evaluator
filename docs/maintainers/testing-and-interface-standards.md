@@ -64,14 +64,14 @@ Tests must cover meaningful logical paths for each bounded module. For this repo
 
 | Surface | Required logical paths | Canonical tests |
 | --- | --- | --- |
-| CLI contract | install check, no-arg failure, paired-argument validation, repeated `--test`, JSON stdout contract | `tests/test_cli_contract.py`, `tests/test_cli_adapter.py` |
+| CLI contract | install check, no-arg failure, paired-argument validation, repeated `--test`, repeated `--test-parameters-file`, JSON stdout contract | `tests/test_cli_contract.py`, `tests/test_cli_adapter.py` |
 | Evidence gateway | routing and metadata | `tests/test_evidence_gateway_routing.py` |
 | Evidence gateway | text loading and text fallback | `tests/test_text_evidence_loading.py` |
 | Evidence gateway | JSON, XML, and YAML behavior | `tests/test_structured_evidence_loading.py` |
 | Evidence gateway | PDF behavior | `tests/test_pdf_evidence_loading.py` |
 | Evidence gateway | known unprocessable extensions | `tests/test_unprocessable_evidence.py` |
 | Test-of-detail gateway | dynamic module load success, missing file, import-spec failure | `tests/test_test_execution.py` |
-| Use case orchestration | single-test success, multi-test success, continue-after-failure, evidence load failure, missing test file, import failure, evaluator execution failure, message contextualization | `tests/test_evaluator_use_case.py` |
+| Use case orchestration | single-test success, multi-test success, continue-after-failure, parameter pass-through, blocked parameter invocation, evidence load failure, missing test file, import failure, evaluator execution failure, message contextualization | `tests/test_evaluator_use_case.py` |
 | Output contract | result summary counts, evaluator message summary counts, final JSON nesting | `tests/test_output_contract.py` |
 
 Behaviorally distinct paths should not be left implicit in integration-only coverage if a bounded unit test can verify them directly.
@@ -103,7 +103,7 @@ When any of these surfaces change, update the matching permanent docs in the sam
 
 - CLI flags or argument rules
 - supported evidence types or fallback behavior
-- metadata fields passed into `evaluate(evidence, metadata)`
+- metadata or caller-owned parameter fields passed into `evaluate(evidence, test_parameters, metadata)`
 - output JSON shape
 - trusted-code execution semantics
 - install path or runtime dependencies

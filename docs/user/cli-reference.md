@@ -16,7 +16,7 @@ Prints:
 NAPE Evaluator CLI is installed and working.
 ```
 
-`--check-install` cannot be combined with `--evidence` or `--test`.
+`--check-install` cannot be combined with `--evidence`, `--test`, or `--test-parameters-file`.
 
 ### `--evidence` And `--test`
 
@@ -32,6 +32,27 @@ nape-eval --evidence <evidence-file> --test <test-a.py> --test <test-b.py>
 
 `--evidence` and at least one `--test` must be provided together.
 
+### `--test-parameters-file`
+
+Repeat `--test-parameters-file` once per repeated `--test` when caller-supplied parameters are needed:
+
+```bash
+nape-eval \
+  --evidence <evidence-file> \
+  --test <test-a.py> \
+  --test-parameters-file <params-a.json> \
+  --test <test-b.py> \
+  --test-parameters-file <params-b.json>
+```
+
+Rules:
+
+- `--test-parameters-file` is optional
+- when present, it must appear once per `--test`
+- parameter files are matched to tests by position
+- each parameter file must decode to a top-level JSON object
+- if omitted for a test, the evaluator passes `{}` as `test_parameters`
+
 If the CLI is invoked with no arguments, it prints usage information to stderr and exits non-zero.
 
 ## Arguments
@@ -40,7 +61,8 @@ If the CLI is invoked with no arguments, it prints usage information to stderr a
 | --- | --- | --- |
 | `--check-install` | No | Verifies the CLI can run. |
 | `--evidence` | Yes for evaluation | Path to one evidence file. |
-| `--test` | Yes for evaluation | Path to one Python file with an `evaluate(evidence, metadata)` function. Repeat to run multiple tests. |
+| `--test` | Yes for evaluation | Path to one Python file with an `evaluate(evidence, test_parameters, metadata)` function. Repeat to run multiple tests. |
+| `--test-parameters-file` | No | Path to one JSON object file that supplies caller-owned `test_parameters` for the matching `--test`. Repeat once per `--test` in the same order. |
 
 ## Output
 
@@ -51,8 +73,12 @@ The evaluator prints one JSON object to stdout:
   "results": [
     {
       "test": "test-a.py",
+      "evidence_file": "./evidence.json",
+      "test_parameters": {},
+      "executed": true,
       "outcome": "pass",
-      "reason": "Reason text"
+      "reason": "Reason text",
+      "test_parameters_source": null
     }
   ],
   "evaluator": {
@@ -80,13 +106,21 @@ For multiple tests, the evaluator prints:
   "results": [
     {
       "test": "test-a.py",
+      "evidence_file": "./evidence.json",
+      "test_parameters": {},
+      "executed": true,
       "outcome": "pass",
-      "reason": "Reason text"
+      "reason": "Reason text",
+      "test_parameters_source": null
     },
     {
       "test": "test-b.py",
+      "evidence_file": "./evidence.json",
+      "test_parameters": {},
+      "executed": true,
       "outcome": "fail",
-      "reason": "Reason text"
+      "reason": "Reason text",
+      "test_parameters_source": null
     }
   ],
   "evaluator": {
@@ -131,6 +165,17 @@ Interpretation rules:
 - Evaluator/runtime failures are reported in `evaluator.messages` and counted in `summary.message_error`.
 - If `summary.ran` is less than `summary.count`, at least `summary.count - summary.ran` requested tests were blocked from execution.
 
+Result items also report `test_parameters_source`:
+
+- `null` when the test ran with `{}` because no parameter file was supplied
+- a file path when the test ran with caller-supplied parameters from that file
+
+Result items also report execution context:
+
+- `evidence_file`: the evidence path passed to the evaluator
+- `test_parameters`: the decoded parameter dict passed to the test, or `null` if no valid dict was available because parameter loading failed
+- `executed`: `true` when the test function completed, `false` when the invocation was blocked before completion
+
 ## Outcomes
 
 The evaluator prints whatever outcome the test-of-detail function returns.
@@ -156,7 +201,17 @@ When the evaluator catches a process-level failure, it prints:
 
 ```json
 {
-  "results": [],
+  "results": [
+    {
+      "test": "./test-a.py",
+      "evidence_file": "./evidence.json",
+      "test_parameters": {},
+      "executed": false,
+      "outcome": "error",
+      "reason": "Error loading evidence: ...",
+      "test_parameters_source": null
+    }
+  ],
   "evaluator": {
     "messages": [
       {
@@ -165,7 +220,8 @@ When the evaluator catches a process-level failure, it prints:
         "code": "evidence_load_error",
         "message": "...",
         "evidence_file": "./evidence.json",
-        "test_file": "./test-a.py"
+        "test_file": "./test-a.py",
+        "test_parameters_source": null
       }
     ],
     "summary": {
@@ -188,6 +244,8 @@ Common failures:
 
 - missing evidence file
 - missing test file
+- missing test parameter file
+- invalid or non-object test parameter file
 - known unprocessable evidence type
 - evidence parsing failure
 - import failure
@@ -197,7 +255,7 @@ When multiple tests are supplied, import or execution failure in one test is ass
 
 This means a blocked evaluation can legitimately produce:
 
-- `results: []`
+- `results[*].executed: false`
 - `summary.error: 0`
 - one or more evaluator `error` messages
 - `summary.message_error > 0`
@@ -212,6 +270,7 @@ Each message contains:
 - `message`
 - `evidence_file`
 - `test_file`
+- `test_parameters_source`
 
 Warning example for a file with no extension:
 
@@ -220,8 +279,12 @@ Warning example for a file with no extension:
   "results": [
     {
       "test": "text_test.py",
+      "evidence_file": "./evidence",
+      "test_parameters": {},
+      "executed": true,
       "outcome": "pass",
-      "reason": "Text evaluated."
+      "reason": "Text evaluated.",
+      "test_parameters_source": null
     }
   ],
   "evaluator": {
@@ -232,7 +295,8 @@ Warning example for a file with no extension:
         "code": "missing_extension_text_fallback",
         "message": "Evidence file had no extension and was evaluated as text.",
         "evidence_file": "./evidence",
-        "test_file": "./text_test.py"
+        "test_file": "./text_test.py",
+        "test_parameters_source": null
       }
     ],
     "summary": {
@@ -255,7 +319,17 @@ Error example for a known unprocessable extension such as `.png`:
 
 ```json
 {
-  "results": [],
+  "results": [
+    {
+      "test": "./verify_author_complete.py",
+      "evidence_file": "./image.png",
+      "test_parameters": {},
+      "executed": false,
+      "outcome": "error",
+      "reason": "Evidence file extension '.png' is not supported for evaluation.",
+      "test_parameters_source": null
+    }
+  ],
   "evaluator": {
     "messages": [
       {
@@ -264,7 +338,8 @@ Error example for a known unprocessable extension such as `.png`:
         "code": "unprocessable_evidence_type",
         "message": "Evidence file extension '.png' is not supported for evaluation.",
         "evidence_file": "./image.png",
-        "test_file": "./verify_author_complete.py"
+        "test_file": "./verify_author_complete.py",
+        "test_parameters_source": null
       }
     ],
     "summary": {
@@ -297,6 +372,7 @@ NAPE CLI invokes:
 nape-eval --check-install
 nape-eval --evidence <evidence-file> --test <test-file>
 nape-eval --evidence <evidence-file> --test <test-a.py> --test <test-b.py>
+nape-eval --evidence <evidence-file> --test <test-a.py> --test-parameters-file <params-a.json>
 ```
 
 NAPE CLI expects valid JSON on stdout for action evaluation.

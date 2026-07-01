@@ -1,7 +1,14 @@
-from typing import Dict, List
+from typing import Any, Dict, List
 
 
-def build_message(level, code, message, evidence_file=None, test_file=None):
+def build_message(
+    level,
+    code,
+    message,
+    evidence_file=None,
+    test_file=None,
+    test_parameters_source=None,
+):
     return {
         "level": level,
         "source": "evaluator",
@@ -9,13 +16,14 @@ def build_message(level, code, message, evidence_file=None, test_file=None):
         "message": message,
         "evidence_file": evidence_file,
         "test_file": test_file,
+        "test_parameters_source": test_parameters_source,
     }
 
 
 def build_summary(count, results, messages):
     summary = {
         "count": count,
-        "ran": len(results),
+        "ran": 0,
         "pass": 0,
         "fail": 0,
         "inconclusive": 0,
@@ -26,6 +34,9 @@ def build_summary(count, results, messages):
         "message_error": 0,
     }
     for result in results:
+        if not result.get("executed", True):
+            continue
+        summary["ran"] += 1
         outcome = result.get("outcome")
         if outcome in ("pass", "fail", "inconclusive", "error"):
             summary[outcome] += 1
@@ -41,7 +52,7 @@ def build_summary(count, results, messages):
 
 
 def build_cli_output(
-    count: int, results: List[Dict[str, str]], messages: List[Dict[str, str]]
+    count: int, results: List[Dict[str, Any]], messages: List[Dict[str, Any]]
 ):
     return {
         "results": results,

@@ -15,9 +15,13 @@ Action evaluation:
 ```bash
 nape-eval --evidence <evidence-file> --test <test-file>
 nape-eval --evidence <evidence-file> --test <test-a.py> --test <test-b.py>
+nape-eval --evidence <evidence-file> --test <test-a.py> --test-parameters-file <params-a.json>
+nape-eval --evidence <evidence-file> --test <test-a.py> --test-parameters-file <params-a.json> --test <test-b.py> --test-parameters-file <params-b.json>
 ```
 
 `--evidence` and at least one `--test` must be provided together.
+
+`--test-parameters-file` is optional, but when used it must be repeated once per `--test` and matched in the same order.
 
 ## Security Boundary
 
@@ -37,7 +41,7 @@ The evaluator dynamically imports the file supplied by `--test`.
 The file must define:
 
 ```python
-def evaluate(evidence, metadata):
+def evaluate(evidence, test_parameters, metadata):
     ...
 ```
 
@@ -45,7 +49,7 @@ def evaluate(evidence, metadata):
 
 The evaluator inspects the evidence file extension before calling `evaluate(...)`.
 
-| Extension | Input to `evaluate(evidence, metadata)` |
+| Extension | Input to `evaluate(evidence, test_parameters, metadata)` |
 | --- | --- |
 | `.txt` | text lines |
 | `.json` | parsed JSON object |
@@ -54,10 +58,26 @@ The evaluator inspects the evidence file extension before calling `evaluate(...)
 | `.pdf` | extracted text lines |
 | unknown | text lines |
 
-Metadata passed as the second argument currently contains:
+Metadata passed as the third argument currently contains:
 
 - `evidence_type`
 - `schema_version`
+
+## Test Parameter Contract
+
+The evaluator passes caller-supplied test parameters as the second argument:
+
+```python
+def evaluate(evidence, test_parameters, metadata):
+    ...
+```
+
+Current rules:
+
+- `test_parameters` is always a dict at the test call boundary
+- if no `--test-parameters-file` is supplied for a test, the evaluator passes `{}`
+- if `--test-parameters-file` is supplied, it must decode as a top-level JSON object
+- parameter-file mapping is positional across repeated `--test` arguments
 
 ## Return Contract
 
@@ -74,8 +94,12 @@ The evaluator serializes the result into one top-level object:
   "results": [
     {
       "test": "test-a.py",
+      "evidence_file": "./evidence.json",
+      "test_parameters": {},
+      "executed": true,
       "outcome": "pass",
-      "reason": "Reason text"
+      "reason": "Reason text",
+      "test_parameters_source": null
     }
   ],
   "evaluator": {
@@ -99,10 +123,24 @@ The evaluator serializes the result into one top-level object:
 Per-test results contain:
 
 - `test`
+- `evidence_file`
+- `test_parameters`
 - `outcome`
 - `reason`
+- `test_parameters_source`
+- `executed`
 
 Evaluator-generated operational notices appear in `evaluator.messages`.
+
+Each evaluator message contains:
+
+- `level`
+- `source`
+- `code`
+- `message`
+- `evidence_file`
+- `test_file`
+- `test_parameters_source`
 
 Summary contains:
 
@@ -113,7 +151,9 @@ Summary contains:
 
 Summary interpretation rules:
 
-- `summary.error` counts only result-level `"error"` outcomes returned by tests that actually completed `evaluate(...)`.
+- the evaluator returns one result item per requested test invocation
+- `summary.ran` counts only result items where `executed == true`
+- `summary.error` counts only result-level `"error"` outcomes returned by tests that actually completed `evaluate(...)`
 - Evaluator/runtime failures are represented by `evaluator.messages` and counted in `summary.message_error`.
 - If `summary.ran < summary.count`, at least `summary.count - summary.ran` requested tests were blocked before completing the test contract.
 
@@ -143,6 +183,10 @@ The evaluator catches these failures and returns evaluator `error` messages:
 | --- | --- |
 | `FileNotFoundError` | `evidence_file_not_found` or `test_file_not_found` | `Unable to find the file(s) for evaluation.` |
 | test import failure | `test_import_error` | `Failed to import the necessary files.` |
+| test parameter file missing | `test_parameter_file_not_found` | `Unable to find the test parameter file for evaluation.` |
+| test parameter file JSON decode failure | `test_parameter_decode_error` | `Failed to decode the test parameter file as JSON.` |
+| test parameter file load failure | `test_parameter_load_error` | `Failed to load the test parameter file.` |
+| test parameter top-level shape failure | `test_parameter_shape_error` | `Test parameter input must be a top-level JSON object.` |
 | known unprocessable extension | `unprocessable_evidence_type` | `Evidence file extension '...' is not supported for evaluation.` |
 | evidence load failure | `evidence_load_error` | `Error loading evidence:` |
 | unhandled test exception | `test_execution_error` | `Failed to execute the evidence evaluation.` |
@@ -152,7 +196,8 @@ Consumers should not infer success from exit status alone. For action evaluation
 
 Do not conflate test-returned `error` outcomes with evaluator execution failures:
 
-- a test can run and return `"error"`, which increments `summary.error`
+- a test can run and return `"error"` with `executed == true`, which increments `summary.error`
+- a blocked invocation still appears in `results` with `executed == false`
 - the evaluator can fail before or during execution, which increments `summary.message_error`
 - a blocked execution can therefore have `summary.error == 0` while still containing evaluator `error` messages
 
@@ -169,7 +214,17 @@ The evaluator can print JSON like this while still exiting successfully:
 
 ```json
 {
-  "results": [],
+  "results": [
+    {
+      "test": "./missing_test.py",
+      "evidence_file": "./missing.json",
+      "test_parameters": {},
+      "executed": false,
+      "outcome": "error",
+      "reason": "Unable to find the file(s) for evaluation. ...",
+      "test_parameters_source": null
+    }
+  ],
   "evaluator": {
     "messages": [
       {
@@ -178,7 +233,8 @@ The evaluator can print JSON like this while still exiting successfully:
         "code": "evidence_file_not_found",
         "message": "Unable to find the file(s) for evaluation. ...",
         "evidence_file": "./missing.json",
-        "test_file": "./verify_author_complete.py"
+        "test_file": "./missing_test.py",
+        "test_parameters_source": null
       }
     ],
     "summary": {
@@ -201,10 +257,21 @@ Treat this as the current evaluator behavior unless and until exit-status handli
 
 If a test-of-detail raises an unexpected exception, the evaluator still collapses that failure into structured evaluator JSON rather than returning arbitrary Python trace data as the process contract.
 
-Evaluator messages now identify both sides of the execution context:
+Evaluator messages now identify the full execution context:
 
 - `evidence_file`
 - `test_file`
+- `test_parameters_source`
+
+Result items always identify the requested invocation context:
+
+- `test`
+- `evidence_file`
+- `test_parameters`
+- `test_parameters_source`
+- `executed`
+
+If the evaluator could not decode a valid parameter dict for that invocation, the result item can carry `test_parameters: null` even though the test call boundary itself only executes with a dict.
 
 For evidence-level failures that happen before any test completes, the evaluator associates the message with each requested `test_file`.
 

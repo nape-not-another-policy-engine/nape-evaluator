@@ -18,7 +18,7 @@ Create `author_verification.json`:
 Create `verify_author_complete.py`:
 
 ```python
-def evaluate(evidence, metadata):
+def evaluate(evidence, test_parameters, metadata):
     if metadata.get("evidence_type") != "json":
         return "error", "The evidence metadata does not indicate JSON input."
 
@@ -31,7 +31,7 @@ def evaluate(evidence, metadata):
     return "fail", f"The author has not achieved the status of complete, their current status is '{status}'."
 ```
 
-For `.json` evidence, `nape-eval` passes `evidence` as a parsed Python object and `metadata` with `evidence_type` and `schema_version`.
+For `.json` evidence, `nape-eval` passes `evidence` as a parsed Python object, `test_parameters` as `{}` when no parameter file is supplied, and `metadata` with `evidence_type` and `schema_version`.
 
 ## 3. Run The Evaluator
 
@@ -46,8 +46,12 @@ Expected output:
   "results": [
     {
       "test": "./verify_author_complete.py",
+      "evidence_file": "./author_verification.json",
+      "test_parameters": {},
+      "executed": true,
       "outcome": "pass",
-      "reason": "The author has achieved the status of complete."
+      "reason": "The author has achieved the status of complete.",
+      "test_parameters_source": null
     }
   ],
   "evaluator": {
@@ -68,7 +72,7 @@ Expected output:
 }
 ```
 
-For full output rules, including blocked-test behavior and evaluator messages, see `cli-reference.md`.
+For full output rules, including blocked-test behavior, `executed`, and evaluator messages, see `cli-reference.md`.
 
 ## 4. Check Install
 

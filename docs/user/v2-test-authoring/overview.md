@@ -2,6 +2,23 @@
 
 This guide describes the current V2 authoring model for test-of-detail files.
 
+Use this page to orient yourself before choosing the deeper authoring docs.
+
+## Quick Routes
+
+Use this folder based on the question you are trying to answer:
+
+| If your question is... | Go here |
+| --- | --- |
+| how do I get a first working test written, step by step? | [Authoring Progression](authoring-progression.md) |
+| what Python shape should I scaffold around? | [Scaffold Guide](scaffold.md) |
+| how should I extract facts from evidence? | [Fact Extraction](fact-extraction.md) |
+| should I fail fast or fail slow when facts cannot be established? | [Fact Establishment Patterns](fact-establishment-patterns.md) |
+| what `subject` / `criteria` input shape should I use? | [Evaluation Input Patterns](evaluation-input-patterns.md) |
+| which executable fixture should I copy first? | [Authoring Examples Index](authoring-examples-index.md) |
+| how do I scale into typed, structural, multi-subject, or derived-fact tests? | [Advanced Authoring Patterns](advanced-authoring-patterns.md) |
+| what assurance domains are good starter anchors? | [Domain Examples](domain-examples.md) |
+
 ## Current Boundary
 
 The current test boundary is:
@@ -92,3 +109,7 @@ Recommended shape:
 - `_build_inconclusive_result(...)`
 
 This keeps the public entry point small and lets extraction and evaluation logic evolve independently.
+
+If you want the tutorial path rather than the summary, continue with:
+
+- [Authoring Progression](authoring-progression.md)

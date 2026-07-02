@@ -1,3 +1,8 @@
+> Historical document
+>
+> This document is retained for historical reference only.
+> It should not be used for any current execution, implementation, or decision-making unless it is being referenced explicitly for historical or traceability purposes.
+
 # Handoff 01: Structured Verification V2
 
 ## Purpose
@@ -6,12 +11,12 @@ Resume V2 structured verification proposal work without re-deriving the evaluato
 
 ## Status
 
-Proposal-shaping work for this plan is complete. Follow-on implementation planning now lives in `docs/1-plan/plans/03-structured-verification-v2-implementation-planning.md`.
+Proposal-shaping work for this plan is complete. Follow-on implementation planning now lives in `docs/zzz-archive/1-plan/plans/03-structured-verification-v2-implementation-planning.md`.
 
 ## Read Order
 
 1. `docs/1-plan/roadmap.md`
-2. `docs/1-plan/plans/01-structured-verification-v2.md`
+2. `docs/zzz-archive/1-plan/plans/01-structured-verification-v2.md`
 3. `docs/product/current-evaluator-reference.md`
 4. `docs/product/nape-evaluator-product-spec.md`
 5. `docs/product/v2-structured-verification-input-proposal.md`

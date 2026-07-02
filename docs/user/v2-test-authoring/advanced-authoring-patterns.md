@@ -237,11 +237,11 @@ def evaluate(evidence, evaluations, metadata):
 
 def _validate_metadata(metadata, evidence):
     if metadata.get("evidence_type") != "json":
-        return _build_error_result("This test expects JSON evidence.")
+        return _build_inconclusive_result("This test expects JSON evidence.")
     if metadata.get("schema_version") != "2":
-        return _build_error_result("This test only supports evaluator schema version 2.")
+        return _build_inconclusive_result("This test only supports evaluator schema version 2.")
     if not isinstance(evidence, dict):
-        return _build_error_result("This test expects JSON evidence as a dictionary.")
+        return _build_inconclusive_result("This test expects JSON evidence as a dictionary.")
     return None
 
 
@@ -477,14 +477,14 @@ def evaluate(evidence, evaluations, metadata):
     coverage_evaluation = evaluation_index.get("coverage")
     branch_evaluation = evaluation_index.get("branch_coverage")
     if coverage_evaluation is None or branch_evaluation is None:
-        return _build_error_result(
+        return _build_inconclusive_result(
             "This test requires both coverage and branch_coverage evaluations with minimum criteria."
         )
 
     coverage_minimum = _read_numeric_criterion(coverage_evaluation, "minimum")
     branch_minimum = _read_numeric_criterion(branch_evaluation, "minimum")
     if coverage_minimum is None or branch_minimum is None:
-        return _build_error_result(
+        return _build_inconclusive_result(
             "This test requires coverage and branch_coverage criteria.minimum values to be numeric."
         )
 
@@ -648,14 +648,14 @@ def evaluate(evidence, evaluations, metadata):
     evaluation_index = _index_evaluations(evaluations)
     review_evaluation = evaluation_index.get("review_date")
     if review_evaluation is None:
-        return _build_error_result(
+        return _build_inconclusive_result(
             "This test requires a review_date evaluation with minimum and maximum criteria."
         )
 
     minimum = _read_date_criterion(review_evaluation, "minimum")
     maximum = _read_date_criterion(review_evaluation, "maximum")
     if minimum is None or maximum is None:
-        return _build_error_result(
+        return _build_inconclusive_result(
             "This test requires review_date criteria.minimum and criteria.maximum to be ISO-8601 dates."
         )
 
@@ -675,7 +675,7 @@ What the author needs to notice:
 2. the internal fact may carry extra fields such as `parsed_value`
 3. the returned public fact should stay simple and readable
 4. typed parsing errors are usually `inconclusive` when the evidence fact is unusable
-5. malformed criteria values are usually returned as test-level `error`
+5. malformed criteria values are usually returned as test-level `inconclusive` with a precise reason
 
 Public fact returned by the test:
 
@@ -805,13 +805,13 @@ def evaluate(evidence, evaluations, metadata):
     evaluation_index = _index_evaluations(evaluations)
     approver_evaluation = evaluation_index.get("approver_profile")
     if approver_evaluation is None:
-        return _build_error_result(
+        return _build_inconclusive_result(
             "This test requires an approver_profile evaluation with an equals criterion."
         )
 
     expected_profile = approver_evaluation.get("criteria", {}).get("equals")
     if not isinstance(expected_profile, dict):
-        return _build_error_result(
+        return _build_inconclusive_result(
             "This test requires approver_profile criteria.equals to be an object."
         )
 
@@ -992,13 +992,13 @@ def evaluate(evidence, evaluations, metadata):
     evaluation_index = _index_evaluations(evaluations)
     gap_evaluation = evaluation_index.get("coverage_gap")
     if gap_evaluation is None:
-        return _build_error_result(
+        return _build_inconclusive_result(
             "This test requires a coverage_gap evaluation with a maximum criterion."
         )
 
     maximum = _read_numeric_criterion(gap_evaluation, "maximum")
     if maximum is None:
-        return _build_error_result(
+        return _build_inconclusive_result(
             "This test requires coverage_gap criteria.maximum to be numeric."
         )
 

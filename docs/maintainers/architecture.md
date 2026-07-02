@@ -88,12 +88,13 @@ Output boundary:
 
 The evaluator catches common failures and converts them to evaluator `error` messages.
 
-Completed test `conclusion: "error"` and evaluator/runtime failure are intentionally distinct:
+Blocked/evaluator-synthesized `conclusion: "inconclusive"` and evaluator/runtime failure are intentionally distinct:
 
-- completed `conclusion: "error"` increments `evaluator.summary.error`
 - blocked invocations still appear in `results` with `execution.executed == false`
+- blocked invocations now carry structured `result` with `conclusion: "inconclusive"`
 - evaluator/runtime failures increment `evaluator.summary.message_error`
 - blocked tests can leave `evaluator.summary.ran` below `evaluator.summary.count`
+- shared evidence-side notices are emitted once as request-scoped evaluator messages with `affected_tests`
 
 This means an evaluation problem can still produce valid JSON output even when one or more requested tests never complete.
 

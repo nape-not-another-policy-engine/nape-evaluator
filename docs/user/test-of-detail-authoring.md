@@ -28,7 +28,6 @@ Accepted `conclusion` values are:
 - `true`
 - `false`
 - `inconclusive`
-- `error`
 
 ## Authoring Model
 
@@ -47,7 +46,7 @@ Small example:
 def evaluate(evidence, evaluations, metadata):
     if metadata.get("evidence_type") != "json":
         return {
-            "conclusion": "error",
+            "conclusion": "inconclusive",
             "facts": [],
             "reason": "This test expects JSON evidence.",
         }
@@ -198,13 +197,15 @@ Your test should still validate:
 - whether the evidence contains extractable facts
 - whether extracted facts are usable for the test logic
 
-Use returned `error` for contract-aware test-level problems you can explain clearly.
+Use `inconclusive` when:
 
-Use `inconclusive` when you cannot establish the facts needed to reach a decision.
+- you cannot establish the facts needed to reach a decision
+- the test cannot complete its own intended evaluation path cleanly
+- you need to explain a test-known problem without claiming `true` or `false`
 
 ## Exception Handling
 
-Prefer returning structured `error` only for expected test-known failures.
+Prefer returning structured `inconclusive` for expected test-known failures.
 
 Do not add broad `except Exception` wrappers unless you are intentionally converting a specific failure into a better domain message.
 
@@ -212,10 +213,11 @@ If your test raises unexpectedly:
 
 - the evaluator blocks that invocation
 - `results[*].execution.executed` becomes `false`
-- `results[*].result` becomes `null`
+- `results[*].result.conclusion` becomes `inconclusive`
+- `results[*].result.reason` is evaluator-generated blocked-result reasoning
 - the failure is reported through `evaluator.messages`
 
-That is different from returning `{"conclusion": "error", ...}` from a completed test.
+That is different from returning `{"conclusion": "inconclusive", ...}` from a completed test you intentionally handled yourself.
 
 ## Authoring Rules
 
@@ -229,7 +231,15 @@ That is different from returning `{"conclusion": "error", ...}` from a completed
 
 ## Recommended Next Reading
 
-For scaffolding, progression from hardcoded to dynamic inputs, example selection by difficulty and domain, fact extraction, fail-fast versus fail-slow establishment, and example evaluation patterns, continue in `v2-test-authoring/README.md`.
+Continue in [V2 Test Authoring](v2-test-authoring/README.md).
+
+Use this route based on what you need next:
+
+- for the step-by-step beginner path, go to [Authoring Progression](v2-test-authoring/authoring-progression.md)
+- for the recommended Python structure, go to [Scaffold Guide](v2-test-authoring/scaffold.md)
+- for fixture selection by difficulty or domain, go to [Authoring Examples Index](v2-test-authoring/authoring-examples-index.md)
+- for fact extraction and establishment guidance, go to [Fact Extraction](v2-test-authoring/fact-extraction.md) and [Fact Establishment Patterns](v2-test-authoring/fact-establishment-patterns.md)
+- for richer typed, structural, multi-subject, or derived-fact logic, go to [Advanced Authoring Patterns](v2-test-authoring/advanced-authoring-patterns.md)
 
 ## Historical Note
 

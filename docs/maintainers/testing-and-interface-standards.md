@@ -74,8 +74,25 @@ Tests must cover meaningful logical paths for each bounded module. For this repo
 | Evidence gateway | PDF behavior | `tests/test_pdf_evidence_loading.py` |
 | Evidence gateway | known unprocessable extensions | `tests/test_unprocessable_evidence.py` |
 | Test-of-detail gateway | dynamic module load success, missing file, import-spec failure | `tests/test_test_execution.py` |
-| Use case orchestration | single-test success, multi-test success, completed-result normalization, evidence load failure, missing test file, import failure, evaluator execution failure, message contextualization | `tests/test_evaluator_use_case.py` |
-| Output contract | result summary counts, evaluator message summary counts, final JSON nesting | `tests/test_output_contract.py` |
+| Use case orchestration | single-test success, multi-test success, completed-result normalization to `inconclusive`, evidence load failure, missing test file, import failure, evaluator execution failure, blocked synthesized `inconclusive`, request-scoped shared-message shaping, stack-trace capture | `tests/test_evaluator_use_case.py` |
+| Output contract | completed versus blocked summary counts, distinct-event evaluator message counting, request-scoped versus test-scoped message shape, final JSON nesting | `tests/test_output_contract.py` |
+
+Current logical-path documentation for the summary/message contract:
+
+- `tests/test_output_contract.py`
+  - full public message shape
+  - blocked `inconclusive` counting
+  - distinct request-scoped event counting
+  - final CLI nesting
+- `tests/test_evaluator_use_case.py`
+  - completed-result normalization to `inconclusive`
+  - request-scoped evidence warning affecting multiple tests
+  - blocked evidence-load `inconclusive`
+  - blocked test-execution `inconclusive`
+  - stack-trace population on execution failure
+- `tests/test_cli_contract.py`
+  - blocked CLI-visible `inconclusive` result
+  - request-scoped shared warning surfaced once in JSON output
 
 Behaviorally distinct paths should not be left implicit in integration-only coverage if a bounded unit test can verify them directly.
 

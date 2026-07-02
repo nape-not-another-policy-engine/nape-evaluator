@@ -1,13 +1,18 @@
+> Historical document
+>
+> This document is retained for historical reference only.
+> It should not be used for any current execution, implementation, or decision-making unless it is being referenced explicitly for historical or traceability purposes.
+
 # Handoff 04: V2 Authoring Progression Deepening
 
 ## Purpose
 
-Resume the authoring-progression deepening work without re-deciding the overall teaching direction.
+Record the completed state and closure decision for the authoring-progression deepening workstream.
 
 ## Read Order
 
 1. `docs/1-plan/roadmap.md`
-2. `docs/1-plan/plans/04-v2-authoring-progression-deepening.md`
+2. `docs/zzz-archive/1-plan/plans/04-v2-authoring-progression-deepening.md`
 3. `docs/user/v2-test-authoring/authoring-progression.md`
 4. `docs/user/v2-test-authoring/authoring-examples-index.md`
 5. `docs/user/v2-test-authoring/evaluation-input-patterns.md`
@@ -89,6 +94,16 @@ Resume the authoring-progression deepening work without re-deciding the overall 
   - the canonical dedicated derived-fact fixture now exists at:
     - `tests/json/test_of_detail/verify_coverage_gap_maximum.py`
   - that fixture is documented in the advanced page, examples index, and evaluation-input pattern library
+- a first deliberate red-team pass on the full guide set has now been completed
+- that pass found and fixed two doc-system issues:
+  - entry-point navigation was too weak:
+    - `README.md`, `overview.md`, and `test-of-detail-authoring.md` now route readers by need, not only by linear reading order
+  - early progression snippets were accidentally regressing from fact-aware result examples back to simplified `facts: []` success paths:
+    - `authoring-progression.md` now keeps the early stages incrementally consistent with the stated "harden, do not invalidate" teaching model
+- the remaining advanced-example question has now been resolved:
+  - the current advanced worked-example set is sufficient
+  - no additional canonical advanced conditional-policy pattern should be added in this workstream
+  - the selected boundary is to keep this guide set centered on verification of facts and evidence-backed test-of-detail conclusions, not broader policy branching
 
 ## Selected Direction
 
@@ -100,66 +115,42 @@ Use progressive section planning:
 2. then deepen the earlier stages
 3. then plan the later stages with more precision after the backbone is validated
 
-## Resume Focus
+## Closure Decision
 
-When resuming this workstream, focus on:
+This workstream is complete.
 
-1. assessing whether `advanced-authoring-patterns.md` now has the right worked-example density or whether one more advanced pattern still adds clear teaching value
-2. assessing whether the main progression now gives enough Python-writing guidance before authors need the scaffold or advanced page
-3. tightening any redundant wording across the progression and companion docs if the new page now covers it better
-4. checking whether navigation between progression, advanced patterns, examples index, and scaffold is now sufficient
+Do not continue it by default.
 
-## Tomorrow First Move
+If a future need emerges, treat it as a new explicit refinement decision rather than unfinished residue from Plan 04.
 
-Do not start by adding more new content.
+## Why It Closed
 
-Start with a deliberate red-team review of the full V2 authoring guide set.
+- the authoring progression now teaches the intended staged path
+- the companion docs now route readers by need
+- the advanced page now covers the selected advanced example families
+- the remaining plausible addition, conditional policy, was explicitly rejected for this workstream because it would pull the guide set away from fact verification and toward broader policy logic
 
-Review these docs together as one guide system:
+## If Reopened Later
 
-1. `docs/user/test-of-detail-authoring.md`
-2. `docs/user/v2-test-authoring/README.md`
-3. `docs/user/v2-test-authoring/authoring-progression.md`
-4. `docs/user/v2-test-authoring/advanced-authoring-patterns.md`
-5. `docs/user/v2-test-authoring/authoring-examples-index.md`
-6. `docs/user/v2-test-authoring/evaluation-input-patterns.md`
-7. `docs/user/v2-test-authoring/scaffold.md`
-8. `docs/user/v2-test-authoring/fact-extraction.md`
-9. `docs/user/v2-test-authoring/fact-establishment-patterns.md`
+Only reopen a similar workstream if one of these becomes true:
 
-Run that review against these questions:
-
-1. redundancy
-   - are the same ideas now explained too many times?
-   - should any wording be trimmed because another page now teaches it better?
-2. navigation
-   - does a beginner know where to go next at each stage?
-   - does an advanced author know when to leave the progression and use the advanced page?
-3. teaching transitions
-   - are there any jumps where the docs still assume too much?
-   - are there any places where the reader is told what to do but not why?
-4. example sufficiency
-   - are the current four advanced worked examples enough?
-   - if not, is the gap truly worth another canonical fixture?
-
-The recommended outcome of tomorrow’s first move is:
-
-- produce a short red-team findings list
-- then patch the docs directly to fix the highest-signal redundancy or navigation issues
-
-Do not reopen the V2 input/output contract unless the review reveals a real contradiction.
-
-Do not start a new workstream unless the review reveals a gap large enough to justify it.
+- product direction broadens the intended role of test-of-detail authoring guidance
+- users need a new advanced example family that is still clearly within fact-verification boundaries
+- the current guide set shows a real teaching failure in practice
 
 ## Guardrails
 
 - do not quietly drift back to “code organization first” as the middle-stage teaching model
 - do not invalidate the value of the hardcoded starter path
 - do not imply that production-grade authoring is required for a first successful test
-- do not overplan later tutorial sections before the new backbone exists
+- do not broaden this guide set into a general policy-design guide without an explicit new decision
 
-## Next Useful Outputs
+## Durable Outputs
 
-- a decision on whether the current four worked examples are sufficient or whether one more advanced pattern is still worth adding
-- any targeted cross-link or redundancy cleanup revealed by that assessment
-- only if needed, a narrower refinement pass on the V2 authoring guide set
+- the completed authoring guide set under `docs/user/v2-test-authoring/`
+- the tightened routing in:
+  - `docs/user/test-of-detail-authoring.md`
+  - `docs/user/v2-test-authoring/README.md`
+  - `docs/user/v2-test-authoring/overview.md`
+- the corrected early-stage progression examples in:
+  - `docs/user/v2-test-authoring/authoring-progression.md`

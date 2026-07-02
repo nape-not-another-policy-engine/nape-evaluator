@@ -201,9 +201,71 @@ class TestCli(unittest.TestCase):
         output_json = json.loads(result.stdout)
         self.assertEqual(output_json["evaluator"]["summary"]["count"], 1)
         self.assertEqual(output_json["evaluator"]["summary"]["ran"], 0)
+        self.assertEqual(output_json["evaluator"]["summary"]["inconclusive"], 1)
         self.assertEqual(output_json["evaluator"]["summary"]["message_error"], 1)
         self.assertFalse(output_json["results"][0]["execution"]["executed"])
-        self.assertIsNone(output_json["results"][0]["result"])
+        self.assertEqual(
+            output_json["results"][0]["result"]["conclusion"], "inconclusive"
+        )
+        self.assertEqual(output_json["evaluator"]["messages"][0]["scope"], "request")
+        self.assertEqual(
+            output_json["evaluator"]["messages"][0]["affected_tests"],
+            [str(self.json_test_file)],
+        )
+
+    def test_multi_test_shared_warning_is_counted_once_as_request_scoped_event(self):
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            evidence_path = Path(tmp_dir) / "author_verification"
+            evidence_path.write_text('{"author":"Bill Bensing","status":"complete"}', encoding="utf-8")
+            test_path = Path(tmp_dir) / "verify_status_from_text.py"
+            test_path.write_text(
+                "\n".join(
+                    [
+                        "import json",
+                        "",
+                        "def evaluate(evidence, evaluations, metadata):",
+                        '    data = json.loads("".join(evidence))',
+                        '    expected = evaluations[0]["criteria"]["equals"]',
+                        '    status = data.get("status")',
+                        '    fact = {"name": "status", "value": status, "value_type": "text", "status": "found" if status not in (None, "") else "not_found"}',
+                        '    if fact["status"] != "found":',
+                        '        return {"conclusion": "inconclusive", "facts": [fact], "reason": "Status could not be established."}',
+                        "    if status == expected:",
+                        '        return {"conclusion": "true", "facts": [fact], "reason": "Status matches."}',
+                        '    return {"conclusion": "false", "facts": [fact], "reason": "Status does not match."}',
+                        "",
+                    ]
+                ),
+                encoding="utf-8",
+            )
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(self.main_py),
+                    "--evidence",
+                    str(evidence_path),
+                    "--invoke",
+                    _status_invoke_json(str(test_path), expected_status="complete"),
+                    "--invoke",
+                    _status_invoke_json(str(test_path), expected_status="approved"),
+                ],
+                capture_output=True,
+                text=True,
+                check=True,
+            )
+
+        output_json = json.loads(result.stdout)
+        self.assertEqual(output_json["evaluator"]["summary"]["count"], 2)
+        self.assertEqual(output_json["evaluator"]["summary"]["ran"], 2)
+        self.assertEqual(output_json["evaluator"]["summary"]["true"], 1)
+        self.assertEqual(output_json["evaluator"]["summary"]["false"], 1)
+        self.assertEqual(output_json["evaluator"]["summary"]["message_count"], 1)
+        self.assertEqual(output_json["evaluator"]["summary"]["message_warning"], 1)
+        self.assertEqual(output_json["evaluator"]["messages"][0]["scope"], "request")
+        self.assertEqual(
+            output_json["evaluator"]["messages"][0]["affected_tests"],
+            [str(test_path), str(test_path)],
+        )
 
     def test_request_file_reads_from_json_file(self):
         request_packet = {

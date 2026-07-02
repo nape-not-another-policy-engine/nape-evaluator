@@ -6,13 +6,13 @@ def evaluate(evidence, evaluations, metadata):
     evaluation_index = _index_evaluations(evaluations)
     status_evaluation = evaluation_index.get("release_status")
     if status_evaluation is None:
-        return _build_error_result(
+        return _build_inconclusive_result(
             "This test requires a release_status evaluation with an allowed_values criterion."
         )
 
     allowed_values = _read_allowed_values(status_evaluation)
     if not allowed_values:
-        return _build_error_result(
+        return _build_inconclusive_result(
             "This test requires release_status criteria.allowed_values to be a non-empty text array."
         )
 
@@ -28,11 +28,11 @@ def evaluate(evidence, evaluations, metadata):
 
 def _validate_metadata(metadata, evidence):
     if metadata.get("evidence_type") != "json":
-        return _build_error_result("This test expects JSON evidence.")
+        return _build_inconclusive_result("This test expects JSON evidence.")
     if metadata.get("schema_version") != "2":
-        return _build_error_result("This test only supports evaluator schema version 2.")
+        return _build_inconclusive_result("This test only supports evaluator schema version 2.")
     if not isinstance(evidence, dict):
-        return _build_error_result("This test expects JSON evidence as a dictionary.")
+        return _build_inconclusive_result("This test expects JSON evidence as a dictionary.")
     return None
 
 
@@ -81,17 +81,11 @@ def _evaluate_allowed_values(status_fact, allowed_values):
     }
 
 
-def _build_inconclusive_result(facts, reason):
+def _build_inconclusive_result(arg1, arg2=None):
+    facts = [] if arg2 is None else arg1
+    reason = arg1 if arg2 is None else arg2
     return {
         "conclusion": "inconclusive",
         "facts": facts,
-        "reason": reason,
-    }
-
-
-def _build_error_result(reason):
-    return {
-        "conclusion": "error",
-        "facts": [],
         "reason": reason,
     }

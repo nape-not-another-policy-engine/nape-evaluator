@@ -1,4 +1,27 @@
+> Historical document
+>
+> This document is retained for historical reference only.
+> It should not be used for any current execution, implementation, or decision-making unless it is being referenced explicitly for historical or traceability purposes.
+
 # Plan 04: V2 Authoring Progression Deepening
+
+## Completion Outcome
+
+This plan is now complete.
+
+Selected closure decision:
+
+- the current advanced worked-example set is sufficient
+- no additional canonical advanced pattern is being added in this workstream
+
+Closure rationale:
+
+- the guide set now teaches the intended beginner-to-expert path clearly
+- entry-point navigation across the authoring docs has been tightened
+- the progression's staged Python examples are now incrementally consistent with the fact-aware V2 result model
+- adding a canonical conditional-policy example would push the guide set toward broader policy-branching guidance, while the selected boundary for this workstream is to keep test-of-detail authoring centered on verification of facts and evidence-backed conclusions
+
+Any future expansion beyond the current advanced example set should require a new explicit product or documentation need, not continuation of this plan by default.
 
 ## Goal
 

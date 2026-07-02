@@ -1,5 +1,23 @@
 # Test Parameter Exploration
 
+## Superseded Status
+
+This document is retained as historical exploration only.
+
+It does not describe the selected or current V2 evaluator contract.
+
+Use these docs for the selected/current direction instead:
+
+- `docs/product/v2-structured-verification-input-proposal.md`
+- `docs/product/v2-structured-verification-result-proposal.md`
+- `docs/product/current-evaluator-reference.md`
+
+The selected and implemented V2 model now uses:
+
+- `evaluate(evidence, evaluations, metadata)`
+- caller-owned `evaluations[*].subject` plus `criteria`
+- packet-based CLI/request transport through `--invoke`, `--invoke-file`, and `--request-file`
+
 This document explores a possible V2 feature for passing caller-supplied test parameters into a test-of-detail.
 
 It is exploratory input, not a final contract.
@@ -43,9 +61,9 @@ Any final design should preserve these rules:
 - failures should be clear to the calling user without relying on Python tracebacks
 - test-of-detail execution should remain deterministic and process-local
 
-## Recommended Contract Direction
+## Historical Explored Contract Direction
 
-The strongest current direction is:
+At the time of this exploration, the strongest direction under consideration was:
 
 ```python
 def evaluate(evidence, test_parameters, metadata):
@@ -487,9 +505,9 @@ The major unresolved questions are:
 5. What message/result codes should distinguish evaluator transport failure from test-level parameter mismatch?
 6. Should direct CLI binding remain positional, or move to current-test scoped binding before more parameter features are added?
 
-## Current Recommendation
+## Historical Recommendation Snapshot
 
-For planning purposes, the strongest current direction is:
+At the time of this exploration, the strongest direction under consideration was:
 
 - keep `metadata` as evaluator-owned context
 - add `test_parameters` as a separate third argument

@@ -21,6 +21,12 @@ When resuming evaluator work:
   - one handoff document in `docs/1-plan/handoffs/`
 - when a workstream changes materially, update the roadmap and the relevant handoff before stopping
 
+## Archive Rules
+
+- use `docs/zzz-archive/` as the dedicated archive root for evaluator docs
+- mirror the live `docs/` structure under `docs/zzz-archive/` when archiving files
+- follow `docs/maintainers/document-archive-policy.md` for archive-versus-supersede decisions and movement rules
+
 ## Baseline Rules
 
 - the evaluator is claim-agnostic unless product docs explicitly change that
@@ -46,3 +52,4 @@ When a plan is completed:
 - move durable conclusions into permanent docs or code comments where appropriate
 - update the roadmap status
 - delete or archive planning docs only after their information has been disseminated
+- if planning docs are archived, move them under the mirrored path in `docs/zzz-archive/1-plan/`

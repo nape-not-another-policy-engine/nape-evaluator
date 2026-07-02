@@ -87,8 +87,7 @@ Current completed-test behavior:
   - `true`
   - `false`
   - `inconclusive`
-  - `error`
-- invalid completed-test result contracts are normalized to completed `error` results
+- invalid completed-test result contracts are normalized to completed `inconclusive` results
 
 Current response behavior:
 
@@ -97,22 +96,28 @@ Current response behavior:
 - `results[*].evidence`: the evidence path
 - `results[*].evaluations`: the caller-owned accepted evaluation input for that invocation
 - `results[*].execution`: evaluator-owned execution state
-- `results[*].result`: completed test-owned result, or `null` when blocked
+- `results[*].result`: completed test-owned result, or evaluator-synthesized blocked `inconclusive` result
 - `evaluator.messages`: evaluator-generated info, warning, and error notices
 - `evaluator.summary`: aggregate counts by completed-test conclusion and evaluator message level
+
+Current ownership distinction:
+
+- `results[*].result.reason` is test-owned when the test completed
+- `results[*].result.reason` is evaluator-owned when the invocation was blocked
+- `evaluator.messages[*].message` is evaluator-owned operational context
 
 Current summary behavior:
 
 - `count`: requested test count
 - `ran`: test count whose result items have `execution.executed == true`
-- `true`, `false`, `inconclusive`, `error`: counts from completed test conclusions only
-- `message_count`, `message_info`, `message_warning`, `message_error`: counts from evaluator-generated notices
+- `true`, `false`, `inconclusive`: counts from result conclusions
+- `message_count`, `message_info`, `message_warning`, `message_error`: counts from distinct emitted evaluator events
 
 Interpretation rules:
 
-- `evaluator.summary.error` means a test ran and returned `conclusion: "error"`.
 - `evaluator.summary.message_error` means the evaluator/runtime reported an operational error.
 - If `evaluator.summary.ran` is less than `evaluator.summary.count`, one or more requested tests were blocked before completing execution.
+- shared evidence-side notices are emitted once as request-scoped events using `affected_tests`
 
 ## Current Non-Goals
 
@@ -152,4 +157,4 @@ Historical V1 used `--test` transport and tuple-returning test contracts. The cu
 - The evaluator stdout contract is small but critical to NAPE CLI report generation.
 - Runtime dependency metadata must match imported libraries.
 - Typed evidence loading and the V2 request/result contract can break older tests written for V1 or early transitional shapes.
-- Returning evaluator `error` messages is different from returning completed test `conclusion: "error"`, and downstream behavior depends on this distinction.
+- Returning evaluator `error` messages is different from returning completed or blocked `inconclusive` results, and downstream behavior depends on this distinction.

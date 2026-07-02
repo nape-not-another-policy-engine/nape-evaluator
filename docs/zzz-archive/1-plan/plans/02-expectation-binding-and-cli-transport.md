@@ -1,4 +1,29 @@
+> Historical document
+>
+> This document is retained for historical reference only.
+> It should not be used for any current execution, implementation, or decision-making unless it is being referenced explicitly for historical or traceability purposes.
+
 # Plan 02: Expectation Binding And CLI Transport
+
+## Completion Outcome
+
+This plan is now complete.
+
+Selected closure decision:
+
+- the V2 caller-input transport is packet-based only
+- the selected direct CLI shape is repeated `--invoke` and `--invoke-file`
+- the selected full-request shape is `--request-file <path-or->`
+- each invocation packet contains both `test` and `evaluations`
+- the older positional `--test` plus `--test-parameters-file` model is baseline history only, not the active direction
+
+Closure rationale:
+
+- the selected transport direction is now fully decided
+- that direction is now implemented in the runtime and documented in permanent current-reference, user, and README surfaces
+- no unresolved core transport question remains in this workstream
+
+Any future transport expansion should require a new explicit product or implementation need rather than continuing this plan by default.
 
 ## Goal
 
@@ -6,14 +31,11 @@ Define and document how caller-supplied comparison/configuration input should be
 
 ## Naming Note
 
-Current committed code and some current docs still use `test_parameters`.
+This plan records an older transition problem that is now resolved.
 
-Current selected V2 proposal direction prefers `evaluations`, `subject`, and `criteria`.
+The selected and implemented V2 contract now uses `evaluations`, `subject`, and `criteria`.
 
-This plan must be explicit about whether a statement refers to:
-
-- the current implemented contract
-- the proposed V2 terminology
+References here to `test_parameters` describe historical baseline context only.
 
 ## Baseline
 
@@ -26,15 +48,15 @@ Read first:
 
 ## Current State
 
-Current committed behavior:
+Historical baseline behavior before the V2 cutover:
 
-- test call boundary is `evaluate(evidence, test_parameters, metadata)`
-- direct CLI support uses repeated `--test-parameters-file`
-- parameter files are matched to repeated `--test` arguments by position
-- if parameter files are used, one must currently be supplied for every `--test`
-- parameter transport/setup failures block only the affected invocation when possible
+- test call boundary was `evaluate(evidence, test_parameters, metadata)`
+- direct CLI support used repeated `--test-parameters-file`
+- parameter files were matched to repeated `--test` arguments by position
+- if parameter files were used, one had to be supplied for every `--test`
+- parameter transport/setup failures blocked only the affected invocation when possible
 
-Selected V2 CLI direction:
+Selected and implemented V2 CLI direction:
 
 - direct CLI should move away from positional `--test` + `--test-parameters-file` binding
 - support `--invoke` for non-file usage
@@ -81,6 +103,10 @@ Out of scope:
 
 6. Feed approved outcomes back into permanent docs.
    Update CLI, contract, authoring, and product docs once decisions are stable.
+
+Status:
+
+- completed
 
 ## Selected CLI Direction
 

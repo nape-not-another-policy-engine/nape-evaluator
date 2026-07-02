@@ -163,7 +163,6 @@ The evaluator prints one JSON object to stdout:
       "true": 1,
       "false": 0,
       "inconclusive": 0,
-      "error": 0,
       "message_count": 0,
       "message_info": 0,
       "message_warning": 0,
@@ -184,18 +183,17 @@ Summary fields:
 - `ran`: how many tests completed the `evaluate(...)` contract
 - `true`: completed-test count for `conclusion: "true"`
 - `false`: completed-test count for `conclusion: "false"`
-- `inconclusive`: completed-test count for `conclusion: "inconclusive"`
-- `error`: completed-test count for `conclusion: "error"`
-- `message_count`: total evaluator message count
+- `inconclusive`: count for all `inconclusive` results, including blocked evaluator-synthesized ones
+- `message_count`: total distinct evaluator event count
 - `message_info`: evaluator `info` message count
 - `message_warning`: evaluator `warning` message count
 - `message_error`: evaluator `error` message count
 
 Interpretation rules:
 
-- `summary.error` is reserved for completed tests that returned `conclusion: "error"`
 - evaluator/runtime failures are reported in `evaluator.messages` and counted in `summary.message_error`
 - if `summary.ran` is less than `summary.count`, at least `summary.count - summary.ran` requested tests were blocked from execution
+- shared evidence-side notices are represented once as request-scoped messages with `affected_tests`
 
 ## Result Semantics
 
@@ -217,7 +215,7 @@ Rules:
 - `execution.status` is `completed` when `execution.executed` is `true`
 - `execution.status` is `blocked` when `execution.executed` is `false`
 - completed tests carry structured `result`
-- blocked tests carry `result: null`
+- blocked tests carry evaluator-synthesized structured `result`
 
 Completed `result` contains:
 
@@ -225,17 +223,22 @@ Completed `result` contains:
 - `facts`
 - `reason`
 
+Ownership rule:
+
+- `result.reason` is test-owned reasoning when the test completed
+- `result.reason` is evaluator-owned reasoning when the invocation was blocked
+- `evaluator.messages[*].message` is evaluator-owned operational context
+
 Expected completed-test conclusions are:
 
 - `true`
 - `false`
 - `inconclusive`
-- `error`
 
 If a test returns an invalid result contract, the evaluator:
 
 - still counts that test in `summary.ran`
-- normalizes the completed result to `conclusion: "error"`
+- normalizes the completed result to `conclusion: "inconclusive"`
 - returns an explanatory `reason`
 
 ## Error Output
@@ -252,8 +255,7 @@ Common evaluator-owned failures:
 Blocked evaluations can legitimately produce:
 
 - `results[*].execution.executed: false`
-- `results[*].result: null`
-- `summary.error: 0`
+- `results[*].result.conclusion: "inconclusive"`
 - one or more evaluator `error` messages
 - `summary.message_error > 0`
 
@@ -261,9 +263,43 @@ Evaluator-generated operational notices are returned in `evaluator.messages`.
 
 Each message contains:
 
+- `scope`
 - `level`
 - `source`
 - `code`
 - `message`
 - `evidence_file`
 - `test_file`
+- `affected_tests`
+- `stack_trace`
+
+Read evaluator messages as operational context, not as the test's claim or reasoning.
+
+## Multi-Test Example
+
+If one evidence file is evaluated by two requested tests, the top-level `summary` aggregates across both result rows.
+
+If both tests complete successfully:
+
+- `summary.count` is `2`
+- `summary.ran` is `2`
+- the `true` / `false` / `inconclusive` totals reflect the two result rows
+
+If the evidence loader also emits one shared warning that applies to both tests, the current runtime emits one request-scoped warning event. In that case:
+
+- `summary.message_warning` is `1`
+- `summary.message_count` is `1`
+- the warning uses:
+  - `scope: "request"`
+  - `affected_tests: [...]`
+
+## Blocked-Test Example
+
+When a requested test is blocked before `evaluate(...)` completes:
+
+- `results[*].execution.executed` is `false`
+- `results[*].execution.status` is `blocked`
+- `results[*].result.conclusion` is `inconclusive`
+- `results[*].result.reason` is evaluator-generated blocked-result reasoning
+- the operational explanation is returned in `evaluator.messages`
+- `summary.message_error` increases

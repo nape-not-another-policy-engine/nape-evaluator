@@ -170,7 +170,7 @@ Related evidence fixtures:
 
 ### Invalid Caller Criteria For The Test
 
-These examples show malformed criteria values that the test recognizes and rejects, usually leading to `error`.
+These examples show malformed criteria values that the test recognizes and rejects, usually leading to `inconclusive` with explicit test-owned reasoning.
 
 - `verify_review_date_range.py`
 - `verify_restore_duration_range.py`

@@ -2,21 +2,34 @@
 
 This folder contains the detailed guide set for the current V2 test-of-detail contract.
 
-Read this folder after:
+Start with:
 
 - `docs/user/test-of-detail-authoring.md`
+
+Use the product proposals only if you want the design rationale behind the selected V2 shape:
+
 - `docs/product/v2-structured-verification-input-proposal.md`
 - `docs/product/v2-structured-verification-result-proposal.md`
+
+## How To Use This Folder
+
+Use the docs in this folder in the way that matches your current need:
+
+- if you are new and want the hand-held path, start with [Authoring Progression](authoring-progression.md)
+- if you already know the contract and want a fixture to copy, start with [Authoring Examples Index](authoring-examples-index.md)
+- if you want the recommended internal Python structure, start with [Scaffold Guide](scaffold.md)
+- if you need help choosing `subject` / `criteria` shapes, start with [Evaluation Input Patterns](evaluation-input-patterns.md)
+- if your test has outgrown one-subject or one-pattern logic, start with [Advanced Authoring Patterns](advanced-authoring-patterns.md)
 
 ## Reading Order
 
 1. [Overview](overview.md)
 2. [Authoring Progression](authoring-progression.md)
-3. [Authoring Examples Index](authoring-examples-index.md)
-4. [Scaffold Guide](scaffold.md)
-5. [Fact Extraction](fact-extraction.md)
-6. [Fact Establishment Patterns](fact-establishment-patterns.md)
-7. [Evaluation Input Patterns](evaluation-input-patterns.md)
+3. [Scaffold Guide](scaffold.md)
+4. [Fact Extraction](fact-extraction.md)
+5. [Fact Establishment Patterns](fact-establishment-patterns.md)
+6. [Evaluation Input Patterns](evaluation-input-patterns.md)
+7. [Authoring Examples Index](authoring-examples-index.md)
 8. [Advanced Authoring Patterns](advanced-authoring-patterns.md)
 9. [Domain Examples](domain-examples.md)
 

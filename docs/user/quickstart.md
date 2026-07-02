@@ -21,7 +21,7 @@ Create `verify_author_complete.py`:
 def evaluate(evidence, evaluations, metadata):
     if metadata.get("evidence_type") != "json":
         return {
-            "conclusion": "error",
+            "conclusion": "inconclusive",
             "facts": [],
             "reason": "This test expects JSON evidence.",
         }
@@ -114,7 +114,6 @@ Expected output:
       "true": 1,
       "false": 0,
       "inconclusive": 0,
-      "error": 0,
       "message_count": 0,
       "message_info": 0,
       "message_warning": 0,

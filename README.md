@@ -66,7 +66,6 @@ Expected stdout shape:
       "true": 1,
       "false": 0,
       "inconclusive": 0,
-      "error": 0,
       "message_count": 0,
       "message_info": 0,
       "message_warning": 0,
@@ -107,20 +106,21 @@ Result and evaluator failures are reported separately:
 
 - `results[*].execution.executed == true` means the test function completed
 - `results[*].execution.executed == false` means the requested invocation was blocked before the test completed
-- `results[*].result.conclusion == "error"` means a completed test returned a test-level error result
+- blocked invocations still carry structured `results[*].result.conclusion == "inconclusive"` with evaluator-owned blocked reasoning
 - `evaluator.messages[*].level == "error"` means the evaluator/runtime hit an operational failure
 - if `evaluator.summary.ran` is less than `evaluator.summary.count`, one or more requested tests were blocked before completing execution
 
 Invalid completed-test result contracts are treated as completed test contract errors:
 
 - the test still counts in `evaluator.summary.ran`
-- the result is normalized to `result.conclusion == "error"`
+- the result is normalized to `result.conclusion == "inconclusive"`
 - the reason explains that the test returned an invalid result contract
 
 ## Start Here
 
 - New users: [Installation](docs/user/installation.md), then [Quickstart](docs/user/quickstart.md)
 - Test authors: [Test-of-detail authoring](docs/user/test-of-detail-authoring.md), then [V2 test authoring](docs/user/v2-test-authoring/README.md)
+- Software integrators: [Software integration guide](docs/user/software-integration/README.md)
 - CLI reference: [CLI reference](docs/user/cli-reference.md)
 - Contract details: [Evaluator contract](docs/reference/evaluator-contract.md)
 - Evidence formats: [Evidence formats](docs/reference/evidence-formats.md)

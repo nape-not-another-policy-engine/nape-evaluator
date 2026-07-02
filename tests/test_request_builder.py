@@ -129,3 +129,34 @@ class TestRequestBuilder(unittest.TestCase):
                 )
                 .try_build()
             )
+
+    def test_builder_rejects_duplicate_subject_names_within_one_test(self):
+        with self.assertRaises(RequestValidationError):
+            (
+                EvaluateEvidenceRequest.builder()
+                .evidence_path("./evidence.json")
+                .raw_tests(
+                    [
+                        {
+                            "test": "./coverage.py",
+                            "evaluations": [
+                                {
+                                    "subject": {
+                                        "name": "coverage",
+                                        "data_type": "number",
+                                    },
+                                    "criteria": {"minimum": 80},
+                                },
+                                {
+                                    "subject": {
+                                        "name": "coverage",
+                                        "data_type": "number",
+                                    },
+                                    "criteria": {"maximum": 95},
+                                },
+                            ],
+                        }
+                    ]
+                )
+                .try_build()
+            )

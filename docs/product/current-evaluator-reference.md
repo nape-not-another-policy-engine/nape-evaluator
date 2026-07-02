@@ -109,6 +109,7 @@ Important current behavior:
 - each requested test packet uses:
   - `test`
   - `evaluations`
+- duplicate `subject.name` values within one requested test packet are rejected rather than silently shadowing one another
 
 ## Current Evidence Loading
 
@@ -179,15 +180,14 @@ Current accepted completed-test conclusions:
 - `true`
 - `false`
 - `inconclusive`
-- `error`
 
 If a completed test returns an invalid result contract, the evaluator normalizes that completed invocation to:
 
-- `result.conclusion = "error"`
+- `result.conclusion = "inconclusive"`
 - `result.facts = []`
 - `result.reason = "...invalid result contract..."`
 
-That is treated as a completed test-level contract error, not as an evaluator execution failure.
+That is treated as a completed test-level contract violation normalized to `inconclusive`, not as an evaluator execution failure.
 
 ## Current Outer Result Item
 
@@ -250,7 +250,11 @@ Current blocked shape:
     "executed": false,
     "status": "blocked"
   },
-  "result": null
+  "result": {
+    "conclusion": "inconclusive",
+    "facts": [],
+    "reason": "The test could not be completed, so the conclusion is inconclusive. The evaluator could not load the evidence file because it was not found."
+  }
 }
 ```
 
@@ -262,7 +266,7 @@ Important current semantics:
   - `completed`
   - `blocked`
 - completed tests always carry structured `result`
-- blocked tests always carry `result: null`
+- blocked tests always carry evaluator-synthesized structured `result`
 
 ## Current Evaluator Output Envelope
 
@@ -279,7 +283,6 @@ Today the evaluator prints:
       "true": 0,
       "false": 0,
       "inconclusive": 0,
-      "error": 0,
       "message_count": 0,
       "message_info": 0,
       "message_warning": 0,
@@ -295,15 +298,55 @@ Current summary behavior:
 
 - `count`: number of requested tests
 - `ran`: number of result items with `execution.executed == true`
-- `true`, `false`, `inconclusive`, `error`: counts from completed test results only
-- `message_count`, `message_info`, `message_warning`, `message_error`: counts from evaluator-generated notices only
+- `true`, `false`, `inconclusive`: counts from result conclusions
+- `message_count`, `message_info`, `message_warning`, `message_error`: counts from distinct emitted evaluator events only
 
 Important current distinction:
 
-- `evaluator.summary.error` means a completed test returned conclusion `error`
+- `evaluator.summary.inconclusive` includes both:
+  - completed tests that returned `inconclusive`
+  - blocked invocations represented as evaluator-synthesized `inconclusive` results
 - `evaluator.summary.message_error` means the evaluator/runtime reported an operational problem
 
 If `ran < count`, one or more requested tests were blocked before successful execution.
+
+Current `evaluator.messages` purpose:
+
+- `evaluator.messages` is the evaluator-owned operational notice stream
+- it is used for evaluator-generated `info`, `warning`, and `error` notices
+- it is not the place where a completed test explains its domain reasoning
+
+Current `result.reason` purpose:
+
+- `results[*].result.reason` is dual-source
+- when `execution.executed == true`, it is test-owned reasoning from a completed test
+- when `execution.executed == false`, it is evaluator-owned reasoning explaining why the blocked invocation is `inconclusive`
+
+Current multi-test message semantics:
+
+- shared evidence-side notices are emitted as distinct request-scoped events
+- request-scoped messages identify impacted tests through `affected_tests`
+- test-scoped messages identify one affected test through `test_file`
+- `message_count` is therefore a count of distinct emitted evaluator events
+
+Example interpretation:
+
+- if two tests run successfully against one evidence file and no evaluator notices occur:
+  - `summary.count == 2`
+  - `summary.ran == 2`
+  - `summary.message_count == 0`
+- if one evidence-side warning applies to both requested tests:
+  - `summary.count == 2`
+  - `summary.ran == 2`
+  - `summary.message_warning == 1`
+  - the warning row uses:
+    - `scope == "request"`
+    - `affected_tests == ["./test-a.py", "./test-b.py"]`
+- if one requested test is blocked before execution:
+  - `results[*].execution.executed == false`
+  - `results[*].result.conclusion == "inconclusive"`
+  - the blocked result row contains evaluator-owned `reason`
+  - the operational explanation also appears in `evaluator.messages`
 
 ## Current Failure Ownership
 
@@ -316,6 +359,7 @@ Evaluator-owned failures still produce:
 
 - a blocked outer result item for each affected requested test
 - one or more evaluator messages describing the operational problem
+- `evaluator.messages[*].stack_trace` when traceback detail exists
 
 Examples of current evaluator-owned failures:
 

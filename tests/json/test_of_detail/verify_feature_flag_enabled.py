@@ -6,13 +6,13 @@ def evaluate(evidence, evaluations, metadata):
     evaluation_index = _index_evaluations(evaluations)
     feature_evaluation = evaluation_index.get("feature_enabled")
     if feature_evaluation is None:
-        return _build_error_result(
+        return _build_inconclusive_result(
             "This test requires a feature_enabled evaluation with an equals criterion."
         )
 
     expected_value = _read_boolean_equals(feature_evaluation)
     if expected_value is None:
-        return _build_error_result(
+        return _build_inconclusive_result(
             "This test requires feature_enabled criteria.equals to be boolean."
         )
 
@@ -28,11 +28,11 @@ def evaluate(evidence, evaluations, metadata):
 
 def _validate_metadata(metadata, evidence):
     if metadata.get("evidence_type") != "json":
-        return _build_error_result("This test expects JSON evidence.")
+        return _build_inconclusive_result("This test expects JSON evidence.")
     if metadata.get("schema_version") != "2":
-        return _build_error_result("This test only supports evaluator schema version 2.")
+        return _build_inconclusive_result("This test only supports evaluator schema version 2.")
     if not isinstance(evidence, dict):
-        return _build_error_result("This test expects JSON evidence as a dictionary.")
+        return _build_inconclusive_result("This test expects JSON evidence as a dictionary.")
     return None
 
 
@@ -92,17 +92,11 @@ def _evaluate_equals(feature_fact, expected_value):
     }
 
 
-def _build_inconclusive_result(facts, reason):
+def _build_inconclusive_result(arg1, arg2=None):
+    facts = [] if arg2 is None else arg1
+    reason = arg1 if arg2 is None else arg2
     return {
         "conclusion": "inconclusive",
         "facts": facts,
-        "reason": reason,
-    }
-
-
-def _build_error_result(reason):
-    return {
-        "conclusion": "error",
-        "facts": [],
         "reason": reason,
     }

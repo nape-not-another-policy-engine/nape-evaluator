@@ -1,3 +1,8 @@
+> Historical document
+>
+> This document is retained for historical reference only.
+> It should not be used for any current execution, implementation, or decision-making unless it is being referenced explicitly for historical or traceability purposes.
+
 # Plan 01: Structured Verification V2
 
 ## Goal
@@ -6,7 +11,7 @@ Expand the evaluator's current flat request/result contract into a clearer V2 st
 
 ## Status
 
-Completed as proposal-shaping work. Follow-on implementation planning now lives in `docs/1-plan/plans/03-structured-verification-v2-implementation-planning.md`.
+Completed as proposal-shaping work. Follow-on implementation planning now lives in `docs/zzz-archive/1-plan/plans/03-structured-verification-v2-implementation-planning.md`.
 
 ## Baseline
 
@@ -26,13 +31,13 @@ Read first:
 
 ## Current State
 
-Current committed behavior:
+Historical baseline at the time this proposal work began:
 
 - test call boundary is `evaluate(evidence, test_parameters, metadata)`
 - per-test output is a flat row with `executed`, `outcome`, and `reason`
 - evaluator messages and summary data are emitted separately under `evaluator`
 
-Current proposal direction:
+Selected proposal direction:
 
 - caller-owned input now uses `test` + `evidence` + `evaluations`
 - each evaluation item uses `subject` plus object-valued `criteria`

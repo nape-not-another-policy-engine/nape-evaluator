@@ -7,14 +7,14 @@ def evaluate(evidence, evaluations, metadata):
     coverage_evaluation = evaluation_index.get("coverage")
     branch_evaluation = evaluation_index.get("branch_coverage")
     if coverage_evaluation is None or branch_evaluation is None:
-        return _build_error_result(
+        return _build_inconclusive_result(
             "This test requires both coverage and branch_coverage evaluations with minimum criteria."
         )
 
     coverage_minimum = _read_numeric_criterion(coverage_evaluation, "minimum")
     branch_minimum = _read_numeric_criterion(branch_evaluation, "minimum")
     if coverage_minimum is None or branch_minimum is None:
-        return _build_error_result(
+        return _build_inconclusive_result(
             "This test requires coverage and branch_coverage criteria.minimum values to be numeric."
         )
 
@@ -42,11 +42,11 @@ def evaluate(evidence, evaluations, metadata):
 
 def _validate_metadata(metadata, evidence):
     if metadata.get("evidence_type") != "json":
-        return _build_error_result("This test expects JSON evidence.")
+        return _build_inconclusive_result("This test expects JSON evidence.")
     if metadata.get("schema_version") != "2":
-        return _build_error_result("This test only supports evaluator schema version 2.")
+        return _build_inconclusive_result("This test only supports evaluator schema version 2.")
     if not isinstance(evidence, dict):
-        return _build_error_result("This test expects JSON evidence as a dictionary.")
+        return _build_inconclusive_result("This test expects JSON evidence as a dictionary.")
     return None
 
 
@@ -122,17 +122,11 @@ def _evaluate_dual_thresholds(coverage_fact, branch_fact, coverage_minimum, bran
     }
 
 
-def _build_inconclusive_result(facts, reason):
+def _build_inconclusive_result(arg1, arg2=None):
+    facts = [] if arg2 is None else arg1
+    reason = arg1 if arg2 is None else arg2
     return {
         "conclusion": "inconclusive",
         "facts": facts,
-        "reason": reason,
-    }
-
-
-def _build_error_result(reason):
-    return {
-        "conclusion": "error",
-        "facts": [],
         "reason": reason,
     }

@@ -141,7 +141,7 @@ Expected evaluator/runtime failures should:
 
 Current meaning must remain explicit:
 
-- completed test `conclusion: "error"` is a test result
+- completed test `conclusion: "inconclusive"` can be a test-owned contract-violation result
 - evaluator/runtime failure is an evaluator message
 - blocked execution is visible through `count`, `ran`, and evaluator messages
 

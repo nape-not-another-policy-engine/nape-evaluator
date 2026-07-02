@@ -6,13 +6,13 @@ def evaluate(evidence, evaluations, metadata):
     evaluation_index = _index_evaluations(evaluations)
     status_evaluation = evaluation_index.get("status")
     if status_evaluation is None:
-        return _build_error_result(
+        return _build_inconclusive_result(
             "This test requires a status evaluation with an equals criterion."
         )
 
     expected_status = _read_expected_status(status_evaluation)
     if expected_status is None:
-        return _build_error_result(
+        return _build_inconclusive_result(
             "This test requires status criteria.equals to be a text value."
         )
 
@@ -29,17 +29,17 @@ def evaluate(evidence, evaluations, metadata):
 
 def _validate_metadata(metadata, evidence):
     if metadata.get("evidence_type") != "json":
-        return _build_error_result(
+        return _build_inconclusive_result(
             "The evidence metadata does not indicate JSON input."
         )
 
     if metadata.get("schema_version") != "2":
-        return _build_error_result(
+        return _build_inconclusive_result(
             "The evaluator schema version is not supported by this test."
         )
 
     if not isinstance(evidence, dict):
-        return _build_error_result(
+        return _build_inconclusive_result(
             "The evidence file is not in the expected JSON format (dictionary)."
         )
 
@@ -93,9 +93,9 @@ def _evaluate_status(status_fact, expected_status):
     }
 
 
-def _build_error_result(reason):
+def _build_inconclusive_result(reason):
     return {
-        "conclusion": "error",
+        "conclusion": "inconclusive",
         "facts": [],
         "reason": reason,
     }

@@ -52,7 +52,7 @@ If a review is inconclusive, record what evidence is missing.
 - Are expected failures bounded and explainable?
 - Are expected evaluator/runtime failures represented through the documented evaluator output contract?
 - Does the change preserve the distinction between:
-  - completed test `conclusion: "error"`
+  - completed test `conclusion: "inconclusive"` caused by a test-owned contract violation
   - evaluator/runtime operational error
 - Are blocked executions still visible through the summary counts and evaluator messages?
 - Does the change avoid introducing raw traceback behavior as the intended contract for expected failures?

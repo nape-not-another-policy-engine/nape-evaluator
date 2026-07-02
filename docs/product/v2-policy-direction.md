@@ -43,18 +43,17 @@ Decision:
   - `true`
   - `false`
   - `inconclusive`
-  - `error`
 
 Handling:
 
 - if a test returns an invalid result contract, treat the test as completed
-- normalize that contract violation into a completed `error` result
+- normalize that contract violation into a completed `inconclusive` result
 - preserve `ran` accounting for that test
 
 Rationale:
 
 - invalid result shapes are test contract violations, not evaluator transport failures
-- keeping them as completed `error` results preserves the distinction between:
+- keeping them as completed `inconclusive` results preserves the distinction between:
   - test behavior problems
   - evaluator/runtime operational failures
 

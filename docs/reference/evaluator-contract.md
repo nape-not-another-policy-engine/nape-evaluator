@@ -105,6 +105,7 @@ Request validation behavior:
   - `subject`
   - `criteria`
 - `subject.name` must be lowercase snake_case ASCII, start with a letter, and end with an alphanumeric
+- duplicate `subject.name` values are not allowed within one test item's `evaluations` array
 - `subject.data_type` must be one of the bounded supported values
 - `criteria` must be a non-empty object with supported keys compatible with `subject.data_type`
 - no hidden type coercion is performed
@@ -170,7 +171,6 @@ Rules:
   - `true`
   - `false`
   - `inconclusive`
-  - `error`
 - `facts` must be an array
 - `reason` must be a non-empty string
 
@@ -178,7 +178,7 @@ If a completed test returns an invalid result contract:
 
 - the test is still counted as `ran`
 - the evaluator normalizes the completed result to:
-  - `conclusion: "error"`
+  - `conclusion: "inconclusive"`
   - `facts: []`
   - explanatory `reason`
 
@@ -229,7 +229,6 @@ The evaluator prints one JSON object to stdout:
       "true": 1,
       "false": 0,
       "inconclusive": 0,
-      "error": 0,
       "message_count": 0,
       "message_info": 0,
       "message_warning": 0,
@@ -255,7 +254,8 @@ Per-test results contain:
 Rules:
 
 - when `execution.executed == true`, `execution.status` must be `completed` and `result` must be present
-- when `execution.executed == false`, `execution.status` must be `blocked` and `result` must be `null`
+- when `execution.executed == false`, `execution.status` must be `blocked` and `result` must be present
+- blocked results must use `conclusion: "inconclusive"`
 
 ## Summary Contract
 
@@ -267,15 +267,60 @@ Summary contains:
   - `true`
   - `false`
   - `inconclusive`
-  - `error`
 - message totals by evaluator message level
 
 Interpretation rules:
 
 - the evaluator returns one result item per requested test
 - `summary.ran` counts only result items where `execution.executed == true`
-- `summary.error` counts only completed-test `error` conclusions
 - evaluator/runtime failures are represented by `evaluator.messages` and counted in `summary.message_error`
+- `summary.inconclusive` includes blocked invocations represented as evaluator-synthesized `inconclusive` results
+- `summary.message_count` counts distinct emitted evaluator events
+- shared evidence-side notices are represented once as request-scoped events with `affected_tests`
+
+## Message Ownership
+
+`evaluator.messages` exists so evaluator-owned operational notices stay separate from test-owned reasoning.
+
+Use `evaluator.messages` for:
+
+- evidence loading warnings
+- evidence loading errors
+- missing test files
+- import failures
+- evaluator/runtime execution failures
+
+Do not read `evaluator.messages[*].message` as the completed test's reasoning.
+
+That reasoning lives only in:
+
+- `results[*].result.reason`
+
+Interpretation rules:
+
+- if `results[*].execution.executed == true`, the completed test provides test-owned `result.reason`
+- if `results[*].execution.executed == false`, the evaluator provides blocked-result `reason`
+- evaluator-owned operational failures increment `summary.message_error`
+
+## Multi-Test Message Semantics
+
+When multiple requested tests share one evidence input:
+
+- `summary.count` reflects requested test count
+- `summary.ran` reflects how many test files completed
+
+Example:
+
+- one evidence file with no extension
+- two requested tests
+
+The current runtime emits:
+
+- one `warning` row with code `missing_extension_text_fallback`
+- `scope: "request"`
+- `affected_tests` listing each impacted test
+- `summary.message_warning == 1`
+- `summary.message_count == 1`
 
 ## Failure Contract
 
@@ -292,10 +337,10 @@ Examples:
 
 Consumers should not infer success from exit status alone. For action evaluation, parse stdout JSON and inspect `results` and `evaluator`.
 
-Do not conflate completed test `error` conclusions with evaluator execution failures:
+Do not conflate completed test contract violations with evaluator execution failures:
 
-- a completed test can return `conclusion: "error"` with `execution.executed == true`
-- a blocked invocation still appears in `results` with `execution.executed == false`
+- a completed test can be normalized to `conclusion: "inconclusive"` with `execution.executed == true` when it returns an invalid result contract
+- a blocked invocation still appears in `results` with `execution.executed == false` and `result.conclusion == "inconclusive"`
 - evaluator/runtime failures increment `summary.message_error`
 
 ## Historical Note

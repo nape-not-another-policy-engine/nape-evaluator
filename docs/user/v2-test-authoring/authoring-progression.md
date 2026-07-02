@@ -158,7 +158,7 @@ At this stage, you can ignore:
 def evaluate(evidence, evaluations, metadata):
     if metadata.get("evidence_type") != "json":
         return {
-            "conclusion": "error",
+            "conclusion": "inconclusive",
             "facts": [],
             "reason": "This test expects JSON evidence.",
         }
@@ -228,32 +228,46 @@ Smallest safe writing sequence:
 
 ```python
 def evaluate(evidence, evaluations, metadata):
-    status = evidence.get("status")
-    if status in (None, ""):
+    if metadata.get("evidence_type") != "json":
         return {
             "conclusion": "inconclusive",
             "facts": [],
+            "reason": "This test expects JSON evidence.",
+        }
+
+    status = evidence.get("status")
+    fact = {
+        "name": "status",
+        "value": status,
+        "value_type": "text",
+        "status": "found" if status not in (None, "") else "not_found",
+    }
+
+    if fact["status"] != "found":
+        return {
+            "conclusion": "inconclusive",
+            "facts": [fact],
             "reason": "Status could not be established.",
         }
 
     if status == "complete":
         return {
             "conclusion": "true",
-            "facts": [],
+            "facts": [fact],
             "reason": "Status is complete.",
         }
 
     return {
         "conclusion": "false",
-        "facts": [],
+        "facts": [fact],
         "reason": f"Status is '{status}', not 'complete'.",
     }
 ```
 
-Then harden it by:
+Then harden it further by:
 
-- adding the JSON metadata check
-- returning a fact record instead of only a bare conclusion
+- adding the schema-version check
+- moving the hardcoded rule into caller-owned `evaluations`
 
 What the author should notice:
 
@@ -356,19 +370,39 @@ Updated test snippet:
 
 ```python
 def evaluate(evidence, evaluations, metadata):
+    if metadata.get("evidence_type") != "json":
+        return {
+            "conclusion": "inconclusive",
+            "facts": [],
+            "reason": "This test expects JSON evidence.",
+        }
+
     expected_status = evaluations[0]["criteria"]["equals"]
     actual_status = evidence.get("status")
+    status_fact = {
+        "name": "status",
+        "value": actual_status,
+        "value_type": "text",
+        "status": "found" if actual_status not in (None, "") else "not_found",
+    }
+
+    if status_fact["status"] != "found":
+        return {
+            "conclusion": "inconclusive",
+            "facts": [status_fact],
+            "reason": "Status could not be established.",
+        }
 
     if actual_status == expected_status:
         return {
             "conclusion": "true",
-            "facts": [],
+            "facts": [status_fact],
             "reason": f"Status is {expected_status}.",
         }
 
     return {
         "conclusion": "false",
-        "facts": [],
+        "facts": [status_fact],
         "reason": f"Status is '{actual_status}', not '{expected_status}'.",
     }
 ```
@@ -412,7 +446,14 @@ Output A:
 ```json
 {
   "conclusion": "true",
-  "facts": [],
+  "facts": [
+    {
+      "name": "status",
+      "value": "complete",
+      "value_type": "text",
+      "status": "found"
+    }
+  ],
   "reason": "Status is complete."
 }
 ```
@@ -436,7 +477,14 @@ Output B:
 ```json
 {
   "conclusion": "false",
-  "facts": [],
+  "facts": [
+    {
+      "name": "status",
+      "value": "complete",
+      "value_type": "text",
+      "status": "found"
+    }
+  ],
   "reason": "Status is 'complete', not 'approved'."
 }
 ```
@@ -460,27 +508,47 @@ Smallest useful rewrite:
 
 ```python
 def evaluate(evidence, evaluations, metadata):
+    if metadata.get("evidence_type") != "json":
+        return {
+            "conclusion": "inconclusive",
+            "facts": [],
+            "reason": "This test expects JSON evidence.",
+        }
+
     expected_status = evaluations[0]["criteria"]["equals"]
     actual_status = evidence.get("status")
+    status_fact = {
+        "name": "status",
+        "value": actual_status,
+        "value_type": "text",
+        "status": "found" if actual_status not in (None, "") else "not_found",
+    }
+
+    if status_fact["status"] != "found":
+        return {
+            "conclusion": "inconclusive",
+            "facts": [status_fact],
+            "reason": "Status could not be established.",
+        }
 
     if actual_status == expected_status:
         return {
             "conclusion": "true",
-            "facts": [],
+            "facts": [status_fact],
             "reason": f"Status is {expected_status}.",
         }
 
     return {
         "conclusion": "false",
-        "facts": [],
+        "facts": [status_fact],
         "reason": f"Status is '{actual_status}', not '{expected_status}'.",
     }
 ```
 
 Then improve it by:
 
-- restoring the fact record
-- restoring the stage-0 missing-value handling
+- adding the schema-version check
+- validating that the caller supplied the criterion the test expects
 - replacing positional indexing with a subject-name lookup later
 
 What the author should notice:
@@ -509,7 +577,7 @@ The test may now be caller-driven, but it still may not explain clearly:
 
 ### What The Next Stage Adds
 
-The next stage teaches the test to reject unsupported conditions explicitly and return a clear test-level `error`.
+The next stage teaches the test to reject unsupported conditions explicitly and return a clear test-level `inconclusive` result.
 
 ### Canonical Fixture
 
@@ -551,7 +619,7 @@ Example defensive-validation snippet:
 ```python
 if metadata.get("evidence_type") != "json":
     return {
-        "conclusion": "error",
+        "conclusion": "inconclusive",
         "facts": [],
         "reason": "This test expects JSON evidence.",
     }
@@ -559,7 +627,7 @@ if metadata.get("evidence_type") != "json":
 minimum = evaluation.get("criteria", {}).get("minimum")
 if not isinstance(minimum, (int, float)) or isinstance(minimum, bool):
     return {
-        "conclusion": "error",
+        "conclusion": "inconclusive",
         "facts": [],
         "reason": "This test requires criteria.minimum to be numeric.",
     }
@@ -571,7 +639,7 @@ This is the first real safety layer.
 
 If the test understands the problem and can explain it as a contract problem, return:
 
-- `error`
+- `inconclusive`
 
 Examples:
 
@@ -586,7 +654,7 @@ Compact test-level contract failure:
 
 ```json
 {
-  "conclusion": "error",
+  "conclusion": "inconclusive",
   "facts": [],
   "reason": "This test requires review_date criteria.minimum and criteria.maximum to be ISO-8601 dates."
 }
@@ -604,7 +672,7 @@ Good writing order:
 2. add metadata validation first
 3. add validation for the evaluation entry your test requires
 4. add validation for the exact criterion key and value type you depend on
-5. return `error` with a concrete reason when the contract is wrong
+5. return `inconclusive` with a concrete reason when the contract is wrong
 
 Good intermediate shape:
 
@@ -612,14 +680,14 @@ Good intermediate shape:
 def evaluate(evidence, evaluations, metadata):
     if metadata.get("evidence_type") != "json":
         return {
-            "conclusion": "error",
+            "conclusion": "inconclusive",
             "facts": [],
             "reason": "This test expects JSON evidence.",
         }
 
     if metadata.get("schema_version") != "2":
         return {
-            "conclusion": "error",
+            "conclusion": "inconclusive",
             "facts": [],
             "reason": "This test only supports evaluator schema version 2.",
         }
@@ -627,7 +695,7 @@ def evaluate(evidence, evaluations, metadata):
     evaluation = evaluations[0] if evaluations else None
     if evaluation is None:
         return {
-            "conclusion": "error",
+            "conclusion": "inconclusive",
             "facts": [],
             "reason": "This test requires one status evaluation.",
         }
@@ -635,22 +703,36 @@ def evaluate(evidence, evaluations, metadata):
     expected_status = evaluation.get("criteria", {}).get("equals")
     if not isinstance(expected_status, str) or not expected_status:
         return {
-            "conclusion": "error",
+            "conclusion": "inconclusive",
             "facts": [],
             "reason": "This test requires criteria.equals to be a non-empty string.",
         }
 
     actual_status = evidence.get("status")
+    status_fact = {
+        "name": "status",
+        "value": actual_status,
+        "value_type": "text",
+        "status": "found" if actual_status not in (None, "") else "not_found",
+    }
+
+    if status_fact["status"] != "found":
+        return {
+            "conclusion": "inconclusive",
+            "facts": [status_fact],
+            "reason": "Unable to evaluate because the status fact could not be established.",
+        }
+
     if actual_status == expected_status:
         return {
             "conclusion": "true",
-            "facts": [],
+            "facts": [status_fact],
             "reason": f"Status is {expected_status}.",
         }
 
     return {
         "conclusion": "false",
-        "facts": [],
+        "facts": [status_fact],
         "reason": f"Status is '{actual_status}', not '{expected_status}'.",
     }
 ```
@@ -658,7 +740,7 @@ def evaluate(evidence, evaluations, metadata):
 What the author should notice:
 
 - validation is real authoring work, not polish
-- `error` is for a test-known contract problem
+- `inconclusive` is for a test-known contract problem or a fact-establishment problem that prevents a `true` or `false` conclusion
 - this stage is still not about helpers first; it is about making assumptions explicit
 
 ### Why This Stage Comes Before Helper Refactoring
@@ -772,7 +854,7 @@ If the evidence does not yield the usable facts needed for a decision, return:
 
 - `inconclusive`
 
-That is different from test-level `error`.
+That is different from a completed test intentionally returning `inconclusive`.
 
 ### Why This Stage Matters
 
@@ -884,7 +966,7 @@ Even when the caller input is valid, the evidence may still fail to support a de
 - the field is present but cannot be parsed into the required type
 - the field exists but is the wrong shape for the expected fact
 
-That is why this stage is about `inconclusive`, not `error`.
+That is why this stage is about explicit `inconclusive` handling, not a separate `error` conclusion.
 
 ### Why This Stage Is Not Enough Yet
 
@@ -1166,7 +1248,7 @@ Recommended breakout:
 - `_extract_facts(...)`
 - `_find_missing_or_invalid_facts(...)`
 - `_evaluate_policy(...)`
-- `_build_error_result(...)`
+- `_build_inconclusive_result(...)`
 - `_build_inconclusive_result(...)`
 
 Compact skeleton:

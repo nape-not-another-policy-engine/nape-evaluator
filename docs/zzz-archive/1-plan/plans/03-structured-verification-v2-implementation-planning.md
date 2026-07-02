@@ -1,4 +1,29 @@
+> Historical document
+>
+> This document is retained for historical reference only.
+> It should not be used for any current execution, implementation, or decision-making unless it is being referenced explicitly for historical or traceability purposes.
+
 # Plan 03: Structured Verification V2 Implementation Planning
+
+## Completion Outcome
+
+This plan is now complete.
+
+Selected closure decision:
+
+- the V2 runtime cutover is complete
+- the builder-only request seam, packet-based CLI transport, structured result envelope, and completed-test conclusion vocabulary are implemented
+- permanent product, reference, user, and maintainer docs are aligned closely enough with the runtime to stop this workstream
+- the residual legacy cleanup pass is complete
+- the last implementation-grade validation gap found during closure review, duplicate `subject.name` within one invocation, has been fixed and covered by tests
+
+Closure rationale:
+
+- the remaining old-shape references are now either explicitly historical, preserved audit/planning traceability, or future-expansion ideas rather than current runtime defects
+- no further active runtime or current-doc contradictions were found in the closure-oriented review
+- keeping this plan open would now mostly create planning residue rather than drive a real unresolved implementation outcome
+
+Any future work beyond this point should be opened as a new explicit workstream, such as broader criteria-surface expansion or a new validation-hardening effort.
 
 ## Goal
 
@@ -11,12 +36,25 @@ This plan starts from:
 1. `docs/product/current-evaluator-reference.md`
 2. `docs/product/v2-structured-verification-input-proposal.md`
 3. `docs/product/v2-structured-verification-result-proposal.md`
-4. `docs/1-plan/plans/01-structured-verification-v2.md`
-5. `docs/1-plan/handoffs/01-structured-verification-v2.md`
+4. `docs/zzz-archive/1-plan/plans/01-structured-verification-v2.md`
+5. `docs/zzz-archive/1-plan/handoffs/01-structured-verification-v2.md`
+
+## Historical Audit Note
+
+The `Implementation Audit` section below records the pre-cutover baseline that was captured before the first V2 runtime implementation landed.
+
+It is preserved for traceability.
+
+It does not describe the current runtime.
+
+For current runtime behavior, use:
+
+- `docs/product/current-evaluator-reference.md`
+- `docs/zzz-archive/1-plan/handoffs/03-structured-verification-v2-implementation-planning.md`
 
 ## Implementation Audit
 
-### Current Runtime Shape
+### Historical Baseline Shape At Time Of Audit
 
 - `src/nape_evaluator/application/io/cli.py`
   - direct CLI transport is built around repeated `--test` plus positional `--test-parameters-file`
@@ -38,7 +76,7 @@ This plan starts from:
   - the gateway only loads the Python module
   - no test-signature or return-shape validation is centralized here today
 
-### Test Surface
+### Historical Test Surface At Time Of Audit
 
 - `tests/test_cli_contract.py`
   - exercises CLI argument binding, parameter-file loading, blocked invocation behavior, and flat JSON output expectations
@@ -82,6 +120,11 @@ Out of scope:
 - changing evaluator fundamentals that were preserved by Plan 01
 
 ## Targeted Updates
+
+Status:
+
+- substantially implemented
+- remaining work is now mostly residual legacy cleanup, validation-precision review, and closure-readiness assessment
 
 ### Phase 1: Domain Contract Refactor Plan
 

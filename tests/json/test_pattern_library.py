@@ -105,7 +105,9 @@ class TestPatternLibraryFixtures(unittest.TestCase):
             ],
         )
 
-        self.assertEqual(output_json["results"][0]["result"]["conclusion"], "error")
+        self.assertEqual(
+            output_json["results"][0]["result"]["conclusion"], "inconclusive"
+        )
         self.assertIn("required to be true", output_json["results"][0]["result"]["reason"])
 
     def test_required_fixture_returns_inconclusive_when_fact_missing(self):
@@ -292,7 +294,7 @@ class TestPatternLibraryFixtures(unittest.TestCase):
             output_json["results"][0]["result"]["reason"],
         )
 
-    def test_date_range_fixture_returns_error_for_invalid_date_criteria(self):
+    def test_date_range_fixture_returns_inconclusive_for_invalid_date_criteria(self):
         output_json = self._run_fixture(
             "operations_timing.json",
             "verify_review_date_range.py",
@@ -307,7 +309,9 @@ class TestPatternLibraryFixtures(unittest.TestCase):
             ],
         )
 
-        self.assertEqual(output_json["results"][0]["result"]["conclusion"], "error")
+        self.assertEqual(
+            output_json["results"][0]["result"]["conclusion"], "inconclusive"
+        )
         self.assertIn("ISO-8601 dates", output_json["results"][0]["result"]["reason"])
 
     def test_duration_range_fixture_uses_duration_range_input(self):
@@ -354,7 +358,7 @@ class TestPatternLibraryFixtures(unittest.TestCase):
             output_json["results"][0]["result"]["reason"],
         )
 
-    def test_duration_range_fixture_returns_error_for_invalid_duration_criteria(self):
+    def test_duration_range_fixture_returns_inconclusive_for_invalid_duration_criteria(self):
         output_json = self._run_fixture(
             "operations_timing.json",
             "verify_restore_duration_range.py",
@@ -369,7 +373,9 @@ class TestPatternLibraryFixtures(unittest.TestCase):
             ],
         )
 
-        self.assertEqual(output_json["results"][0]["result"]["conclusion"], "error")
+        self.assertEqual(
+            output_json["results"][0]["result"]["conclusion"], "inconclusive"
+        )
         self.assertIn(
             "supported ISO-8601 durations",
             output_json["results"][0]["result"]["reason"],

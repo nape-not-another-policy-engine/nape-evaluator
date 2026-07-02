@@ -1,3 +1,5 @@
+"""Bounded request and response models for the evaluator use case."""
+
 import re
 from dataclasses import dataclass
 from typing import Any, Dict, Iterable, List, Optional, Tuple
@@ -25,7 +27,7 @@ SUPPORTED_CRITERIA_KEYS = {
     "disallowed_values",
     "required",
 }
-SUPPORTED_RESULT_CONCLUSIONS = {"true", "false", "inconclusive", "error"}
+SUPPORTED_RESULT_CONCLUSIONS = {"true", "false", "inconclusive"}
 SUBJECT_NAME_RE = re.compile(r"^[a-z](?:[a-z0-9_]*[a-z0-9])?$")
 SUPPORTED_CRITERIA_BY_DATA_TYPE = {
     "text": {"equals", "allowed_values", "disallowed_values", "required"},
@@ -78,6 +80,8 @@ SUPPORTED_CRITERIA_BY_DATA_TYPE = {
 
 @dataclass(frozen=True)
 class RequestValidationError(Exception):
+    """Raised when caller-owned request input fails builder validation."""
+
     code: str
     message: str
 
@@ -87,6 +91,8 @@ class RequestValidationError(Exception):
 
 @dataclass(frozen=True)
 class ResponseValidationError(Exception):
+    """Raised when evaluator response data violates the output contract."""
+
     message: str
 
     def __str__(self):
@@ -95,6 +101,8 @@ class ResponseValidationError(Exception):
 
 @dataclass(frozen=True)
 class EvaluationSubject:
+    """One caller-declared evaluation subject."""
+
     name: str
     data_type: str
 
@@ -107,6 +115,8 @@ class EvaluationSubject:
 
 @dataclass(frozen=True)
 class EvaluationInput:
+    """One caller-declared subject-plus-criteria evaluation input."""
+
     subject: EvaluationSubject
     criteria: Dict[str, Any]
 
@@ -119,6 +129,8 @@ class EvaluationInput:
 
 @dataclass(frozen=True)
 class TestInvocationRequest:
+    """One requested test invocation accepted by the request builder."""
+
     test_path: str
     evaluations: Tuple[EvaluationInput, ...]
     blocked_code: Optional[str] = None
@@ -156,6 +168,8 @@ class TestInvocationRequest:
 
 @dataclass(frozen=True)
 class EvaluateEvidenceRequest:
+    """The validated request object that crosses the use-case seam."""
+
     evidence_path: str
     test_invocations: Tuple[TestInvocationRequest, ...]
 
@@ -165,6 +179,8 @@ class EvaluateEvidenceRequest:
 
 
 class EvaluateEvidenceRequestBuilder:
+    """Builder that validates caller-owned request input before execution."""
+
     def __init__(self):
         self._evidence_path = None
         self._raw_tests = []
@@ -241,12 +257,22 @@ class EvaluateEvidenceRequestBuilder:
                 f"tests[{index}].evaluations must be an array.",
             )
 
+        seen_subject_names = set()
+        evaluations = []
+        for evaluation_index, raw_evaluation in enumerate(raw_evaluations):
+            evaluation = self._build_evaluation(index, evaluation_index, raw_evaluation)
+            subject_name = evaluation.subject.name
+            if subject_name in seen_subject_names:
+                raise RequestValidationError(
+                    "duplicate_subject_name",
+                    f"tests[{index}].evaluations contains duplicate subject.name '{subject_name}'.",
+                )
+            seen_subject_names.add(subject_name)
+            evaluations.append(evaluation)
+
         return TestInvocationRequest.ready(
             test_path=test_path,
-            evaluations=[
-                self._build_evaluation(index, evaluation_index, raw_evaluation)
-                for evaluation_index, raw_evaluation in enumerate(raw_evaluations)
-            ],
+            evaluations=evaluations,
         )
 
     def _build_evaluation(self, test_index: int, evaluation_index: int, raw_evaluation):
@@ -388,6 +414,8 @@ def _value_matches_data_type(data_type: str, value: Any):
 
 @dataclass(frozen=True)
 class EvaluateEvidenceResponse:
+    """The validated evaluator response before CLI serialization."""
+
     count: int
     results: Tuple[Dict[str, Any], ...]
     messages: Tuple[Dict[str, Any], ...]
@@ -399,16 +427,23 @@ class EvaluateEvidenceResponse:
             )
         for result in self.results:
             self._validate_result_record(result)
+        for message in self.messages:
+            self._validate_message_record(message)
 
     @classmethod
     def normalize_completed_result(cls, raw_result: Any):
+        """Normalize completed test output into the bounded result contract."""
+
         try:
             return cls._validate_completed_result_contract(raw_result)
         except ResponseValidationError as exc:
             return {
-                "conclusion": "error",
+                "conclusion": "inconclusive",
                 "facts": [],
-                "reason": str(exc),
+                "reason": (
+                    "The test completed, but returned an invalid result contract, "
+                    f"so the conclusion is inconclusive. {exc}"
+                ),
             }
 
     @classmethod
@@ -450,10 +485,22 @@ class EvaluateEvidenceResponse:
 
         if executed:
             cls._validate_completed_result_contract(result["result"])
-        elif result["result"] is not None:
+        else:
+            cls._validate_blocked_result_contract(result["result"])
+
+    @classmethod
+    def _validate_blocked_result_contract(cls, raw_result: Any):
+        if not isinstance(raw_result, dict):
             raise ResponseValidationError(
-                "Result must be null when execution.executed is false."
+                "Blocked results must include an object with conclusion, facts, and reason."
             )
+
+        result = cls._validate_completed_result_contract(raw_result)
+        if result["conclusion"] != "inconclusive":
+            raise ResponseValidationError(
+                "Blocked results must use conclusion 'inconclusive'."
+            )
+        return result
 
     @classmethod
     def _validate_completed_result_contract(cls, raw_result: Any):
@@ -495,5 +542,97 @@ class EvaluateEvidenceResponse:
             "reason": reason,
         }
 
+    @classmethod
+    def _validate_message_record(cls, message: Dict[str, Any]):
+        if not isinstance(message, dict):
+            raise ResponseValidationError("Each evaluator message must be an object.")
+
+        required_keys = {
+            "scope",
+            "level",
+            "source",
+            "code",
+            "message",
+            "evidence_file",
+            "test_file",
+            "affected_tests",
+            "stack_trace",
+        }
+        if set(message) != required_keys:
+            raise ResponseValidationError(
+                "Each evaluator message must include exactly scope, level, source, code, message, evidence_file, test_file, affected_tests, and stack_trace."
+            )
+
+        if message["scope"] not in {"request", "test"}:
+            raise ResponseValidationError(
+                "Evaluator message scope must be request or test."
+            )
+
+        if message["level"] not in {"info", "warning", "error"}:
+            raise ResponseValidationError(
+                "Evaluator message level must be info, warning, or error."
+            )
+
+        if message["source"] != "evaluator":
+            raise ResponseValidationError(
+                "Evaluator message source must be 'evaluator'."
+            )
+
+        for field_name in ("code", "message"):
+            value = message[field_name]
+            if not isinstance(value, str) or not value:
+                raise ResponseValidationError(
+                    f"Evaluator message {field_name} must be a non-empty string."
+                )
+
+        if message["evidence_file"] is not None and not isinstance(
+            message["evidence_file"], str
+        ):
+            raise ResponseValidationError(
+                "Evaluator message evidence_file must be a string or null."
+            )
+
+        if message["test_file"] is not None and not isinstance(message["test_file"], str):
+            raise ResponseValidationError(
+                "Evaluator message test_file must be a string or null."
+            )
+
+        affected_tests = message["affected_tests"]
+        if affected_tests is not None:
+            if not isinstance(affected_tests, list) or not all(
+                isinstance(item, str) and item for item in affected_tests
+            ):
+                raise ResponseValidationError(
+                    "Evaluator message affected_tests must be an array of non-empty strings or null."
+                )
+
+        stack_trace = message["stack_trace"]
+        if stack_trace is not None and not isinstance(stack_trace, str):
+            raise ResponseValidationError(
+                "Evaluator message stack_trace must be a string or null."
+            )
+
+        if message["scope"] == "request":
+            if message["test_file"] is not None:
+                raise ResponseValidationError(
+                    "Request-scoped messages must use test_file null."
+                )
+            if not isinstance(affected_tests, list) or not affected_tests:
+                raise ResponseValidationError(
+                    "Request-scoped messages must include a non-empty affected_tests array."
+                )
+
+        if message["scope"] == "test":
+            if not isinstance(message["test_file"], str) or not message["test_file"]:
+                raise ResponseValidationError(
+                    "Test-scoped messages must include a non-empty test_file."
+                )
+            if affected_tests is not None:
+                raise ResponseValidationError(
+                    "Test-scoped messages must use affected_tests null."
+                )
+
     def to_cli_output(self):
+        """Serialize the validated response into the CLI JSON shape."""
+
         return build_cli_output(self.count, list(self.results), list(self.messages))

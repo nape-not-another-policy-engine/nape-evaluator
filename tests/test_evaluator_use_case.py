@@ -59,7 +59,7 @@ class TestEvaluatorUseCase(unittest.TestCase):
         self.assertEqual(actual.results[0]["result"]["conclusion"], "true")
         self.assertEqual(actual.messages, ())
 
-    def test_evaluate_request_normalizes_invalid_test_result_to_completed_error(self):
+    def test_evaluate_request_normalizes_invalid_test_result_to_completed_inconclusive(self):
         evidence_gateway = Mock()
         evidence_gateway.load_evidence_input.return_value = (
             {"status": "complete"},
@@ -75,21 +75,24 @@ class TestEvaluatorUseCase(unittest.TestCase):
 
         self.assertTrue(actual.results[0]["execution"]["executed"])
         self.assertEqual(actual.results[0]["execution"]["status"], "completed")
-        self.assertEqual(actual.results[0]["result"]["conclusion"], "error")
+        self.assertEqual(actual.results[0]["result"]["conclusion"], "inconclusive")
         self.assertIn("invalid result contract", actual.results[0]["result"]["reason"])
 
-    def test_evaluate_request_handles_evidence_load_failure(self):
+    def test_evaluate_request_handles_evidence_load_failure_as_blocked_inconclusive(self):
         evidence_gateway = Mock()
         evidence_gateway.load_evidence_input.side_effect = EvidenceLoadFailure(
             "bad evidence",
             [
                 {
+                    "scope": "request",
                     "level": "error",
                     "source": "evaluator",
                     "code": "evidence_load_error",
                     "message": "bad evidence",
                     "evidence_file": "./evidence.json",
                     "test_file": None,
+                    "affected_tests": None,
+                    "stack_trace": "Traceback...",
                 }
             ],
         )
@@ -98,23 +101,28 @@ class TestEvaluatorUseCase(unittest.TestCase):
 
         self.assertEqual(actual.count, 1)
         self.assertFalse(actual.results[0]["execution"]["executed"])
-        self.assertIsNone(actual.results[0]["result"])
+        self.assertEqual(actual.results[0]["result"]["conclusion"], "inconclusive")
         self.assertEqual(actual.messages[0]["code"], "evidence_load_error")
-        self.assertEqual(actual.messages[0]["test_file"], "./success_test.py")
+        self.assertEqual(actual.messages[0]["scope"], "request")
+        self.assertEqual(actual.messages[0]["test_file"], None)
+        self.assertEqual(actual.messages[0]["affected_tests"], ["./success_test.py"])
 
-    def test_evaluate_request_contextualizes_shared_messages_for_each_test(self):
+    def test_evaluate_request_contextualizes_shared_messages_once_for_request(self):
         evidence_gateway = Mock()
         evidence_gateway.load_evidence_input.return_value = (
             {"status": "complete"},
             {"evidence_type": "json", "schema_version": "2"},
             [
                 {
+                    "scope": "request",
                     "level": "warning",
                     "source": "evaluator",
                     "code": "missing_extension_text_fallback",
                     "message": "fallback",
                     "evidence_file": None,
                     "test_file": None,
+                    "affected_tests": None,
+                    "stack_trace": None,
                 }
             ],
         )
@@ -147,11 +155,78 @@ class TestEvaluatorUseCase(unittest.TestCase):
         )
 
         self.assertEqual(len(actual.results), 2)
-        self.assertEqual(len(actual.messages), 2)
-        self.assertEqual(actual.messages[0]["test_file"], "./test-a.py")
-        self.assertEqual(actual.messages[1]["test_file"], "./test-b.py")
+        self.assertEqual(len(actual.messages), 1)
+        self.assertEqual(actual.messages[0]["scope"], "request")
+        self.assertEqual(actual.messages[0]["test_file"], None)
+        self.assertEqual(actual.messages[0]["affected_tests"], ["./test-a.py", "./test-b.py"])
 
-    def test_evaluate_request_blocks_failed_test_execution(self):
+    def test_evaluate_request_cli_output_counts_distinct_request_messages_once(self):
+        evidence_gateway = Mock()
+        evidence_gateway.load_evidence_input.return_value = (
+            {"status": "complete"},
+            {"evidence_type": "json", "schema_version": "2"},
+            [
+                {
+                    "scope": "request",
+                    "level": "warning",
+                    "source": "evaluator",
+                    "code": "missing_extension_text_fallback",
+                    "message": "fallback",
+                    "evidence_file": None,
+                    "test_file": None,
+                    "affected_tests": None,
+                    "stack_trace": None,
+                }
+            ],
+        )
+        test_gateway = Mock()
+        test_gateway.load_test_of_detail.return_value = Mock(
+            evaluate=Mock(
+                side_effect=[
+                    {
+                        "conclusion": "true",
+                        "facts": [],
+                        "reason": "ok",
+                    },
+                    {
+                        "conclusion": "false",
+                        "facts": [],
+                        "reason": "not ok",
+                    },
+                ]
+            )
+        )
+
+        actual = evaluate_request(
+            _request(
+                [
+                    {
+                        "test": "./test-a.py",
+                        "evaluations": [],
+                    },
+                    {
+                        "test": "./test-b.py",
+                        "evaluations": [],
+                    },
+                ]
+            ),
+            evidence_gateway,
+            test_gateway,
+        ).to_cli_output()
+
+        self.assertEqual(actual["evaluator"]["summary"]["count"], 2)
+        self.assertEqual(actual["evaluator"]["summary"]["ran"], 2)
+        self.assertEqual(actual["evaluator"]["summary"]["true"], 1)
+        self.assertEqual(actual["evaluator"]["summary"]["false"], 1)
+        self.assertEqual(actual["evaluator"]["summary"]["message_count"], 1)
+        self.assertEqual(actual["evaluator"]["summary"]["message_warning"], 1)
+        self.assertEqual(actual["evaluator"]["messages"][0]["scope"], "request")
+        self.assertEqual(
+            actual["evaluator"]["messages"][0]["affected_tests"],
+            ["./test-a.py", "./test-b.py"],
+        )
+
+    def test_evaluate_request_blocks_failed_test_execution_with_stack_trace(self):
         evidence_gateway = Mock()
         evidence_gateway.load_evidence_input.return_value = (
             {"status": "complete"},
@@ -166,17 +241,36 @@ class TestEvaluatorUseCase(unittest.TestCase):
         actual = evaluate_request(_request(), evidence_gateway, test_gateway)
 
         self.assertFalse(actual.results[0]["execution"]["executed"])
-        self.assertIsNone(actual.results[0]["result"])
+        self.assertEqual(actual.results[0]["result"]["conclusion"], "inconclusive")
+        self.assertIn("conclusion is inconclusive", actual.results[0]["result"]["reason"])
         self.assertEqual(actual.messages[0]["code"], "test_execution_error")
+        self.assertEqual(actual.messages[0]["scope"], "test")
+        self.assertEqual(actual.messages[0]["test_file"], "./success_test.py")
+        self.assertIsInstance(actual.messages[0]["stack_trace"], str)
+        self.assertIn("RuntimeError: boom", actual.messages[0]["stack_trace"])
 
 
 class TestMessageContextualization(unittest.TestCase):
-    def test_contextualize_messages_adds_request_context(self):
+    def test_contextualize_messages_builds_request_scoped_message(self):
         actual = contextualize_messages(
-            [{"level": "warning", "code": "warning_code", "message": "warning"}],
+            [
+                {
+                    "scope": "request",
+                    "level": "warning",
+                    "source": "evaluator",
+                    "code": "warning_code",
+                    "message": "warning",
+                    "evidence_file": None,
+                    "test_file": None,
+                    "affected_tests": None,
+                    "stack_trace": None,
+                }
+            ],
             "./evidence.json",
-            "./test.py",
+            ["./test-a.py", "./test-b.py"],
         )
 
+        self.assertEqual(actual[0]["scope"], "request")
         self.assertEqual(actual[0]["evidence_file"], "./evidence.json")
-        self.assertEqual(actual[0]["test_file"], "./test.py")
+        self.assertEqual(actual[0]["test_file"], None)
+        self.assertEqual(actual[0]["affected_tests"], ["./test-a.py", "./test-b.py"])

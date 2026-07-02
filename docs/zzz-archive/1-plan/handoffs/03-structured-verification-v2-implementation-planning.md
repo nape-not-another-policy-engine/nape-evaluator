@@ -1,13 +1,18 @@
+> Historical document
+>
+> This document is retained for historical reference only.
+> It should not be used for any current execution, implementation, or decision-making unless it is being referenced explicitly for historical or traceability purposes.
+
 # Handoff 03: Structured Verification V2 Implementation Planning
 
 ## Purpose
 
-Resume V2 implementation planning from the audited codebase rather than re-deriving the selected proposal shape.
+Record the completed state and closure decision for the V2 implementation-planning workstream.
 
 ## Read Order
 
 1. `docs/1-plan/roadmap.md`
-2. `docs/1-plan/plans/03-structured-verification-v2-implementation-planning.md`
+2. `docs/zzz-archive/1-plan/plans/03-structured-verification-v2-implementation-planning.md`
 3. `docs/product/current-evaluator-reference.md`
 4. `docs/product/v2-structured-verification-input-proposal.md`
 5. `docs/product/v2-structured-verification-result-proposal.md`
@@ -48,28 +53,57 @@ Resume V2 implementation planning from the audited codebase rather than re-deriv
   - `src/nape_evaluator/domain/use_cases.py`
   - `src/nape_evaluator/application/io/output_contract.py`
 - evidence loading appears reusable with minimal structural change
-- CLI transport remains the largest cross-plan dependency because Plan 02 still owns how caller input is bound into requests
+- the earlier CLI transport dependency is now resolved because Plan 02 is complete
+- the current remaining work is narrower:
+  - residual legacy cleanup outside explicit historical notes
+  - any implementation-grade validation precision gaps
+  - deciding whether Plan 03 is ready to close after that cleanup
+- that closure review is now complete
+- the last implementation-grade issue found in that review was duplicate `subject.name` within one invocation:
+  - the request builder now rejects duplicates
+  - test coverage now exists for that validation
+- the remaining old-shape references are now confined to explicit historical notes, preserved audit/planning traceability, or future-thinking material
+
+## Closure Decision
+
+This workstream is complete.
+
+Do not continue it by default.
+
+If future implementation work is needed, treat it as a new explicit workstream rather than unfinished residue from Plan 03.
+
+## Why It Closed
+
+- the selected V2 request/result/runtime cutover is implemented
+- the selected CLI transport direction is implemented and Plan 02 is complete
+- permanent docs are aligned closely enough with the runtime
+- the residual legacy cleanup pass has been completed
+- the last concrete validation-hardening issue found during closure review has been fixed
+- no remaining active runtime contradiction or current-doc contradiction justifies keeping the plan open
 
 ## Resume Focus
 
-When resuming this plan, focus on:
+Only reopen a similar workstream if one of these becomes true:
 
-1. turning the audited phases into implementation-ready tasks
-2. checking for any remaining narrow legacy references or null legacy fields that should be removed rather than merely documented
-3. tightening any remaining validation precision only if implementation-grade gaps are still present
-4. deciding whether any remaining plan material should be promoted into permanent docs or code comments
+1. a new implementation-grade validation gap is discovered
+2. product direction expands the bounded first-pass criteria surface
+3. the runtime and current docs drift apart in a material way
+4. a new response/request contract change is selected
 
 ## Guardrails
 
 - do not quietly re-open the selected V2 terminology
-- do not assume CLI ergonomics that Plan 02 has not selected yet
+- do not reopen the selected packet-based CLI transport without a new explicit need
 - do not collapse evaluator-owned execution failures into test-owned conclusions
 - do not plan any tuple-return compatibility shim
 - do not move caller-owned V2 request validation into the gateway or scatter it across the use case body
 
-## Next Useful Outputs
+## Durable Outputs
 
-- any residual legacy cleanup outside the now-removed `test_parameters_source` field
-- any follow-up validation precision tasks discovered during doc alignment
-- any remaining implementation planning notes that are still worth carrying forward after the runtime/doc cutover
-- any future expansion of the bounded first-pass criteria surface if richer conditional-policy input becomes a product requirement
+- the implemented V2 runtime:
+  - builder-only request seam
+  - packet-based CLI transport
+  - structured outer execution plus inner result contract
+- the aligned current docs
+- the completed residual legacy cleanup pass
+- the duplicate-subject validation added during closure review

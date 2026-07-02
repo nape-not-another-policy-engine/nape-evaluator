@@ -28,6 +28,66 @@ The following baseline work is already in place and should be treated as prerequ
 
 ## Workstreams
 
+There is no active workstream right now.
+
+### Plan 13: Evidence Format Example Deepening
+
+Status:
+
+- complete
+
+Purpose:
+
+- deepen the new format-specific authoring example library with negative-path, ambiguity-handling, and domain-richer patterns so authors can see how to return `inconclusive` correctly when facts cannot be cleanly established
+
+Plan:
+
+- `docs/zzz-archive/1-plan/plans/13-evidence-format-example-deepening.md`
+
+Handoff:
+
+- `docs/zzz-archive/1-plan/handoffs/13-evidence-format-example-deepening.md`
+
+Primary dependencies:
+
+- `docs/product/current-evaluator-reference.md`
+- `docs/reference/evidence-formats.md`
+- `docs/user/v2-test-authoring/evidence-format-authoring.md`
+- `docs/user/v2-test-authoring/authoring-examples-index.md`
+- `tests/xml/test_pattern_library.py`
+- `tests/yaml/test_pattern_library.py`
+- `tests/text/test_pattern_library.py`
+- `tests/pdf/test_pattern_library.py`
+
+### Plan 12: Evidence Format Authoring Guides And Examples
+
+Status:
+
+- complete
+
+Purpose:
+
+- extend the V2 authoring guidance and executable example library so authors can learn how to write tests against JSON, XML, YAML, text, and PDF evidence without reverse-engineering the loader behavior from scattered docs
+
+Plan:
+
+- `docs/zzz-archive/1-plan/plans/12-evidence-format-authoring-guides-and-examples.md`
+
+Handoff:
+
+- `docs/zzz-archive/1-plan/handoffs/12-evidence-format-authoring-guides-and-examples.md`
+
+Primary dependencies:
+
+- `docs/product/current-evaluator-reference.md`
+- `docs/reference/evidence-formats.md`
+- `docs/user/test-of-detail-authoring.md`
+- `docs/user/v2-test-authoring/README.md`
+- `docs/user/v2-test-authoring/fact-extraction.md`
+- `tests/json/test_pattern_library.py`
+- `tests/test_structured_evidence_loading.py`
+- `tests/test_pdf_evidence_loading.py`
+
 ### Plan 11: Release Automation And Promotion Gate
 
 Status:

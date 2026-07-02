@@ -25,6 +25,7 @@ Historical V1 behavior remains documented in `../product/v1-evaluator-baseline.m
 | `scripts/release_validation.sh` | executable clean-install and release-validation matrix. |
 | `tests/manual/` | manual smoke entry points. |
 | `tests/v1_baseline/` | historical V1 baseline smoke example. |
+| `tests/json/`, `tests/xml/`, `tests/yaml/`, `tests/text/`, `tests/pdf/` | executable format-specific authoring examples. |
 | `tests/` | automated CLI, use-case, loader, and contract tests. |
 
 ## Current Contract Source Map
@@ -60,6 +61,11 @@ Historical V1 behavior remains documented in `../product/v1-evaluator-baseline.m
 | current sample V2 test-of-detail | `tests/json/test_of_detail/verify_author_complete.py` |
 | historical V1 smoke entry point | `tests/v1_baseline/author_test.sh` |
 | automated JSON CLI pass test | `tests/json/test_pass.py` |
+| executable JSON authoring examples | `tests/json/test_of_detail/`, `tests/json/test_pattern_library.py` |
+| executable XML authoring examples | `tests/xml/test_of_detail/`, `tests/xml/test_pattern_library.py` |
+| executable YAML authoring examples | `tests/yaml/test_of_detail/`, `tests/yaml/test_pattern_library.py` |
+| executable text authoring examples | `tests/text/test_of_detail/`, `tests/text/test_pattern_library.py` |
+| executable PDF authoring examples | `tests/pdf/test_of_detail/`, `tests/pdf/test_pattern_library.py` |
 | automated CLI transport coverage | `tests/test_cli_contract.py`, `tests/test_cli_adapter.py` |
 | automated request-builder coverage | `tests/test_request_builder.py` |
 | automated use-case orchestration coverage | `tests/test_evaluator_use_case.py` |

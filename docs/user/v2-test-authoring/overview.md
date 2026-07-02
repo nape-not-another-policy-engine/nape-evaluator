@@ -13,6 +13,7 @@ Use this folder based on the question you are trying to answer:
 | how do I get a first working test written, step by step? | [Authoring Progression](authoring-progression.md) |
 | what Python shape should I scaffold around? | [Scaffold Guide](scaffold.md) |
 | how should I extract facts from evidence? | [Fact Extraction](fact-extraction.md) |
+| how do I write extraction helpers for JSON, XML, YAML, text, or PDF evidence? | [Evidence Format Authoring](evidence-format-authoring.md) |
 | should I fail fast or fail slow when facts cannot be established? | [Fact Establishment Patterns](fact-establishment-patterns.md) |
 | what `subject` / `criteria` input shape should I use? | [Evaluation Input Patterns](evaluation-input-patterns.md) |
 | which executable fixture should I copy first? | [Authoring Examples Index](authoring-examples-index.md) |
@@ -113,3 +114,7 @@ This keeps the public entry point small and lets extraction and evaluation logic
 If you want the tutorial path rather than the summary, continue with:
 
 - [Authoring Progression](authoring-progression.md)
+
+If you already understand the public boundary and now need format-specific extraction guidance, continue with:
+
+- [Evidence Format Authoring](evidence-format-authoring.md)

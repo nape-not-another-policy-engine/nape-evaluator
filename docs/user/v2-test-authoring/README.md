@@ -24,6 +24,7 @@ Use the docs in this folder in the way that matches your current need:
 - if you already know the contract and want a fixture to copy, start with [Authoring Examples Index](authoring-examples-index.md)
 - if you want the recommended internal Python structure, start with [Scaffold Guide](scaffold.md)
 - if you need help choosing `subject` / `criteria` shapes, start with [Evaluation Input Patterns](evaluation-input-patterns.md)
+- if you need help extracting facts from JSON, XML, YAML, text, or PDF evidence, start with [Evidence Format Authoring](evidence-format-authoring.md)
 - if your test has outgrown one-subject or one-pattern logic, start with [Advanced Authoring Patterns](advanced-authoring-patterns.md)
 
 ## Reading Order
@@ -32,11 +33,12 @@ Use the docs in this folder in the way that matches your current need:
 2. [Authoring Progression](authoring-progression.md)
 3. [Scaffold Guide](scaffold.md)
 4. [Fact Extraction](fact-extraction.md)
-5. [Fact Establishment Patterns](fact-establishment-patterns.md)
-6. [Evaluation Input Patterns](evaluation-input-patterns.md)
-7. [Authoring Examples Index](authoring-examples-index.md)
-8. [Advanced Authoring Patterns](advanced-authoring-patterns.md)
-9. [Domain Examples](domain-examples.md)
+5. [Evidence Format Authoring](evidence-format-authoring.md)
+6. [Fact Establishment Patterns](fact-establishment-patterns.md)
+7. [Evaluation Input Patterns](evaluation-input-patterns.md)
+8. [Authoring Examples Index](authoring-examples-index.md)
+9. [Advanced Authoring Patterns](advanced-authoring-patterns.md)
+10. [Domain Examples](domain-examples.md)
 
 ## Included Template
 

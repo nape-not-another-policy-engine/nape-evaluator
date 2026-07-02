@@ -15,6 +15,10 @@ Structured data parsing for JSON, XML, and YAML happens in evaluator core rather
 
 For `.txt` and unknown extensions, the evaluator sets `metadata["evidence_type"]` to `text`.
 
+Authoring guidance for writing tests against those runtime shapes lives in:
+
+- `docs/user/v2-test-authoring/evidence-format-authoring.md`
+
 ## Known Unprocessable Extensions
 
 The evaluator does not attempt text fallback for these extensions and instead returns `unprocessable_evidence_type`:

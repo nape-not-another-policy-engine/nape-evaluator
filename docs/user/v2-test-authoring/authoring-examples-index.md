@@ -11,7 +11,17 @@ Use it when you want to answer questions like:
 
 All executable fixtures referenced here live under:
 
-- `tests/json/test_of_detail/`
+- `tests/json/`
+- `tests/xml/`
+- `tests/yaml/`
+- `tests/text/`
+- `tests/pdf/`
+
+Each format-family example tree uses the same basic model when practical:
+
+- `evidence/`
+- `test_of_detail/`
+- `test_pattern_library.py`
 
 ## Quick Start Recommendation
 
@@ -26,6 +36,56 @@ That gives you:
 - one simple text equality example
 - one simple threshold example
 - one simple multi-subject example
+
+## By Evidence Format
+
+### JSON
+
+Use these when you want the broadest current example library.
+
+- `tests/json/test_of_detail/verify_author_complete.py`
+- `tests/json/test_of_detail/verify_component_coverage_minimum.py`
+- `tests/json/test_of_detail/verify_dual_coverage_fail_fast.py`
+
+### XML
+
+Use this when you want the simplest structured non-dictionary example.
+
+- `tests/xml/test_of_detail/verify_author_complete.py`
+
+Use this next when your XML evidence uses namespaces.
+
+- `tests/xml/test_of_detail/verify_author_complete_namespaced.py`
+
+### YAML
+
+Use this when you want a structured object example that feels close to JSON but still exercises typed YAML loading.
+
+- `tests/yaml/test_of_detail/verify_component_coverage_minimum.py`
+
+Use this next when the YAML value is present but invalid for the subject data type.
+
+- `tests/yaml/test_of_detail/verify_component_coverage_invalid_fact.py`
+
+### Text
+
+Use this when you want the simplest line-oriented parser example.
+
+- `tests/text/test_of_detail/verify_author_complete.py`
+
+Use this next when text evidence contains competing candidate values and the fact cannot be established cleanly.
+
+- `tests/text/test_of_detail/verify_author_complete_ambiguous.py`
+
+### PDF
+
+Use this when you want a text-extraction-backed example and need to see the defensive difference between plain text and PDF-derived text.
+
+- `tests/pdf/test_of_detail/verify_author_complete.py`
+
+Use this next when PDF extraction yields competing candidate values and the result should be `inconclusive`.
+
+- `tests/pdf/test_of_detail/verify_author_complete_ambiguous.py`
 
 ## By Difficulty
 
@@ -83,6 +143,8 @@ These are good when the main goal is to learn the test shape, not to mirror a sp
 | `verify_author_complete.py` | generic starter | text `equals` |
 | `verify_feature_flag_enabled.py` | generic binary-state check | boolean `equals` |
 | `verify_service_owner_required.py` | generic presence check | `required` |
+| `tests/text/test_of_detail/verify_author_complete_ambiguous.py` | generic ambiguity handling | text `equals` with ambiguous establishment |
+| `tests/pdf/test_of_detail/verify_author_complete_ambiguous.py` | generic extracted-text ambiguity handling | text `equals` with ambiguous establishment |
 
 ### Engineering / Software Assurance
 
@@ -96,6 +158,7 @@ These map well to build, test, and component-quality evidence.
 | `verify_coverage_gap_maximum.py` | allowable gap between two quality measures | derived fact `maximum` |
 | `verify_dual_coverage_thresholds.py` | two required numeric quality gates | multi-subject fail slow |
 | `verify_dual_coverage_fail_fast.py` | same domain with simpler establishment flow | multi-subject fail fast |
+| `tests/yaml/test_of_detail/verify_component_coverage_invalid_fact.py` | typed fact present but unusable | numeric threshold with invalid establishment |
 
 ### Authorization Assurance
 
@@ -108,6 +171,7 @@ These map well to access approval, review, and revocation evidence.
 | `verify_approver_profile_equals.py` | approver metadata exactly matches expectation | object `equals` |
 | `verify_reviewer_roles_equals.py` | reviewer roles exactly match expectation | array `equals` |
 | `verify_revocation_reason_null.py` | field is explicitly null, not just absent | null `equals` |
+| `tests/xml/test_of_detail/verify_author_complete_namespaced.py` | structured approval/status data with namespace handling | text `equals` with namespace-aware extraction |
 
 ### Operational / Timing Assurance
 
@@ -156,17 +220,40 @@ These are useful when the evidence carries one or more status-like values.
 
 ## By Negative Path Type
 
+### Ambiguous Extracted Fact
+
+These examples show evidence that yields more than one competing candidate value, so the test returns `inconclusive` instead of claiming the fact is false.
+
+- `tests/text/test_of_detail/verify_author_complete_ambiguous.py`
+- `tests/pdf/test_of_detail/verify_author_complete_ambiguous.py`
+
+Related evidence fixtures:
+
+- `tests/text/evidence/author_verification_ambiguous_status.txt`
+
 ### Invalid Extracted Fact
 
 These examples show evidence present but unusable, usually leading to `inconclusive`.
 
 - `verify_review_date_range.py`
 - `verify_restore_duration_range.py`
+- `tests/yaml/test_of_detail/verify_component_coverage_invalid_fact.py`
 
 Related evidence fixtures:
 
 - `operations_timing_invalid_review_date.json`
 - `operations_timing_invalid_restore_duration.json`
+- `tests/yaml/evidence/component_assurance_invalid_coverage.yaml`
+
+### Namespace-Aware Extraction
+
+This example shows evidence that is structurally valid XML but requires one explicit namespace-handling seam in the extraction helper.
+
+- `tests/xml/test_of_detail/verify_author_complete_namespaced.py`
+
+Related evidence fixtures:
+
+- `tests/xml/evidence/author_verification_namespaced.xml`
 
 ### Invalid Caller Criteria For The Test
 

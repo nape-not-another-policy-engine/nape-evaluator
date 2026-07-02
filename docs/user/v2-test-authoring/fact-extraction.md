@@ -2,6 +2,10 @@
 
 Fact extraction is the step where the Python test reads the already-loaded evidence and produces the fact records it will later use for evaluation.
 
+This page defines the format-agnostic fact model.
+
+If you need the concrete extraction style for JSON, XML, YAML, text, or PDF evidence, use [Evidence Format Authoring](evidence-format-authoring.md) alongside this page.
+
 ## Extraction Goal
 
 The goal is not to decide `true` or `false` immediately.
@@ -91,6 +95,18 @@ def _extract_coverage_fact(evidence):
 - prefer explicit extraction helpers over inline nested lookups everywhere
 - if a fact has nontrivial parsing rules, give it its own helper
 - if multiple facts depend on the same evidence region, factor that region lookup once
+
+## Format Reminder
+
+The fact shape stays the same across evidence families.
+
+What changes by format is the extraction helper implementation:
+
+- JSON and YAML usually extract from dictionary/list structures
+- XML extracts from an element tree
+- text and PDF extract from line-oriented text
+
+Use one helper layer to absorb that difference so your later evaluation logic stays stable.
 
 ## Ordering Guidance
 

@@ -1,0 +1,4 @@
+<ns:author xmlns:ns="https://example.com/author">
+  <ns:name>Bill Bensing</ns:name>
+  <ns:status>complete</ns:status>
+</ns:author>

@@ -28,6 +28,64 @@ The following baseline work is already in place and should be treated as prerequ
 
 ## Workstreams
 
+### Plan 11: Release Automation And Promotion Gate
+
+Status:
+
+- complete
+
+Purpose:
+
+- define the evaluator release gate and tag-triggered promotion path, including what must pass before release and what publication targets are actually supported
+
+Plan:
+
+- `docs/zzz-archive/1-plan/plans/11-release-automation-and-promotion-gate.md`
+
+Handoff:
+
+- `docs/zzz-archive/1-plan/handoffs/11-release-automation-and-promotion-gate.md`
+
+Primary dependencies:
+
+- `docs/zzz-archive/1-plan/plans/10-clean-install-and-release-validation.md`
+- `docs/maintainers/release-validation.md`
+- `.github/workflows/release-trigger.yaml`
+- `Makefile`
+- `pyproject.toml`
+- `docs/user/installation.md`
+- `https://docs.napecentral.com/install-nape-from-nape-binary-repo.html#official-nape-binary-repo`
+
+### Plan 10: Clean-Install And Release Validation
+
+Status:
+
+- complete
+
+Purpose:
+
+- define pre-deployment clean-install and release-validation work so the current V2 evaluator contract is verified in a fresh install before wider rollout
+
+Plan:
+
+- `docs/zzz-archive/1-plan/plans/10-clean-install-and-release-validation.md`
+
+Handoff:
+
+- `docs/zzz-archive/1-plan/handoffs/10-clean-install-and-release-validation.md`
+
+Primary dependencies:
+
+- `docs/product/current-evaluator-reference.md`
+- `docs/product/nape-evaluator-product-spec.md`
+- `docs/product/v2-policy-direction.md`
+- `docs/product/v1-evaluator-baseline.md`
+- `docs/reference/evaluator-contract.md`
+- `docs/user/installation.md`
+- `docs/maintainers/local-development.md`
+- `pyproject.toml`
+- `scripts/docs_smoke.sh`
+
 ### Plan 09: CLI Zero-Exit JSON Contract
 
 Status:
@@ -286,6 +344,8 @@ Primary dependencies:
 - Plan 06's focused and broader regression coverage is now also landed: use-case, output-contract, CLI-contract, request-builder, and pattern-library tests all reflect the selected summary/message semantics and the executable sample test-of-detail fixtures now align with the documented `inconclusive` contract.
 - Plan 08 is now complete: the evaluator now has one bounded V1 historical baseline, a practical V1-to-V2 migration guide for test authors and wrapper authors, and the exploratory/proposal-era product docs that no longer belong in the live product tree have been moved into `docs/zzz-archive/product/` with live-reference cleanup.
 - Plan 09 is now complete: non-`--check-install` evaluator invocations return exit `0` plus stdout JSON even for malformed caller/request input, while exact standalone `--check-install` remains a separate plain-text operational command.
+- Plan 10 is now complete: the evaluator now has an executable clean-install and release-validation matrix, maintainer and installation docs that distinguish `--check-install` from full typed-loader validation, a resolvable `PyPDF2` runtime dependency pin, and a packaged console-script entry point that works in a fresh virtual-environment install.
+- Plan 11 is now complete: maintainers now have standardized `make release-validate*` command surfaces, a release-process doc, a clean-install helper script, a selected evaluator publication target of PyPI, and a tag-triggered GitHub Actions gate that reruns `make release-validate` before publish. Any future official NAPE-controlled evaluator repository should be designed as a Python-package repository model rather than assumed from the current native-binary repo path.
 - All active plans should preserve the current evaluator fundamentals unless a product decision explicitly changes them.
 
 ## Operating Rule

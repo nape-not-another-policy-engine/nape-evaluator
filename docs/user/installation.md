@@ -20,6 +20,15 @@ Expected output:
 NAPE Evaluator CLI is installed and working.
 ```
 
+Important:
+
+- `--check-install` verifies that the CLI entry point starts
+- it does not prove that all typed evidence loaders and runtime dependencies are healthy
+
+If you need broader maintainer or release validation, use:
+
+- `docs/maintainers/release-validation.md`
+
 ## PATH Notes
 
 If `nape-eval` is not found after installation, confirm where Python installs console scripts.

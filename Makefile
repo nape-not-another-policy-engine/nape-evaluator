@@ -1,4 +1,4 @@
-.PHONY: build-release pip-install pip-uninstall pypi-publish clean docs-smoke
+.PHONY: build-release pip-install pip-uninstall pypi-publish clean docs-smoke release-validate-local release-validate-clean-install release-validate
 
 PROJECT_NAME = nape
 BINARY_OUTPUT_DIR = binary-output
@@ -32,7 +32,7 @@ clean:
 	@echo "\n\033[1;96m Cleaning all NAPE Evaluator files \033[0m\n"
 	rm -rf $(BINARY_OUTPUT_DIR)
 	rm -rf $(BUILD_OUTPUT_DIR)
-	rm -rf build dist *.egg-info
+	rm -rf build dist *.egg-info src/*.egg-info
 	rm *.spec
 	@echo "\n\033[1;96m NAPE Evaluator - All Cleaned Up - COMPLETE! \033[0m\n"
 
@@ -40,3 +40,18 @@ docs-smoke:
 	@echo "\n\033[1;96m Running NAPE Evaluator docs smoke checks \033[0m\n"
 	bash ./scripts/docs_smoke.sh
 	@echo "\n\033[1;96m NAPE Evaluator - Docs Smoke - COMPLETE! \033[0m\n"
+
+release-validate-local:
+	@echo "\n\033[1;96m Running local release validation \033[0m\n"
+	python3 -m unittest discover
+	$(MAKE) docs-smoke
+	EVALUATOR_USE_MAIN_PY=1 bash ./scripts/release_validation.sh
+	@echo "\n\033[1;96m NAPE Evaluator - Local Release Validation - COMPLETE! \033[0m\n"
+
+release-validate-clean-install:
+	@echo "\n\033[1;96m Running clean-install release validation \033[0m\n"
+	bash ./scripts/release_validation_clean_install.sh
+	@echo "\n\033[1;96m NAPE Evaluator - Clean-Install Release Validation - COMPLETE! \033[0m\n"
+
+release-validate: release-validate-local release-validate-clean-install
+	@echo "\n\033[1;96m NAPE Evaluator - Full Release Validation - COMPLETE! \033[0m\n"

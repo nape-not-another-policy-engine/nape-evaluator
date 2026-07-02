@@ -22,6 +22,7 @@ Historical V1 behavior remains documented in `../product/v1-evaluator-baseline.m
 | `src/nape_evaluator/application/io/output_contract.py` | output message and summary shaping. |
 | `pyproject.toml` | package metadata, runtime dependencies, version, and `nape-eval` console script. |
 | `Makefile` | local build, install, publish, and clean targets. |
+| `scripts/release_validation.sh` | executable clean-install and release-validation matrix. |
 | `tests/manual/` | manual smoke entry points. |
 | `tests/v1_baseline/` | historical V1 baseline smoke example. |
 | `tests/` | automated CLI, use-case, loader, and contract tests. |

@@ -3,11 +3,10 @@ requires = ["setuptools>=42", "wheel", "twine"]
 build-backend = "setuptools.build_meta"
 
 [project.scripts]
-nape-eval = "main:main"
+nape-eval = "nape_evaluator.main:main"
 
 [tool.setuptools]
 package-dir = {"" = "src"}
-py-modules = ["main"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
@@ -38,7 +37,7 @@ readme = "README.md"
 requires-python = ">=3.6"
 dependencies = [
     "PyYAML~=6.0.2",
-    "PyPDF2~=5.4.0",
+    "PyPDF2~=3.0.1",
 ]
 classifiers = [
     "Development Status :: 5 - Production/Stable",

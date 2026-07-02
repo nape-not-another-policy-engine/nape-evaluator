@@ -37,6 +37,26 @@ make pip-install
 PYPI_URL=<repository-url> make pypi-publish
 ```
 
+## Release Validation
+
+Run the full current release gate locally with:
+
+```bash
+make release-validate
+```
+
+If you only need the repository-runtime portion:
+
+```bash
+make release-validate-local
+```
+
+If you only need the fresh-virtual-environment clean-install portion:
+
+```bash
+make release-validate-clean-install
+```
+
 ## Smoke Test Current Behavior
 
 From the repository root:
@@ -44,6 +64,12 @@ From the repository root:
 ```bash
 python main.py --check-install
 make docs-smoke
+```
+
+For a broader pre-release evaluator contract check from the repository runtime:
+
+```bash
+EVALUATOR_USE_MAIN_PY=1 bash ./scripts/release_validation.sh
 ```
 
 If you want to run the current JSON path manually:
@@ -131,3 +157,8 @@ Current product-level direction is recorded in:
 
 - `docs/product/current-evaluator-reference.md`
 - `docs/product/v2-policy-direction.md`
+
+Release-readiness validation guidance is recorded in:
+
+- `docs/maintainers/release-validation.md`
+- `docs/maintainers/release-process.md`

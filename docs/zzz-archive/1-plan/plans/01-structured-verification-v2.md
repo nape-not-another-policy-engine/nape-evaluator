@@ -26,8 +26,8 @@ Read first:
 
 1. `docs/product/current-evaluator-reference.md`
 2. `docs/product/nape-evaluator-product-spec.md`
-3. `docs/product/v2-structured-verification-input-proposal.md`
-4. `docs/product/v2-structured-verification-result-proposal.md`
+3. `docs/zzz-archive/product/v2-structured-verification-input-proposal.md`
+4. `docs/zzz-archive/product/v2-structured-verification-result-proposal.md`
 
 ## Current State
 

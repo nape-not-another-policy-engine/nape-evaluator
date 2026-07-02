@@ -119,6 +119,7 @@ Invalid completed-test result contracts are treated as completed test contract e
 ## Start Here
 
 - New users: [Installation](docs/user/installation.md), then [Quickstart](docs/user/quickstart.md)
+- Migrating older usage: [V1 to V2 migration](docs/user/v1-to-v2-migration.md)
 - Test authors: [Test-of-detail authoring](docs/user/test-of-detail-authoring.md), then [V2 test authoring](docs/user/v2-test-authoring/README.md)
 - Software integrators: [Software integration guide](docs/user/software-integration/README.md)
 - CLI reference: [CLI reference](docs/user/cli-reference.md)

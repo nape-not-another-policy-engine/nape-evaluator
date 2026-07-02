@@ -124,7 +124,7 @@ This page covers:
 - direct invocation packets
 - full outer request packets
 - when to choose each CLI transport
-- stdout, stderr, and exit-status expectations
+- stdout JSON plus supporting stderr and exit-status expectations
 
 ### [Response handling](response-handling.md)
 

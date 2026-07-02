@@ -54,6 +54,10 @@ Your wrapper should not collapse these into one flat list of outcomes.
 
 Each top-level section has a different owner and a different meaning.
 
+One important process-boundary exception exists:
+
+- exact standalone `--check-install` is a plain-text operational command, not an evaluator JSON response
+
 ## How To Parse The Response Safely
 
 At minimum, your software should:
@@ -268,7 +272,7 @@ Current supported values:
 Interpretation:
 
 - `request`
-  - one evaluator event applies to more than one requested test or to the request as a whole
+  - one evaluator event applies to more than one requested test, or to the request as a whole before accepted test rows existed
 - `test`
   - one evaluator event is specific to one requested test
 
@@ -279,6 +283,7 @@ Use this only for request-scoped shared events.
 Interpretation:
 
 - if `scope == "request"`, `affected_tests` identifies which requested tests were impacted
+- if `scope == "request"` and `affected_tests == []`, the event applies to the request as a whole but the evaluator did not have an accepted requested-test set yet
 - if `scope == "test"`, this should be `null`
 
 ### `test_file`
@@ -500,6 +505,8 @@ For diagnosis, a wrapper should strongly consider retaining:
 - subprocess exit status
 - stderr
 - wrapper-local correlation identifiers
+
+For the current evaluator contract, the retained exit status is mainly supporting diagnostic context. It is not the primary action result signal for non-`--check-install` invocations.
 
 At minimum, retain these for any run with:
 

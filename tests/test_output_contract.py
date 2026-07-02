@@ -5,6 +5,7 @@ from nape_evaluator.application.io.output_contract import (
     build_message,
     build_summary,
 )
+from nape_evaluator.domain.use_case_models import EvaluateEvidenceResponse
 
 
 class TestOutputContract(unittest.TestCase):
@@ -153,3 +154,28 @@ class TestOutputContract(unittest.TestCase):
         self.assertEqual(actual["message_warning"], 1)
         self.assertEqual(actual["true"], 1)
         self.assertEqual(actual["false"], 1)
+
+    def test_request_scoped_error_with_no_accepted_tests_is_allowed(self):
+        response = EvaluateEvidenceResponse(
+            count=0,
+            results=(),
+            messages=(
+                build_message(
+                    "error",
+                    "cli_argument_error",
+                    "No evaluator invocation arguments were provided.",
+                    evidence_file=None,
+                    test_file=None,
+                    scope="request",
+                    affected_tests=[],
+                    stack_trace=None,
+                ),
+            ),
+        )
+
+        actual = response.to_cli_output()
+
+        self.assertEqual(actual["results"], [])
+        self.assertEqual(actual["evaluator"]["summary"]["count"], 0)
+        self.assertEqual(actual["evaluator"]["summary"]["message_error"], 1)
+        self.assertEqual(actual["evaluator"]["messages"][0]["affected_tests"], [])

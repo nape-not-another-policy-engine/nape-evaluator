@@ -6,16 +6,19 @@ Use this folder when installing `nape-eval`, running it directly, writing test-o
 
 1. [Installation](installation.md)
 2. [Quickstart](quickstart.md)
-3. [CLI reference](cli-reference.md)
-4. [Test-of-detail authoring](test-of-detail-authoring.md)
-5. [V2 test authoring](v2-test-authoring/README.md)
-6. [Software integration](software-integration/README.md)
+3. [V1 to V2 migration](v1-to-v2-migration.md)
+4. [CLI reference](cli-reference.md)
+5. [Test-of-detail authoring](test-of-detail-authoring.md)
+6. [V2 test authoring](v2-test-authoring/README.md)
+7. [Software integration](software-integration/README.md)
 
 ## Current Behavior Note
 
 These docs describe the current committed V2 evaluator contract.
 
 Historical V1 material remains available in `../product/v1-evaluator-baseline.md` for migration review only.
+
+Use [V1 to V2 migration](v1-to-v2-migration.md) when you need the practical cutover path rather than the raw historical baseline.
 
 ## V2 Authoring Guide Note
 

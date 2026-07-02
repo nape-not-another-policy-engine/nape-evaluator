@@ -38,6 +38,32 @@ class TestCli(unittest.TestCase):
             / "author_verification_empty_status.json"
         )
 
+    def assert_request_error_output(
+        self,
+        result,
+        *,
+        expected_code: str,
+        expected_message_fragment: str,
+        expected_affected_tests=None,
+    ):
+        self.assertEqual(result.returncode, 0)
+        self.assertEqual(result.stderr, "")
+        output_json = json.loads(result.stdout)
+        self.assertEqual(output_json["results"], [])
+        self.assertEqual(output_json["evaluator"]["summary"]["count"], 0)
+        self.assertEqual(output_json["evaluator"]["summary"]["ran"], 0)
+        self.assertEqual(output_json["evaluator"]["summary"]["message_error"], 1)
+        self.assertEqual(len(output_json["evaluator"]["messages"]), 1)
+        message = output_json["evaluator"]["messages"][0]
+        self.assertEqual(message["scope"], "request")
+        self.assertEqual(message["level"], "error")
+        self.assertEqual(message["code"], expected_code)
+        self.assertIn(expected_message_fragment, message["message"])
+        self.assertEqual(
+            message["affected_tests"],
+            expected_affected_tests if expected_affected_tests is not None else [],
+        )
+
     def test_check_install(self):
         result = subprocess.run(
             [sys.executable, str(self.main_py), "--check-install"],
@@ -47,18 +73,20 @@ class TestCli(unittest.TestCase):
         )
         self.assertEqual(result.stdout.strip(), "NAPE Evaluator CLI is installed and working.")
 
-    def test_no_arguments_prints_usage_and_exits_nonzero(self):
+    def test_no_arguments_return_zero_and_json_error_output(self):
         result = subprocess.run(
             [sys.executable, str(self.main_py)],
             capture_output=True,
             text=True,
             check=False,
         )
-        self.assertEqual(result.returncode, 2)
-        self.assertEqual(result.stdout, "")
-        self.assertIn("usage:", result.stderr.lower())
+        self.assert_request_error_output(
+            result,
+            expected_code="cli_argument_error",
+            expected_message_fragment="No evaluator invocation arguments were provided.",
+        )
 
-    def test_check_install_cannot_be_combined_with_v2_evaluation_args(self):
+    def test_check_install_cannot_be_combined_with_v2_evaluation_args_and_returns_json_error(self):
         result = subprocess.run(
             [
                 sys.executable,
@@ -73,10 +101,10 @@ class TestCli(unittest.TestCase):
             text=True,
             check=False,
         )
-        self.assertEqual(result.returncode, 2)
-        self.assertIn(
-            "--check-install cannot be combined with --evidence, --invoke, --invoke-file, or --request-file.",
-            result.stderr,
+        self.assert_request_error_output(
+            result,
+            expected_code="cli_argument_error",
+            expected_message_fragment="--check-install cannot be combined with --evidence, --invoke, --invoke-file, or --request-file.",
         )
 
     def test_direct_invoke_returns_true_result(self):
@@ -164,7 +192,7 @@ class TestCli(unittest.TestCase):
         self.assertEqual(output_json["evaluator"]["summary"]["inconclusive"], 1)
         self.assertEqual(output_json["results"][0]["result"]["conclusion"], "inconclusive")
 
-    def test_invalid_invoke_json_returns_parse_error(self):
+    def test_invalid_invoke_json_returns_zero_and_json_error(self):
         result = subprocess.run(
             [
                 sys.executable,
@@ -178,9 +206,169 @@ class TestCli(unittest.TestCase):
             text=True,
             check=False,
         )
+        self.assert_request_error_output(
+            result,
+            expected_code="request_json_decode_error",
+            expected_message_fragment="Failed to decode --invoke value as JSON.",
+        )
 
-        self.assertEqual(result.returncode, 2)
-        self.assertIn("Failed to decode --invoke value as JSON.", result.stderr)
+    def test_invalid_invoke_file_json_returns_zero_and_json_error(self):
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            invoke_file = Path(tmp_dir) / "invoke.json"
+            invoke_file.write_text("{bad json", encoding="utf-8")
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(self.main_py),
+                    "--evidence",
+                    str(self.evidence_file),
+                    "--invoke-file",
+                    str(invoke_file),
+                ],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+
+        self.assert_request_error_output(
+            result,
+            expected_code="request_json_decode_error",
+            expected_message_fragment=f"Failed to decode invoke file {invoke_file} as JSON.",
+        )
+
+    def test_direct_mode_missing_evidence_returns_zero_and_json_error(self):
+        result = subprocess.run(
+            [
+                sys.executable,
+                str(self.main_py),
+                "--invoke",
+                _status_invoke_json(str(self.json_test_file)),
+            ],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+
+        self.assert_request_error_output(
+            result,
+            expected_code="cli_argument_error",
+            expected_message_fragment="--evidence must be provided with --invoke or --invoke-file.",
+        )
+
+    def test_evidence_without_invokes_returns_zero_and_json_error(self):
+        result = subprocess.run(
+            [
+                sys.executable,
+                str(self.main_py),
+                "--evidence",
+                str(self.evidence_file),
+            ],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+
+        self.assert_request_error_output(
+            result,
+            expected_code="cli_argument_error",
+            expected_message_fragment="--evidence must be provided together with at least one --invoke or --invoke-file.",
+        )
+
+    def test_invalid_subject_name_returns_zero_and_json_error(self):
+        invalid_request = json.dumps(
+            {
+                "test": str(self.json_test_file),
+                "evaluations": [
+                    {
+                        "subject": {"name": "Status", "data_type": "text"},
+                        "criteria": {"equals": "complete"},
+                    }
+                ],
+            }
+        )
+        result = subprocess.run(
+            [
+                sys.executable,
+                str(self.main_py),
+                "--evidence",
+                str(self.evidence_file),
+                "--invoke",
+                invalid_request,
+            ],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+
+        self.assert_request_error_output(
+            result,
+            expected_code="invalid_subject_name",
+            expected_message_fragment="must be lowercase snake_case ASCII",
+            expected_affected_tests=[str(self.json_test_file)],
+        )
+
+    def test_request_file_top_level_array_returns_zero_and_json_error(self):
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            request_file = Path(tmp_dir) / "request.json"
+            request_file.write_text("[]", encoding="utf-8")
+            result = subprocess.run(
+                [sys.executable, str(self.main_py), "--request-file", str(request_file)],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+
+        self.assert_request_error_output(
+            result,
+            expected_code="invalid_request_packet",
+            expected_message_fragment="--request-file must decode to a top-level JSON object.",
+        )
+
+    def test_request_file_invalid_json_returns_zero_and_json_error(self):
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            request_file = Path(tmp_dir) / "request.json"
+            request_file.write_text("{bad json", encoding="utf-8")
+            result = subprocess.run(
+                [sys.executable, str(self.main_py), "--request-file", str(request_file)],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+
+        self.assert_request_error_output(
+            result,
+            expected_code="request_json_decode_error",
+            expected_message_fragment=f"Failed to decode request file {request_file} as JSON.",
+        )
+
+    def test_request_file_dash_invalid_json_returns_zero_and_json_error(self):
+        result = subprocess.run(
+            [sys.executable, str(self.main_py), "--request-file", "-"],
+            input="{bad json",
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+
+        self.assert_request_error_output(
+            result,
+            expected_code="request_json_decode_error",
+            expected_message_fragment="Failed to decode stdin request JSON.",
+        )
+
+    def test_unknown_flag_returns_zero_and_json_error(self):
+        result = subprocess.run(
+            [sys.executable, str(self.main_py), "--unknown-flag"],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+
+        self.assert_request_error_output(
+            result,
+            expected_code="cli_argument_error",
+            expected_message_fragment="unrecognized arguments: --unknown-flag",
+        )
 
     def test_missing_evidence_returns_blocked_result(self):
         missing_evidence = self.repo_root / "tests" / "manual" / "missing.json"

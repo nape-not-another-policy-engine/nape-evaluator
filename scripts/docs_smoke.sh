@@ -13,26 +13,26 @@ fi
 
 python3 main.py \
   --evidence tests/json/evidence/author_verification.json \
-  --test tests/json/test_of_detail/verify_author_complete.py \
+  --invoke '{"test":"tests/json/test_of_detail/verify_author_complete.py","evaluations":[{"subject":{"name":"status","data_type":"text"},"criteria":{"equals":"complete"}}]}' \
   | python3 -c '
 import json, sys
 data = json.load(sys.stdin)
 assert data["evaluator"]["summary"]["count"] == 1
 assert data["evaluator"]["summary"]["ran"] == 1
-assert data["evaluator"]["summary"]["pass"] == 1
-assert data["results"][0]["outcome"] == "pass"
+assert data["evaluator"]["summary"]["true"] == 1
+assert data["results"][0]["result"]["conclusion"] == "true"
 '
 
 python3 main.py \
   --evidence tests/json/evidence/author_verification_empty_status.json \
-  --test tests/json/test_of_detail/verify_author_complete.py \
+  --invoke '{"test":"tests/json/test_of_detail/verify_author_complete.py","evaluations":[{"subject":{"name":"status","data_type":"text"},"criteria":{"equals":"complete"}}]}' \
   | python3 -c '
 import json, sys
 data = json.load(sys.stdin)
 assert data["evaluator"]["summary"]["count"] == 1
 assert data["evaluator"]["summary"]["ran"] == 1
 assert data["evaluator"]["summary"]["inconclusive"] == 1
-assert data["results"][0]["outcome"] == "inconclusive"
+assert data["results"][0]["result"]["conclusion"] == "inconclusive"
 '
 
 echo "docs-smoke: OK"

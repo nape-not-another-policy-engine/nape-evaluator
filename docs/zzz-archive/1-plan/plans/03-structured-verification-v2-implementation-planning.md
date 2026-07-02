@@ -34,8 +34,8 @@ Turn the selected V2 structured verification model into an implementation-ready 
 This plan starts from:
 
 1. `docs/product/current-evaluator-reference.md`
-2. `docs/product/v2-structured-verification-input-proposal.md`
-3. `docs/product/v2-structured-verification-result-proposal.md`
+2. `docs/zzz-archive/product/v2-structured-verification-input-proposal.md`
+3. `docs/zzz-archive/product/v2-structured-verification-result-proposal.md`
 4. `docs/zzz-archive/1-plan/plans/01-structured-verification-v2.md`
 5. `docs/zzz-archive/1-plan/handoffs/01-structured-verification-v2.md`
 

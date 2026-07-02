@@ -77,7 +77,7 @@ python -m unittest
 This covers:
 
 - install check
-- no-argument usage and non-zero exit behavior
+- no-argument zero-exit JSON error behavior
 - `--check-install` exclusivity with evaluation arguments
 - CLI contract behavior through subprocess tests
 - direct CLI adapter behavior through unit tests

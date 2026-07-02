@@ -19,12 +19,69 @@ The following baseline work is already in place and should be treated as prerequ
   Current committed evaluator behavior.
 - `docs/product/nape-evaluator-product-spec.md`
   Current product scope and direction.
-- `docs/product/v2-structured-verification-input-proposal.md`
-  Proposed V2 input expansion.
-- `docs/product/v2-structured-verification-result-proposal.md`
-  Proposed V2 result expansion.
+- `docs/product/v2-policy-direction.md`
+  Current selected V2 policy stance.
+- `docs/zzz-archive/product/v2-structured-verification-input-proposal.md`
+  Historical V2 input-design rationale and traceability.
+- `docs/zzz-archive/product/v2-structured-verification-result-proposal.md`
+  Historical V2 result-design rationale and traceability.
 
 ## Workstreams
+
+### Plan 09: CLI Zero-Exit JSON Contract
+
+Status:
+
+- complete
+
+Purpose:
+
+- unify non-`--check-install` CLI behavior so evaluator invocations always return exit `0` plus stdout JSON, including malformed caller/request input
+
+Plan:
+
+- `docs/1-plan/plans/09-cli-zero-exit-json-contract.md`
+
+Handoff:
+
+- `docs/1-plan/handoffs/09-cli-zero-exit-json-contract.md`
+
+Primary dependencies:
+
+- `docs/product/current-evaluator-reference.md`
+- `docs/reference/evaluator-contract.md`
+- `docs/user/cli-reference.md`
+- `docs/user/software-integration/request-and-invocation.md`
+- `docs/user/software-integration/response-handling.md`
+- `src/nape_evaluator/application/io/cli.py`
+- `tests/test_cli_contract.py`
+
+### Plan 08: V1 Historical Support And Migration
+
+Status:
+
+- complete
+
+Purpose:
+
+- define the minimum durable V1 historical support, create a practical V1-to-V2 migration guide, and decide which older product-thinking docs should remain live versus move into `docs/zzz-archive/`
+
+Plan:
+
+- `docs/zzz-archive/1-plan/plans/08-v1-historical-support-and-migration.md`
+
+Handoff:
+
+- `docs/zzz-archive/1-plan/handoffs/08-v1-historical-support-and-migration.md`
+
+Primary dependencies:
+
+- `docs/product/current-evaluator-reference.md`
+- `docs/product/nape-evaluator-product-spec.md`
+- `docs/product/v1-evaluator-baseline.md`
+- `docs/reference/evaluator-contract.md`
+- `docs/maintainers/document-archive-policy.md`
+- `docs/user/README.md`
 
 ### Plan 07: Evaluator Software Integration Guide
 
@@ -101,8 +158,8 @@ Handoff:
 Primary dependencies:
 
 - `docs/product/current-evaluator-reference.md`
-- `docs/product/v2-structured-verification-input-proposal.md`
-- `docs/product/v2-structured-verification-result-proposal.md`
+- `docs/zzz-archive/product/v2-structured-verification-input-proposal.md`
+- `docs/zzz-archive/product/v2-structured-verification-result-proposal.md`
 
 ### Plan 02: Expectation Binding And CLI Transport
 
@@ -125,7 +182,7 @@ Handoff:
 Primary dependencies:
 
 - `docs/product/current-evaluator-reference.md`
-- `docs/product/test-parameter-exploration.md`
+- `docs/zzz-archive/product/test-parameter-exploration.md`
 - `docs/user/cli-reference.md`
 - `docs/reference/evaluator-contract.md`
 
@@ -150,8 +207,8 @@ Handoff:
 Primary dependencies:
 
 - `docs/product/current-evaluator-reference.md`
-- `docs/product/v2-structured-verification-input-proposal.md`
-- `docs/product/v2-structured-verification-result-proposal.md`
+- `docs/zzz-archive/product/v2-structured-verification-input-proposal.md`
+- `docs/zzz-archive/product/v2-structured-verification-result-proposal.md`
 - `src/nape_evaluator/domain/use_cases.py`
 - `src/nape_evaluator/application/io/cli.py`
 - `src/nape_evaluator/application/io/output_contract.py`
@@ -227,6 +284,8 @@ Primary dependencies:
 - Plan 06 is now complete: it owned the evaluator-level `summary` and `messages` clarification and implementation pass, including purpose, ownership boundaries, multi-test examples, distinct-event counting, and the `inconclusive`-only result conclusion model.
 - Plan 06's implementation is now landed: permanent docs and examples now explain the ownership split between evaluator messages and test reasoning, shared evidence-side notices are represented once as request-scoped distinct events with `affected_tests`, blocked invocations return evaluator-synthesized structured `inconclusive` results, invalid completed-test contracts are normalized to completed `inconclusive` results, and evaluator messages include `stack_trace` when traceback detail exists.
 - Plan 06's focused and broader regression coverage is now also landed: use-case, output-contract, CLI-contract, request-builder, and pattern-library tests all reflect the selected summary/message semantics and the executable sample test-of-detail fixtures now align with the documented `inconclusive` contract.
+- Plan 08 is now complete: the evaluator now has one bounded V1 historical baseline, a practical V1-to-V2 migration guide for test authors and wrapper authors, and the exploratory/proposal-era product docs that no longer belong in the live product tree have been moved into `docs/zzz-archive/product/` with live-reference cleanup.
+- Plan 09 is now complete: non-`--check-install` evaluator invocations return exit `0` plus stdout JSON even for malformed caller/request input, while exact standalone `--check-install` remains a separate plain-text operational command.
 - All active plans should preserve the current evaluator fundamentals unless a product decision explicitly changes them.
 
 ## Operating Rule

@@ -59,7 +59,11 @@ Rules:
 - `--request-file -` reads that full outer request packet from stdin
 - `--request-file` cannot be combined with `--evidence`, `--invoke`, or `--invoke-file`
 
-If the CLI is invoked with no arguments, it prints usage information to stderr and exits non-zero.
+Execution contract:
+
+- exact standalone `--check-install` prints plain text and returns exit status `0`
+- every other invocation returns exit status `0` and prints one JSON object to stdout
+- if the CLI is invoked with no evaluator arguments, it returns a request-scoped JSON `error` response instead of printing usage to stderr and exiting non-zero
 
 ## Arguments
 
@@ -172,6 +176,40 @@ The evaluator prints one JSON object to stdout:
 }
 ```
 
+For malformed invocation input, the outer shape stays the same and `results` can be empty. Example:
+
+```json
+{
+  "results": [],
+  "evaluator": {
+    "messages": [
+      {
+        "scope": "request",
+        "level": "error",
+        "source": "evaluator",
+        "code": "cli_argument_error",
+        "message": "No evaluator invocation arguments were provided. Use --check-install, or provide --evidence with --invoke/--invoke-file, or use --request-file.",
+        "evidence_file": null,
+        "test_file": null,
+        "affected_tests": [],
+        "stack_trace": null
+      }
+    ],
+    "summary": {
+      "count": 0,
+      "ran": 0,
+      "true": 0,
+      "false": 0,
+      "inconclusive": 0,
+      "message_count": 1,
+      "message_info": 0,
+      "message_warning": 0,
+      "message_error": 1
+    }
+  }
+}
+```
+
 Top-level fields:
 
 - `results`
@@ -274,6 +312,8 @@ Each message contains:
 - `stack_trace`
 
 Read evaluator messages as operational context, not as the test's claim or reasoning.
+
+For request-scoped malformed-invocation errors, `affected_tests` can legitimately be `[]` when the CLI could not establish an accepted requested-test set.
 
 ## Multi-Test Example
 

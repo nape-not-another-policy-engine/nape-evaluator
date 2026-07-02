@@ -1,9 +1,10 @@
 import io
 import unittest
-from contextlib import redirect_stderr, redirect_stdout
+from contextlib import redirect_stdout
 from unittest.mock import patch
 
 from nape_evaluator.application.io import cli
+from nape_evaluator.application.io.cli import CliInvocationError
 from nape_evaluator.domain.use_case_models import EvaluateEvidenceResponse
 
 
@@ -45,9 +46,7 @@ class TestCliAdapter(unittest.TestCase):
         self.assertEqual(args.request_file, "./request.json")
 
     def test_parse_args_rejects_mixing_request_file_and_direct_flags(self):
-        stderr = io.StringIO()
-
-        with redirect_stderr(stderr), self.assertRaises(SystemExit) as context:
+        with self.assertRaises(CliInvocationError) as context:
             cli.parse_args(
                 [
                     "--request-file",
@@ -59,20 +58,28 @@ class TestCliAdapter(unittest.TestCase):
                 ]
             )
 
-        self.assertEqual(context.exception.code, 2)
+        self.assertEqual(context.exception.code, "cli_argument_error")
         self.assertIn(
             "--request-file cannot be combined with --evidence, --invoke, or --invoke-file.",
-            stderr.getvalue(),
+            str(context.exception),
         )
 
     def test_parse_args_rejects_no_arguments(self):
-        stderr = io.StringIO()
-
-        with redirect_stderr(stderr), self.assertRaises(SystemExit) as context:
+        with self.assertRaises(CliInvocationError) as context:
             cli.parse_args([])
 
-        self.assertEqual(context.exception.code, 2)
-        self.assertIn("usage:", stderr.getvalue().lower())
+        self.assertEqual(context.exception.code, "cli_argument_error")
+        self.assertIn(
+            "No evaluator invocation arguments were provided.",
+            str(context.exception),
+        )
+
+    def test_parse_args_rejects_unknown_flag_with_bounded_cli_error(self):
+        with self.assertRaises(CliInvocationError) as context:
+            cli.parse_args(["--unknown-flag"])
+
+        self.assertEqual(context.exception.code, "cli_argument_error")
+        self.assertIn("unrecognized arguments: --unknown-flag", str(context.exception))
 
     def test_run_cli_check_install_prints_message(self):
         stdout = io.StringIO()
@@ -118,3 +125,13 @@ class TestCliAdapter(unittest.TestCase):
             ],
         )
         self.assertIn('"true": 1', stdout.getvalue())
+
+    def test_run_cli_returns_bounded_json_for_argument_error(self):
+        stdout = io.StringIO()
+
+        with redirect_stdout(stdout):
+            exit_code = cli.run_cli([])
+
+        self.assertEqual(exit_code, 0)
+        self.assertIn('"results": []', stdout.getvalue())
+        self.assertIn('"code": "cli_argument_error"', stdout.getvalue())

@@ -1,3 +1,8 @@
+> Historical document
+>
+> This document is retained for historical reference only.
+> It should not be used for any current execution, implementation, or decision-making unless it is being referenced explicitly for historical or traceability purposes.
+
 # Test Parameter Exploration
 
 ## Superseded Status
@@ -8,9 +13,14 @@ It does not describe the selected or current V2 evaluator contract.
 
 Use these docs for the selected/current direction instead:
 
-- `docs/product/v2-structured-verification-input-proposal.md`
-- `docs/product/v2-structured-verification-result-proposal.md`
 - `docs/product/current-evaluator-reference.md`
+- `docs/product/nape-evaluator-product-spec.md`
+- `docs/product/v2-policy-direction.md`
+
+Historical V2 design-rationale documents remain available in:
+
+- `docs/zzz-archive/product/v2-structured-verification-input-proposal.md`
+- `docs/zzz-archive/product/v2-structured-verification-result-proposal.md`
 
 The selected and implemented V2 model now uses:
 

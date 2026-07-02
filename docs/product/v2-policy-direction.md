@@ -57,16 +57,24 @@ Rationale:
   - test behavior problems
   - evaluator/runtime operational failures
 
-### 3. Keep zero exit status when valid evaluator JSON is produced
+### 3. Return zero exit status and stdout JSON for evaluation invocations
 
 Status:
 
-- Selected
+- Implemented
 
 Decision:
 
-- for evaluation invocations, keep exit status `0` whenever the evaluator successfully emits valid contract JSON
-- reserve non-zero exit status for cases where the process cannot provide a valid evaluator contract reliably
+- keep exact standalone `--check-install` as a separate operational command with plain-text success output
+- for every non-`--check-install` evaluator invocation, return exit status `0`
+- for every non-`--check-install` evaluator invocation, emit one evaluator JSON object on stdout
+- represent malformed caller/request input through request-scoped evaluator `error` messages inside that JSON envelope
+
+Rationale:
+
+- downstream wrappers no longer need one parser-error path and a different evaluator-error path
+- malformed invocation input stays machine-readable and consistent with the rest of the evaluator contract
+- exit status stops competing with the actual evaluator response surface
 
 ### 4. Keep trusted-code execution explicit; do not promise a sandbox unless implemented
 

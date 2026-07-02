@@ -617,9 +617,9 @@ class EvaluateEvidenceResponse:
                 raise ResponseValidationError(
                     "Request-scoped messages must use test_file null."
                 )
-            if not isinstance(affected_tests, list) or not affected_tests:
+            if not isinstance(affected_tests, list):
                 raise ResponseValidationError(
-                    "Request-scoped messages must include a non-empty affected_tests array."
+                    "Request-scoped messages must include an affected_tests array."
                 )
 
         if message["scope"] == "test":

@@ -39,6 +39,13 @@ Rules:
 - `--request-file` cannot be combined with `--evidence`, `--invoke`, or `--invoke-file`
 - `--request-file -` reads the full outer request packet from stdin
 
+Execution behavior:
+
+- exact standalone `--check-install` returns exit status `0` and prints a plain-text health message
+- every non-`--check-install` invocation returns exit status `0`
+- every non-`--check-install` invocation emits one evaluator JSON object on stdout
+- malformed CLI or request input is translated into request-scoped evaluator `error` messages inside that JSON envelope
+
 ## Security Boundary
 
 The evaluator dynamically imports and executes the Python file supplied by each requested `test`.
@@ -111,6 +118,12 @@ Request validation behavior:
 - no hidden type coercion is performed
 
 Malformed caller-owned request packets are rejected before the use-case execution seam is crossed.
+
+When the CLI rejects malformed caller-owned input before a validated request object exists, it still emits the normal outer response envelope:
+
+- `results: []`
+- `evaluator.messages` containing request-scoped `error` events
+- `evaluator.summary` derived from zero result rows and the emitted evaluator messages
 
 ## Test Call Contract
 
@@ -335,7 +348,7 @@ Examples:
 - test import failure
 - unhandled exception during test execution
 
-Consumers should not infer success from exit status alone. For action evaluation, parse stdout JSON and inspect `results` and `evaluator`.
+Consumers should not infer evaluation success from exit status alone. For non-`--check-install` action evaluation, parse stdout JSON and inspect `results` and `evaluator`.
 
 Do not conflate completed test contract violations with evaluator execution failures:
 

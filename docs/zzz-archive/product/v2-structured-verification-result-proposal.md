@@ -1,3 +1,8 @@
+> Historical document
+>
+> This document is retained for historical reference only.
+> It should not be used for any current execution, implementation, or decision-making unless it is being referenced explicitly for historical or traceability purposes.
+
 # V2 Structured Verification Result Proposal
 
 This document proposes a V2 result model for `nape-evaluator` that separates:

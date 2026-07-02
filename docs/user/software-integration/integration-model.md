@@ -286,6 +286,7 @@ into one large integration function.
 - “`inconclusive` always means the same thing”
 - “every failure should be read from `result.reason`”
 - “if the process exit status is zero, there were no evaluator problems”
+- “malformed invocation input will appear only as stderr text rather than evaluator JSON”
 - “if one test is blocked, all tests must have been blocked”
 - “internal Python imports are the official public API because they work today”
 

@@ -35,9 +35,10 @@ Historical V1 behavior remains documented in `../product/v1-evaluator-baseline.m
 | direct-mode `--evidence` argument | `src/nape_evaluator/application/io/cli.py` |
 | repeated `--invoke` and `--invoke-file` arguments | `src/nape_evaluator/application/io/cli.py` |
 | `--request-file` argument, file-path mode, and stdin mode via `-` | `src/nape_evaluator/application/io/cli.py` |
-| no-argument usage and non-zero exit | `src/nape_evaluator/application/io/cli.py` |
+| no-argument zero-exit JSON request error | `src/nape_evaluator/application/io/cli.py` |
 | direct-mode validation rules | `src/nape_evaluator/application/io/cli.py` |
 | full-request decoding and top-level `tests` handling | `src/nape_evaluator/application/io/cli.py` |
+| request-scoped CLI invocation error translation | `src/nape_evaluator/application/io/cli.py`, `src/nape_evaluator/application/io/output_contract.py`, `src/nape_evaluator/domain/use_case_models.py` |
 | request builder seam and request validation | `src/nape_evaluator/domain/use_case_models.py` |
 | supported `subject.data_type` vocabulary | `src/nape_evaluator/domain/use_case_models.py` |
 | supported `criteria` vocabulary and compatibility rules | `src/nape_evaluator/domain/use_case_models.py` |

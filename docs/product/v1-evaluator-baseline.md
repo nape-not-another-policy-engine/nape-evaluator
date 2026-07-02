@@ -14,6 +14,10 @@ The V1 baseline is derived from committed files:
 
 Current committed behavior has moved beyond this baseline. Use this document for migration, compatibility review, and version-to-version comparison.
 
+If you need the practical cutover steps rather than the raw historical baseline, use:
+
+- `docs/user/v1-to-v2-migration.md`
+
 ## V1 CLI Workflow
 
 Check install:
@@ -116,12 +120,12 @@ V2 should explicitly decide:
 
 | Area | V1 baseline | Current V2 behavior or decision pressure | Breaking impact | Recommendation | Status |
 | --- | --- | --- | --- | --- | --- |
-| Evidence input shape | `evaluate(evidence)` receives text lines from `readlines()`. | Current typed loader passes parsed objects for JSON/XML/YAML/PDF and text lines for TXT/unknown. | High: existing V1 tests that parse text lines can fail when receiving dicts or XML objects. | Preserve a raw text-lines mode or provide explicit migration guidance. | Open follow-up. |
+| Evidence input shape | `evaluate(evidence)` receives text lines from `readlines()`. | Current typed loader passes parsed objects for JSON/XML/YAML/PDF and text lines for TXT/unknown. | High: existing V1 tests that parse text lines can fail when receiving dicts or XML objects. | Keep typed evidence loading as the V2 contract and provide explicit migration guidance for older tests. | Migration guidance documented. |
 | Supported file types | File extension is ignored; every evidence file is opened as text. | Current behavior branches on `.txt`, `.json`, `.xml`, `.yaml`, `.yml`, `.pdf`, and unknown extensions. | High: behavior changes based on filename extension. | Define supported extensions and fallback behavior as a formal contract. | Implemented, keep documented. |
 | Runtime dependencies | V1 requires only the standard library at runtime. | Current behavior imports `yaml` and `PyPDF2`. | Medium: users may install a package that starts but fails for typed loaders if runtime dependencies are missing. | Declare accepted typed-loader libraries as project runtime dependencies, not only build requirements. | Implemented in package metadata. |
 | `--check-install` | Prints a health message if the CLI starts. | Typed loaders introduce required runtime dependencies, but install check still validates base CLI startup rather than every loader path. | Medium: install check can pass while YAML/PDF evaluation later fails if packaging or environment setup is wrong. | Keep install check as a base CLI check, and verify loader support in clean install/release validation. | Direction chosen; release-process follow-up remains. |
 | Outcome validation | V1 prints whatever `evaluate(...)` returns as `outcome`. | Current behavior validates expected NAPE outcomes before printing JSON and converts invalid values to result-level `error`. | Medium: invalid custom outcomes now become contract errors. | Keep invalid outcomes as result-level `error` while preserving `ran` accounting. | Implemented. |
-| Failure and exit status | V1 catches failures, prints JSON `error`, and does not explicitly set non-zero exit status. | V2 should keep zero exit when valid evaluator JSON is produced and reserve non-zero for process/contract-unavailable failures. | Medium: NAPE CLI and scripts may rely on stdout JSON rather than exit status. | Keep action-level failures machine-readable in JSON; use non-zero only when valid evaluator JSON cannot be relied upon. | Recommended V2 direction documented. |
+| Failure and exit status | V1 catches failures, prints JSON `error`, and does not explicitly set non-zero exit status. | V2 keeps exact standalone `--check-install` as plain-text `0`, and returns `0` plus evaluator JSON for every other invocation, including malformed caller/request input. | Medium: wrappers must classify evaluator outcomes from JSON rather than from exit status alone. | Keep action-level and malformed-request failures machine-readable in JSON so wrappers can use one response contract. | Implemented. |
 | Dynamic test execution | V1 dynamically imports and executes trusted Python test files. | V2 should keep trusted-code execution explicit unless a real sandbox is implemented. | Medium: sandboxing can break existing tests that import libraries or access local resources. | Document trusted-code execution honestly and revisit only when execution controls are an actual product feature. | Recommended V2 direction documented. |
 | Package version | V1 package metadata is `1.0.0`. | Current package metadata is `2.0.0`. | Low to medium: version bump communicates breaking change. | Keep the major version signal aligned with contract changes. | Implemented. |
 | Docs smoke fixtures | V1 has manual examples but no executable docs smoke target. | Current implementation has automated unit tests plus a local-only docs smoke target for documented examples. | Low: docs can still drift if the target is not run. | Keep `make docs-smoke` in local doc and release verification. | Implemented. |

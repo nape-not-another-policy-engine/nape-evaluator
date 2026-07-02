@@ -357,20 +357,21 @@ When the evaluator successfully emits valid contract JSON, your wrapper should p
 
 ### Stderr
 
-Stderr is useful operational context, especially for CLI misuse or process-level problems.
+Stderr is useful supporting operational context.
 
 Your wrapper may log stderr, retain it, or attach it to wrapper-local diagnostics.
 
-But stderr is not the main evaluator action contract when valid stdout JSON is available.
+But stderr is not the main evaluator action contract. For non-`--check-install` evaluator invocations, stdout JSON is the primary contract even when the request was malformed.
 
 ### Exit Status
 
-Exit status is secondary to contract availability.
+Exit status is secondary to contract availability for evaluator invocations.
 
-The current product direction is:
+The current contract is:
 
-- valid evaluator JSON on stdout is the main integration result
-- non-zero exit status is most important when valid evaluator JSON cannot be relied upon
+- exact standalone `--check-install` returns plain text with exit status `0`
+- every non-`--check-install` evaluator invocation returns exit status `0`
+- non-`--check-install` invocations are expected to provide evaluator JSON on stdout, including malformed caller/request input
 
 That means a good wrapper should usually decide in this order:
 
@@ -389,6 +390,8 @@ A practical wrapper should usually classify the subprocess result in this order:
 5. if no, use exit status and stderr as wrapper-level diagnostic input
 
 This order matters because otherwise a wrapper may incorrectly mark a run as failed even when the evaluator intentionally returned a structured JSON contract containing blocked or inconclusive outcomes.
+
+For the current evaluator, malformed invocation input belongs in step 4, not step 5, because it is returned as evaluator JSON rather than as a separate parser-only process failure.
 
 ## Request Artifact Strategy
 
@@ -486,7 +489,7 @@ Bad pattern:
 Better pattern:
 
 - parse stdout JSON when available
-- use exit status and stderr only as supporting process-level diagnostics
+- use exit status and stderr only as supporting process-level diagnostics for evaluator invocations
 
 ### Mistake 4: Letting The Shell Own Escaping Logic
 

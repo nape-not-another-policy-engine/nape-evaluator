@@ -74,6 +74,13 @@ Current CLI validation rules:
 - `--request-file` cannot be combined with `--evidence`, `--invoke`, or `--invoke-file`
 - `--request-file -` means read the full request packet from stdin
 
+Current CLI execution contract:
+
+- exact standalone `--check-install` prints a plain-text health message and returns exit status `0`
+- every non-`--check-install` invocation returns exit status `0`
+- every non-`--check-install` invocation prints one JSON object to stdout
+- malformed caller-owned invocation input is represented as request-scoped evaluator `error` message output rather than stderr-only parser termination
+
 ## Current Request Model
 
 The evaluator now uses a verified builder-only request seam:
@@ -102,7 +109,10 @@ request = (
 Important current behavior:
 
 - request validation happens before the use-case execution seam is crossed
-- malformed caller-owned request packets are rejected by request-builder validation
+- malformed caller-owned request packets are rejected by request-builder validation before use-case execution
+- when that rejection happens through the CLI, the CLI still emits the normal outer JSON envelope with:
+  - `results: []`
+  - request-scoped evaluator `error` messages
 - top-level full-request packets use:
   - `evidence`
   - `tests`
@@ -326,6 +336,7 @@ Current multi-test message semantics:
 
 - shared evidence-side notices are emitted as distinct request-scoped events
 - request-scoped messages identify impacted tests through `affected_tests`
+- request-scoped malformed-request messages can use `affected_tests == []` when no accepted requested-test set existed yet
 - test-scoped messages identify one affected test through `test_file`
 - `message_count` is therefore a count of distinct emitted evaluator events
 

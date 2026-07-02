@@ -35,7 +35,8 @@ Current behavior:
 - Supports full-request mode with:
   - `--request-file <path-or->`
 - Treats `--check-install` as mutually exclusive with evaluation arguments.
-- Prints CLI usage and exits non-zero when invoked without arguments.
+- Returns plain text and exit status `0` for exact standalone `--check-install`.
+- Returns exit status `0` plus stdout JSON for every non-`--check-install` invocation, including malformed caller/request input.
 - Loads evidence by file extension.
 - Builds minimal metadata for the test contract.
 - Validates caller-owned `tests[*].evaluations[*]` input before test execution.
@@ -76,6 +77,7 @@ Current request behavior:
   - `subject`
   - `criteria`
 - malformed caller-owned request packets are rejected before the use-case execution seam is crossed
+- the CLI still translates malformed caller-owned invocation input into the normal outer JSON envelope with request-scoped evaluator `error` messages
 
 Current completed-test behavior:
 
@@ -99,11 +101,13 @@ Current response behavior:
 - `results[*].result`: completed test-owned result, or evaluator-synthesized blocked `inconclusive` result
 - `evaluator.messages`: evaluator-generated info, warning, and error notices
 - `evaluator.summary`: aggregate counts by completed-test conclusion and evaluator message level
+- request-scoped malformed-invocation errors can use `affected_tests: []` when no accepted requested-test set existed yet
 
 Current ownership distinction:
 
-- `results[*].result.reason` is test-owned when the test completed
+- `results[*].result.reason` is usually test-owned when the test completed
 - `results[*].result.reason` is evaluator-owned when the invocation was blocked
+- completed rows normalized from invalid completed-test result contracts carry evaluator-authored explanatory `reason`
 - `evaluator.messages[*].message` is evaluator-owned operational context
 
 Current summary behavior:
@@ -143,9 +147,12 @@ Current expansion points still include:
 Related docs:
 
 - `current-evaluator-reference.md`
-- `v2-structured-verification-input-proposal.md`
-- `v2-structured-verification-result-proposal.md`
 - `v2-policy-direction.md`
+
+Historical design rationale remains available in:
+
+- `../zzz-archive/product/v2-structured-verification-input-proposal.md`
+- `../zzz-archive/product/v2-structured-verification-result-proposal.md`
 
 ## Historical V1 Contrast
 

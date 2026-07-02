@@ -66,7 +66,7 @@ Tests must cover meaningful logical paths for each bounded module. For this repo
 
 | Surface | Required logical paths | Canonical tests |
 | --- | --- | --- |
-| CLI contract | install check, no-arg failure, direct-mode validation, `--request-file` behavior, JSON stdout contract | `tests/test_cli_contract.py`, `tests/test_cli_adapter.py` |
+| CLI contract | install check, no-arg JSON request error, direct-mode validation, malformed request decoding, `--request-file` behavior, zero-exit JSON stdout contract | `tests/test_cli_contract.py`, `tests/test_cli_adapter.py` |
 | Request builder | evidence validation, top-level `tests` validation, subject/data-type/criteria validation, compatibility validation | `tests/test_request_builder.py` |
 | Evidence gateway | routing and metadata | `tests/test_evidence_gateway_routing.py` |
 | Evidence gateway | text loading and text fallback | `tests/test_text_evidence_loading.py` |

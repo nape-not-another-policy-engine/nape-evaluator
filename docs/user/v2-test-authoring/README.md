@@ -6,10 +6,15 @@ Start with:
 
 - `docs/user/test-of-detail-authoring.md`
 
-Use the product proposals only if you want the design rationale behind the selected V2 shape:
+Use these current docs first:
 
-- `docs/product/v2-structured-verification-input-proposal.md`
-- `docs/product/v2-structured-verification-result-proposal.md`
+- `docs/product/current-evaluator-reference.md`
+- `docs/product/v2-policy-direction.md`
+
+Use the archived proposals only if you want the deeper historical design rationale behind the selected V2 shape:
+
+- `docs/zzz-archive/product/v2-structured-verification-input-proposal.md`
+- `docs/zzz-archive/product/v2-structured-verification-result-proposal.md`
 
 ## How To Use This Folder
 

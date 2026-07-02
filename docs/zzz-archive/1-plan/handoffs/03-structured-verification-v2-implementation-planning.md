@@ -14,8 +14,8 @@ Record the completed state and closure decision for the V2 implementation-planni
 1. `docs/1-plan/roadmap.md`
 2. `docs/zzz-archive/1-plan/plans/03-structured-verification-v2-implementation-planning.md`
 3. `docs/product/current-evaluator-reference.md`
-4. `docs/product/v2-structured-verification-input-proposal.md`
-5. `docs/product/v2-structured-verification-result-proposal.md`
+4. `docs/zzz-archive/product/v2-structured-verification-input-proposal.md`
+5. `docs/zzz-archive/product/v2-structured-verification-result-proposal.md`
 6. `src/nape_evaluator/domain/use_case_models.py`
 7. `src/nape_evaluator/domain/use_cases.py`
 8. `src/nape_evaluator/application/io/cli.py`

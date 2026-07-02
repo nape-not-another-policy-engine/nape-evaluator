@@ -16,42 +16,48 @@ Prints:
 NAPE Evaluator CLI is installed and working.
 ```
 
-`--check-install` cannot be combined with `--evidence`, `--test`, or `--test-parameters-file`.
+`--check-install` cannot be combined with `--evidence`, `--invoke`, `--invoke-file`, or `--request-file`.
 
-### `--evidence` And `--test`
+### Direct Invocation Mode
 
-```bash
-nape-eval --evidence <evidence-file> --test <test-of-detail-python-file>
-```
-
-Repeat `--test` to evaluate multiple tests against the same evidence file:
-
-```bash
-nape-eval --evidence <evidence-file> --test <test-a.py> --test <test-b.py>
-```
-
-`--evidence` and at least one `--test` must be provided together.
-
-### `--test-parameters-file`
-
-Repeat `--test-parameters-file` once per repeated `--test` when caller-supplied parameters are needed:
+Inline invocation packets:
 
 ```bash
 nape-eval \
   --evidence <evidence-file> \
-  --test <test-a.py> \
-  --test-parameters-file <params-a.json> \
-  --test <test-b.py> \
-  --test-parameters-file <params-b.json>
+  --invoke '{"test":"./test.py","evaluations":[]}'
+```
+
+File-based invocation packets:
+
+```bash
+nape-eval \
+  --evidence <evidence-file> \
+  --invoke-file <invoke-a.json> \
+  --invoke-file <invoke-b.json>
 ```
 
 Rules:
 
-- `--test-parameters-file` is optional
-- when present, it must appear once per `--test`
-- parameter files are matched to tests by position
-- each parameter file must decode to a top-level JSON object
-- if omitted for a test, the evaluator passes `{}` as `test_parameters`
+- `--evidence` is required in direct mode
+- use one or more `--invoke` and/or `--invoke-file`
+- each repeated value represents exactly one test invocation packet
+- each invocation packet contains both:
+  - `test`
+  - `evaluations`
+
+### Full-Request Mode
+
+```bash
+nape-eval --request-file <request.json>
+nape-eval --request-file -
+```
+
+Rules:
+
+- `--request-file` accepts one full outer request packet
+- `--request-file -` reads that full outer request packet from stdin
+- `--request-file` cannot be combined with `--evidence`, `--invoke`, or `--invoke-file`
 
 If the CLI is invoked with no arguments, it prints usage information to stderr and exits non-zero.
 
@@ -60,9 +66,55 @@ If the CLI is invoked with no arguments, it prints usage information to stderr a
 | Argument | Required | Description |
 | --- | --- | --- |
 | `--check-install` | No | Verifies the CLI can run. |
-| `--evidence` | Yes for evaluation | Path to one evidence file. |
-| `--test` | Yes for evaluation | Path to one Python file with an `evaluate(evidence, test_parameters, metadata)` function. Repeat to run multiple tests. |
-| `--test-parameters-file` | No | Path to one JSON object file that supplies caller-owned `test_parameters` for the matching `--test`. Repeat once per `--test` in the same order. |
+| `--evidence` | Yes in direct mode | Path to one evidence file. |
+| `--invoke` | No | One JSON object containing `test` and `evaluations` for a single test invocation. Repeat as needed. |
+| `--invoke-file` | No | Path to one JSON object file containing `test` and `evaluations` for a single test invocation. Repeat as needed. |
+| `--request-file` | Yes in full-request mode | Path to one full JSON request packet, or `-` for stdin. |
+
+## Request Shapes
+
+Single invocation packet:
+
+```json
+{
+  "test": "./verify_author_complete.py",
+  "evaluations": [
+    {
+      "subject": {
+        "name": "status",
+        "data_type": "text"
+      },
+      "criteria": {
+        "equals": "complete"
+      }
+    }
+  ]
+}
+```
+
+Full request packet:
+
+```json
+{
+  "evidence": "./author_verification.json",
+  "tests": [
+    {
+      "test": "./verify_author_complete.py",
+      "evaluations": [
+        {
+          "subject": {
+            "name": "status",
+            "data_type": "text"
+          },
+          "criteria": {
+            "equals": "complete"
+          }
+        }
+      ]
+    }
+  ]
+}
+```
 
 ## Output
 
@@ -72,13 +124,35 @@ The evaluator prints one JSON object to stdout:
 {
   "results": [
     {
-      "test": "test-a.py",
-      "evidence_file": "./evidence.json",
-      "test_parameters": {},
-      "executed": true,
-      "outcome": "pass",
-      "reason": "Reason text",
-      "test_parameters_source": null
+      "test": "./verify_author_complete.py",
+      "evidence": "./author_verification.json",
+      "evaluations": [
+        {
+          "subject": {
+            "name": "status",
+            "data_type": "text"
+          },
+          "criteria": {
+            "equals": "complete"
+          }
+        }
+      ],
+      "execution": {
+        "executed": true,
+        "status": "completed"
+      },
+      "result": {
+        "conclusion": "true",
+        "facts": [
+          {
+            "name": "status",
+            "value": "complete",
+            "value_type": "text",
+            "status": "found"
+          }
+        ],
+        "reason": "The author has achieved the status of complete."
+      }
     }
   ],
   "evaluator": {
@@ -86,50 +160,8 @@ The evaluator prints one JSON object to stdout:
     "summary": {
       "count": 1,
       "ran": 1,
-      "pass": 1,
-      "fail": 0,
-      "inconclusive": 0,
-      "error": 0,
-      "message_count": 0,
-      "message_info": 0,
-      "message_warning": 0,
-      "message_error": 0
-    }
-  }
-}
-```
-
-For multiple tests, the evaluator prints:
-
-```json
-{
-  "results": [
-    {
-      "test": "test-a.py",
-      "evidence_file": "./evidence.json",
-      "test_parameters": {},
-      "executed": true,
-      "outcome": "pass",
-      "reason": "Reason text",
-      "test_parameters_source": null
-    },
-    {
-      "test": "test-b.py",
-      "evidence_file": "./evidence.json",
-      "test_parameters": {},
-      "executed": true,
-      "outcome": "fail",
-      "reason": "Reason text",
-      "test_parameters_source": null
-    }
-  ],
-  "evaluator": {
-    "messages": [],
-    "summary": {
-      "count": 2,
-      "ran": 2,
-      "pass": 1,
-      "fail": 1,
+      "true": 1,
+      "false": 0,
       "inconclusive": 0,
       "error": 0,
       "message_count": 0,
@@ -149,11 +181,11 @@ Top-level fields:
 Summary fields:
 
 - `count`: how many tests were requested
-- `ran`: how many tests actually completed the `evaluate(...)` contract
-- `pass`: result count for tests that returned `pass`
-- `fail`: result count for tests that returned `fail`
-- `inconclusive`: result count for tests that returned `inconclusive`
-- `error`: result count for tests that returned `error`
+- `ran`: how many tests completed the `evaluate(...)` contract
+- `true`: completed-test count for `conclusion: "true"`
+- `false`: completed-test count for `conclusion: "false"`
+- `inconclusive`: completed-test count for `conclusion: "inconclusive"`
+- `error`: completed-test count for `conclusion: "error"`
 - `message_count`: total evaluator message count
 - `message_info`: evaluator `info` message count
 - `message_warning`: evaluator `warning` message count
@@ -161,101 +193,66 @@ Summary fields:
 
 Interpretation rules:
 
-- `summary.error` is reserved for result-level `"error"` outcomes returned by tests that actually ran.
-- Evaluator/runtime failures are reported in `evaluator.messages` and counted in `summary.message_error`.
-- If `summary.ran` is less than `summary.count`, at least `summary.count - summary.ran` requested tests were blocked from execution.
+- `summary.error` is reserved for completed tests that returned `conclusion: "error"`
+- evaluator/runtime failures are reported in `evaluator.messages` and counted in `summary.message_error`
+- if `summary.ran` is less than `summary.count`, at least `summary.count - summary.ran` requested tests were blocked from execution
 
-Result items also report `test_parameters_source`:
+## Result Semantics
 
-- `null` when the test ran with `{}` because no parameter file was supplied
-- a file path when the test ran with caller-supplied parameters from that file
+Each `results[*]` item contains:
 
-Result items also report execution context:
+- `test`
+- `evidence`
+- `evaluations`
+- `execution`
+- `result`
 
-- `evidence_file`: the evidence path passed to the evaluator
-- `test_parameters`: the decoded parameter dict passed to the test, or `null` if no valid dict was available because parameter loading failed
-- `executed`: `true` when the test function completed, `false` when the invocation was blocked before completion
+`execution` contains:
 
-## Outcomes
+- `executed`
+- `status`
 
-The evaluator prints whatever outcome the test-of-detail function returns.
+Rules:
 
-Expected NAPE outcome values are:
+- `execution.status` is `completed` when `execution.executed` is `true`
+- `execution.status` is `blocked` when `execution.executed` is `false`
+- completed tests carry structured `result`
+- blocked tests carry `result: null`
 
-- `pass`
-- `fail`
+Completed `result` contains:
+
+- `conclusion`
+- `facts`
+- `reason`
+
+Expected completed-test conclusions are:
+
+- `true`
+- `false`
 - `inconclusive`
 - `error`
 
-The evaluator validates this list before printing output.
+If a test returns an invalid result contract, the evaluator:
 
-If a test returns any other value, the evaluator:
-
-- keeps the test in `summary.ran`
-- normalizes the result to `outcome: "error"`
-- returns a reason explaining that the outcome was unsupported
+- still counts that test in `summary.ran`
+- normalizes the completed result to `conclusion: "error"`
+- returns an explanatory `reason`
 
 ## Error Output
 
-When the evaluator catches a process-level failure, it prints:
-
-```json
-{
-  "results": [
-    {
-      "test": "./test-a.py",
-      "evidence_file": "./evidence.json",
-      "test_parameters": {},
-      "executed": false,
-      "outcome": "error",
-      "reason": "Error loading evidence: ...",
-      "test_parameters_source": null
-    }
-  ],
-  "evaluator": {
-    "messages": [
-      {
-        "level": "error",
-        "source": "evaluator",
-        "code": "evidence_load_error",
-        "message": "...",
-        "evidence_file": "./evidence.json",
-        "test_file": "./test-a.py",
-        "test_parameters_source": null
-      }
-    ],
-    "summary": {
-      "count": 1,
-      "ran": 0,
-      "pass": 0,
-      "fail": 0,
-      "inconclusive": 0,
-      "error": 0,
-      "message_count": 1,
-      "message_info": 0,
-      "message_warning": 0,
-      "message_error": 1
-    }
-  }
-}
-```
-
-Common failures:
+Common evaluator-owned failures:
 
 - missing evidence file
-- missing test file
-- missing test parameter file
-- invalid or non-object test parameter file
-- known unprocessable evidence type
+- unprocessable evidence type
 - evidence parsing failure
+- missing test file
 - import failure
 - exception raised while executing `evaluate(...)`
 
-When multiple tests are supplied, import or execution failure in one test is associated with that `test_file` in `evaluator.messages` and does not stop the remaining tests from running.
+Blocked evaluations can legitimately produce:
 
-This means a blocked evaluation can legitimately produce:
-
-- `results[*].executed: false`
+- `results[*].execution.executed: false`
+- `results[*].result: null`
 - `summary.error: 0`
 - one or more evaluator `error` messages
 - `summary.message_error > 0`
@@ -270,109 +267,3 @@ Each message contains:
 - `message`
 - `evidence_file`
 - `test_file`
-- `test_parameters_source`
-
-Warning example for a file with no extension:
-
-```json
-{
-  "results": [
-    {
-      "test": "text_test.py",
-      "evidence_file": "./evidence",
-      "test_parameters": {},
-      "executed": true,
-      "outcome": "pass",
-      "reason": "Text evaluated.",
-      "test_parameters_source": null
-    }
-  ],
-  "evaluator": {
-    "messages": [
-      {
-        "level": "warning",
-        "source": "evaluator",
-        "code": "missing_extension_text_fallback",
-        "message": "Evidence file had no extension and was evaluated as text.",
-        "evidence_file": "./evidence",
-        "test_file": "./text_test.py",
-        "test_parameters_source": null
-      }
-    ],
-    "summary": {
-      "count": 1,
-      "ran": 1,
-      "pass": 1,
-      "fail": 0,
-      "inconclusive": 0,
-      "error": 0,
-      "message_count": 1,
-      "message_info": 0,
-      "message_warning": 1,
-      "message_error": 0
-    }
-  }
-}
-```
-
-Error example for a known unprocessable extension such as `.png`:
-
-```json
-{
-  "results": [
-    {
-      "test": "./verify_author_complete.py",
-      "evidence_file": "./image.png",
-      "test_parameters": {},
-      "executed": false,
-      "outcome": "error",
-      "reason": "Evidence file extension '.png' is not supported for evaluation.",
-      "test_parameters_source": null
-    }
-  ],
-  "evaluator": {
-    "messages": [
-      {
-        "level": "error",
-        "source": "evaluator",
-        "code": "unprocessable_evidence_type",
-        "message": "Evidence file extension '.png' is not supported for evaluation.",
-        "evidence_file": "./image.png",
-        "test_file": "./verify_author_complete.py",
-        "test_parameters_source": null
-      }
-    ],
-    "summary": {
-      "count": 1,
-      "ran": 0,
-      "pass": 0,
-      "fail": 0,
-      "inconclusive": 0,
-      "error": 0,
-      "message_count": 1,
-      "message_info": 0,
-      "message_warning": 0,
-      "message_error": 1
-    }
-  }
-}
-```
-
-Known unprocessable extensions currently include common image, archive, media, and executable formats. Unknown extensions that are not on that denylist still use the warning-plus-text-fallback path.
-
-If evaluation stops before any test completes, the evaluator still associates each message with the requested `test_file` so callers can see which requested runs were blocked.
-
-The evaluator may still exit successfully after printing JSON output that includes evaluator `error` messages. Consumers should inspect `results` and `evaluator` instead of relying on process exit status alone.
-
-## NAPE CLI Integration
-
-NAPE CLI invokes:
-
-```bash
-nape-eval --check-install
-nape-eval --evidence <evidence-file> --test <test-file>
-nape-eval --evidence <evidence-file> --test <test-a.py> --test <test-b.py>
-nape-eval --evidence <evidence-file> --test <test-a.py> --test-parameters-file <params-a.json>
-```
-
-NAPE CLI expects valid JSON on stdout for action evaluation.

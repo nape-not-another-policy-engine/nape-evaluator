@@ -2,6 +2,8 @@
 
 `nape-eval` is intentionally small. It is a process boundary between NAPE CLI report generation and Python test-of-detail execution.
 
+This document describes the current committed implementation architecture.
+
 ## Execution Flow
 
 ```text
@@ -13,16 +15,20 @@ nape-eval
   if --check-install:
     print health message
     exit
-  reject --check-install with --evidence, --test, or --test-parameters-file
-  require --evidence and --test together
-  validate repeated --test-parameters-file count when present
-  load parameter files into per-test invocation requests
-  resolve loader strategy by extension
+  reject --check-install with evaluation args
+  if direct mode:
+    require --evidence
+    require one or more --invoke/--invoke-file packets
+    decode invocation packets
+  if full-request mode:
+    decode one outer request packet from path or stdin
+  build EvaluateEvidenceRequest through builder().try_build()
   load evidence and build metadata
   for each requested test invocation:
     dynamically import test file
-    call evaluate(evidence, test_parameters, metadata)
-    collect result or evaluator message
+    call evaluate(evidence, evaluations, metadata)
+    collect completed result or evaluator message
+  validate/normalize completed result shape
   print {"results": [...], "evaluator": {...}}
 ```
 
@@ -32,36 +38,39 @@ CLI boundary:
 
 - Implemented by `src/nape_evaluator/application/io/cli.py`.
 - `main.py` is bootstrap-only and delegates to `run_cli()`.
-- Exposes `--check-install`, `--evidence`, `--test`, and `--test-parameters-file`.
-- Rejects `--check-install` if combined with evaluation arguments.
-- Prints usage and exits non-zero when invoked without arguments.
-- Owns direct CLI parameter-file decoding and per-test invocation construction.
+- Exposes `--check-install`, `--evidence`, `--invoke`, `--invoke-file`, and `--request-file`.
+- Rejects invalid flag combinations before use-case execution.
+- Owns request-packet decoding and boundary transport rules.
 
 Use-case boundary:
 
 - Implemented by `src/nape_evaluator/domain/use_cases.py`.
 - Uses request/result models from `src/nape_evaluator/domain/use_case_models.py`.
 - Defines gateway seams in `src/nape_evaluator/domain/gateways.py` using Python `Protocol`s.
-- Owns end-to-end evaluation orchestration for one evidence file and one or more test files.
-- Treats each requested test as its own invocation context with optional caller-owned parameters.
+- Owns end-to-end evaluation orchestration for one evidence file and one or more test invocations.
+- Treats each requested test as its own invocation context.
 - Aggregates result records and evaluator messages into the final output object.
+
+Request seam:
+
+- Implemented by `EvaluateEvidenceRequest` and `EvaluateEvidenceRequestBuilder`.
+- The builder validates caller-owned input before the use case runs.
+- The built request is the accepted use-case boundary object.
 
 Evidence boundary:
 
 - Implemented by `src/nape_evaluator/application/driver/evidence_gateway.py`.
 - The evaluator loads evidence by file extension.
 - The evaluator builds metadata alongside the loaded evidence.
-- Structured formats are parsed before `evaluate(evidence, test_parameters, metadata)` is called.
+- Structured formats are parsed before `evaluate(evidence, evaluations, metadata)` is called.
 
 Test execution boundary:
 
 - Implemented through the test-of-detail gateway seam defined in `src/nape_evaluator/domain/gateways.py`.
 - Concrete driver implementation lives in `src/nape_evaluator/application/driver/test_of_detail_gateway.py`.
 - Test files are Python files loaded dynamically.
-- Test files must define `evaluate(evidence, test_parameters, metadata)`.
+- Test files must define `evaluate(evidence, evaluations, metadata)`.
 - Test files execute in the local Python environment.
-- One evidence file can be evaluated against one or more repeated `--test` arguments in a single invocation.
-- Each test can also receive caller-owned parameters through a matched `--test-parameters-file`.
 
 Output boundary:
 
@@ -73,21 +82,20 @@ Output boundary:
   - `evaluator.summary`
 - The evaluator emits one result item per requested test invocation.
 - Evaluator/runtime failures are reported through `evaluator.messages`.
-- Result context includes `evidence_file`, `test_parameters`, `test_parameters_source`, and `executed`.
-- Message context includes `test_parameters_source`.
+- Result context includes `test`, `evidence`, `evaluations`, `execution`, and `result`.
 
 ## Error Model
 
 The evaluator catches common failures and converts them to evaluator `error` messages.
 
-Returned test outcome `"error"` and evaluator/runtime failure are intentionally distinct:
+Completed test `conclusion: "error"` and evaluator/runtime failure are intentionally distinct:
 
-- returned `"error"` with `executed == true` increments `evaluator.summary.error`
-- blocked invocations still appear in `results` with `executed == false`
+- completed `conclusion: "error"` increments `evaluator.summary.error`
+- blocked invocations still appear in `results` with `execution.executed == false`
 - evaluator/runtime failures increment `evaluator.summary.message_error`
 - blocked tests can leave `evaluator.summary.ran` below `evaluator.summary.count`
 
-This means an evaluation problem can still produce JSON output even when one or more requested tests never complete.
+This means an evaluation problem can still produce valid JSON output even when one or more requested tests never complete.
 
 Future releases can still revisit whether some failures should produce a non-zero process exit instead.
 
@@ -110,16 +118,16 @@ Root repository layout is intentionally stabilized as:
 ## Current Module Ownership
 
 - `main.py`: bootstrap entry point only
-- `src/nape_evaluator/application/io/cli.py`: CLI parser construction, argument validation, parameter-file decoding, and stdout contract emission
+- `src/nape_evaluator/application/io/cli.py`: CLI parser construction, argument validation, request-packet decoding, and stdout contract emission
 - `src/nape_evaluator/application/io/output_contract.py`: output message and summary shaping
 - `src/nape_evaluator/application/driver/evidence_gateway.py`: concrete evidence gateway implementation
 - `src/nape_evaluator/application/driver/test_of_detail_gateway.py`: concrete test-of-detail gateway implementation
-- `src/nape_evaluator/domain/use_case_models.py`: bounded use-case request/result models
+- `src/nape_evaluator/domain/use_case_models.py`: bounded use-case request/result models and request/response validation
 - `src/nape_evaluator/domain/use_cases.py`: evaluation orchestration
 - `src/nape_evaluator/domain/gateways.py`: domain-owned gateway seams and domain-level gateway failure type
 
 ## Historical Compatibility Risk
 
-Typed evidence loading moved evidence parsing from test-of-detail files into evaluator core. That improves consistency but changes the authoring contract for older V1 tests that parsed JSON from text lines.
+Typed evidence loading moved evidence parsing from test-of-detail files into evaluator core. The V2 cutover also replaced older parameter-based transport and tuple-returning test contracts.
 
-The current parameter feature also changes the test signature from two arguments to three: `evaluate(evidence, test_parameters, metadata)`.
+Tests written for V1 or early transitional shapes may need migration.

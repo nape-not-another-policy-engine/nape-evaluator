@@ -8,7 +8,7 @@ from nape_evaluator.application.driver.test_of_detail_gateway import (
 )
 from nape_evaluator.domain.use_case_models import (
     EvaluateEvidenceRequest,
-    TestInvocationRequest,
+    RequestValidationError,
 )
 from nape_evaluator.domain.use_cases import evaluate_request
 
@@ -19,19 +19,23 @@ def build_parser():
     )
     parser.add_argument("--evidence", help="The evidence file to evaluate.")
     parser.add_argument(
-        "--test",
+        "--invoke",
         action="append",
-        help="A Test of Detail file. Repeat this argument to evaluate multiple tests against the same evidence.",
+        help="One JSON object containing test and evaluations for a single invocation.",
+    )
+    parser.add_argument(
+        "--invoke-file",
+        action="append",
+        help="Path to one JSON object file containing test and evaluations for a single invocation.",
+    )
+    parser.add_argument(
+        "--request-file",
+        help="Path to one JSON request file containing evidence and tests, or - to read that full request from stdin.",
     )
     parser.add_argument(
         "--check-install",
         action="store_true",
         help="Check if the CLI is installed and working.",
-    )
-    parser.add_argument(
-        "--test-parameters-file",
-        action="append",
-        help="Path to a JSON object file containing caller-supplied parameters for one test. Repeat once per --test in the same order.",
     )
     return parser
 
@@ -40,84 +44,102 @@ def parse_args(argv=None):
     parser = build_parser()
     args = parser.parse_args(argv)
 
-    if args.check_install and (args.evidence or args.test or args.test_parameters_file):
+    has_direct_invocations = bool(args.invoke or args.invoke_file)
+    has_request_file = bool(args.request_file)
+
+    if args.check_install and (
+        args.evidence or has_direct_invocations or has_request_file
+    ):
         parser.error(
-            "--check-install cannot be combined with --evidence, --test, or --test-parameters-file."
+            "--check-install cannot be combined with --evidence, --invoke, --invoke-file, or --request-file."
         )
 
     if (
         not args.check_install
         and not args.evidence
-        and not args.test
-        and not args.test_parameters_file
+        and not has_direct_invocations
+        and not has_request_file
     ):
         parser.print_help(sys.stderr)
         raise SystemExit(2)
 
-    if (
-        (args.evidence and not args.test)
-        or (args.test and not args.evidence)
-        or (args.test_parameters_file and (not args.evidence or not args.test))
-    ):
-        parser.error("--evidence and --test must be provided together.")
-
-    if args.test_parameters_file and len(args.test_parameters_file) != len(args.test):
+    if has_request_file and (args.evidence or has_direct_invocations):
         parser.error(
-            "--test-parameters-file must be omitted or repeated once per --test."
+            "--request-file cannot be combined with --evidence, --invoke, or --invoke-file."
+        )
+
+    if has_direct_invocations and not args.evidence:
+        parser.error("--evidence must be provided with --invoke or --invoke-file.")
+
+    if args.evidence and not has_direct_invocations and not has_request_file:
+        parser.error(
+            "--evidence must be provided together with at least one --invoke or --invoke-file."
         )
 
     return args
 
 
-def load_test_parameters_file(test_path, test_parameters_source):
+def _raise_cli_error(message: str):
+    build_parser().error(message)
+
+
+def _decode_json_string(raw_value: str, source_label: str):
     try:
-        with open(test_parameters_source, "r", encoding="utf-8") as handle:
-            data = json.load(handle)
-    except FileNotFoundError as exc:
-        return TestInvocationRequest.blocked(
-            test_path,
-            "test_parameter_file_not_found",
-            "Unable to find the test parameter file for evaluation. " + str(exc),
-            test_parameters_source=test_parameters_source,
-        )
+        return json.loads(raw_value)
     except json.JSONDecodeError as exc:
-        return TestInvocationRequest.blocked(
-            test_path,
-            "test_parameter_decode_error",
-            "Failed to decode the test parameter file as JSON. " + str(exc),
-            test_parameters_source=test_parameters_source,
-        )
+        _raise_cli_error(f"Failed to decode {source_label} as JSON. {exc}")
+
+
+def _decode_json_file(path: str, source_label: str):
+    try:
+        with open(path, "r", encoding="utf-8") as handle:
+            return json.load(handle)
+    except FileNotFoundError as exc:
+        _raise_cli_error(f"Unable to find {source_label}. {exc}")
+    except json.JSONDecodeError as exc:
+        _raise_cli_error(f"Failed to decode {source_label} as JSON. {exc}")
     except Exception as exc:
-        return TestInvocationRequest.blocked(
-            test_path,
-            "test_parameter_load_error",
-            "Failed to load the test parameter file. " + str(exc),
-            test_parameters_source=test_parameters_source,
+        _raise_cli_error(f"Failed to load {source_label}. {exc}")
+
+
+def _decode_request_file(request_file: str):
+    if request_file == "-":
+        try:
+            return json.load(sys.stdin)
+        except json.JSONDecodeError as exc:
+            _raise_cli_error(f"Failed to decode stdin request JSON. {exc}")
+        except Exception as exc:
+            _raise_cli_error(f"Failed to read stdin request JSON. {exc}")
+    return _decode_json_file(request_file, f"request file {request_file}")
+
+
+def build_request_from_args(args):
+    try:
+        if args.request_file:
+            request_packet = _decode_request_file(args.request_file)
+            if not isinstance(request_packet, dict):
+                _raise_cli_error("--request-file must decode to a top-level JSON object.")
+            return (
+                EvaluateEvidenceRequest.builder()
+                .evidence_path(request_packet.get("evidence"))
+                .raw_tests(request_packet.get("tests"))
+                .try_build()
+            )
+
+        raw_tests = []
+        for raw_value in args.invoke or []:
+            raw_tests.append(_decode_json_string(raw_value, "--invoke value"))
+        for path in args.invoke_file or []:
+            raw_tests.append(_decode_json_file(path, f"invoke file {path}"))
+
+        return (
+            EvaluateEvidenceRequest.builder()
+            .evidence_path(args.evidence)
+            .raw_tests(raw_tests)
+            .try_build()
         )
-
-    if not isinstance(data, dict):
-        return TestInvocationRequest.blocked(
-            test_path,
-            "test_parameter_shape_error",
-            "Test parameter input must be a top-level JSON object.",
-            test_parameters_source=test_parameters_source,
-        )
-
-    return TestInvocationRequest.ready(
-        test_path,
-        data,
-        test_parameters_source=test_parameters_source,
-    )
-
-
-def build_test_invocations(test_files, test_parameter_files):
-    if not test_parameter_files:
-        return [TestInvocationRequest.ready(test_path, {}) for test_path in test_files]
-
-    invocations = []
-    for test_path, test_parameters_source in zip(test_files, test_parameter_files):
-        invocations.append(load_test_parameters_file(test_path, test_parameters_source))
-    return invocations
+    except RequestValidationError as exc:
+        _raise_cli_error(str(exc))
 
 
 def run_cli(argv=None):
@@ -127,16 +149,12 @@ def run_cli(argv=None):
         print("NAPE Evaluator CLI is installed and working.")
         return 0
 
+    request = build_request_from_args(args)
+
     print(
         json.dumps(
             evaluate_request(
-                EvaluateEvidenceRequest(
-                    evidence_path=args.evidence,
-                    test_invocations=build_test_invocations(
-                        list(args.test),
-                        list(args.test_parameters_file) if args.test_parameters_file else [],
-                    ),
-                ),
+                request,
                 DEFAULT_EVIDENCE_GATEWAY,
                 DEFAULT_TEST_OF_DETAIL_GATEWAY,
             ).to_cli_output()

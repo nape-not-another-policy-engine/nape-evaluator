@@ -7,7 +7,6 @@ def build_message(
     message,
     evidence_file=None,
     test_file=None,
-    test_parameters_source=None,
 ):
     return {
         "level": level,
@@ -16,7 +15,6 @@ def build_message(
         "message": message,
         "evidence_file": evidence_file,
         "test_file": test_file,
-        "test_parameters_source": test_parameters_source,
     }
 
 
@@ -24,8 +22,8 @@ def build_summary(count, results, messages):
     summary = {
         "count": count,
         "ran": 0,
-        "pass": 0,
-        "fail": 0,
+        "true": 0,
+        "false": 0,
         "inconclusive": 0,
         "error": 0,
         "message_count": len(messages),
@@ -34,12 +32,14 @@ def build_summary(count, results, messages):
         "message_error": 0,
     }
     for result in results:
-        if not result.get("executed", True):
+        execution = result.get("execution", {})
+        if not execution.get("executed", False):
             continue
         summary["ran"] += 1
-        outcome = result.get("outcome")
-        if outcome in ("pass", "fail", "inconclusive", "error"):
-            summary[outcome] += 1
+        result_payload = result.get("result") or {}
+        conclusion = result_payload.get("conclusion")
+        if conclusion in ("true", "false", "inconclusive", "error"):
+            summary[conclusion] += 1
     for message in messages:
         level = message.get("level")
         if level == "info":

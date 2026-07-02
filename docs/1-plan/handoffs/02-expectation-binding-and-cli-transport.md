@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Resume caller-supplied expectation transport work without losing the current implementation context.
+Resume caller-supplied evaluation-input transport work without losing the current implementation context.
 
 ## Read Order
 
@@ -19,29 +19,44 @@ Resume caller-supplied expectation transport work without losing the current imp
 - direct CLI parameter transport currently uses repeated `--test-parameters-file`
 - binding is positional across repeated `--test`
 - the current implementation already produces one result item per requested invocation, including blocked invocations
+- the selected V2 proposal direction no longer uses `expectation`; it now uses caller-owned `evaluations[*].subject` plus `criteria`
+- the selected V2 direct CLI direction is now:
+  - `--invoke` for non-file usage
+  - `--invoke-file` for file usage
+  - `--request-file` for full-request file or stdin usage
+  - one repeated invocation packet per test
+  - each invocation packet contains both `test` and `evaluations`
+- the selected full-request direction is to accept one full outer JSON request packet through `--request-file`, where `-` means stdin, rather than only a repeated invocation list
+- the selected V2 CLI transport direction is also packet-based only; micro-flag decomposition is not part of the V2 direction
 
 ## Primary Review Questions
 
-Before adding more CLI input features, decide:
+The direct binding model is now selected.
 
-1. should direct CLI binding remain positional?
-2. should `--test` become an explicit invocation scope?
-3. should inline one-at-a-time input be added?
-4. should inline input and file-based input be mutually exclusive per test in the first version?
-5. should manifest-style binding wait until scoped CLI binding is settled?
+Remaining questions are:
+
+None on the core V2 CLI transport shape.
 
 ## Current Recommendation
 
 The strongest current direction is:
 
 - keep the three-argument test contract
-- keep dict-shaped caller input
-- move future CLI ergonomics toward explicit per-test scoping
-- treat current positional file binding as implemented baseline, not necessarily the final ergonomic direction
+- keep packet-shaped caller input
+- use one repeated invocation packet per test
+- support `--invoke` and `--invoke-file`
+- support `--request-file` for programmatic callers or full-request submission
+- use a full outer request packet for file-or-stdin transport
+- keep V2 packet-based only rather than adding micro-flags for decomposed subject/criteria input
+- treat current positional file binding as implemented baseline only, not the V2 direction
+- keep full-request transport separate from the human direct-flag shape
 
 ## Guardrails
 
 - do not hide current implementation terminology when the behavior is still committed as `test_parameters`
 - do not silently coerce caller input types
 - do not mix evaluator-owned metadata with caller-owned comparison input
-- do not start another CLI syntax implementation until the binding model is explicitly chosen and recorded
+- do not fall back to positional matching for V2 direct CLI
+- do not split one invocation across multiple unrelated CLI flags if the packet-based model has already been chosen
+- do not introduce a custom binary transport as the first V2 process-to-process interface
+- do not introduce a second micro-flag input language for V2 caller-owned evaluation packets

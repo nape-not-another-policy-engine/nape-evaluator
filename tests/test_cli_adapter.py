@@ -4,92 +4,64 @@ from contextlib import redirect_stderr, redirect_stdout
 from unittest.mock import patch
 
 from nape_evaluator.application.io import cli
-from nape_evaluator.domain.use_case_models import (
-    EvaluateEvidenceResponse,
-    TestInvocationRequest,
-)
+from nape_evaluator.domain.use_case_models import EvaluateEvidenceResponse
+
+
+def _completed_result():
+    return {
+        "test": "./test.py",
+        "evidence": "./evidence.json",
+        "evaluations": [],
+        "execution": {"executed": True, "status": "completed"},
+        "result": {"conclusion": "true", "facts": [], "reason": "ok"},
+    }
 
 
 class TestCliAdapter(unittest.TestCase):
-    def test_parse_args_accepts_repeated_test_arguments(self):
+    def test_parse_args_accepts_repeated_invoke_arguments(self):
         args = cli.parse_args(
             [
                 "--evidence",
                 "./evidence.json",
-                "--test",
-                "./test-a.py",
-                "--test",
-                "./test-b.py",
+                "--invoke",
+                '{"test":"./test-a.py","evaluations":[]}',
+                "--invoke",
+                '{"test":"./test-b.py","evaluations":[]}',
             ]
         )
 
         self.assertEqual(args.evidence, "./evidence.json")
-        self.assertEqual(args.test, ["./test-a.py", "./test-b.py"])
+        self.assertEqual(
+            args.invoke,
+            [
+                '{"test":"./test-a.py","evaluations":[]}',
+                '{"test":"./test-b.py","evaluations":[]}',
+            ],
+        )
         self.assertFalse(args.check_install)
 
-    def test_parse_args_accepts_repeated_parameter_files(self):
-        args = cli.parse_args(
-            [
-                "--evidence",
-                "./evidence.json",
-                "--test",
-                "./test-a.py",
-                "--test-parameters-file",
-                "./params-a.json",
-            ]
-        )
+    def test_parse_args_accepts_request_file(self):
+        args = cli.parse_args(["--request-file", "./request.json"])
+        self.assertEqual(args.request_file, "./request.json")
 
-        self.assertEqual(args.test_parameters_file, ["./params-a.json"])
-
-    def test_parse_args_rejects_missing_paired_argument(self):
-        stderr = io.StringIO()
-
-        with redirect_stderr(stderr), self.assertRaises(SystemExit) as context:
-            cli.parse_args(["--evidence", "./evidence.json"])
-
-        self.assertEqual(context.exception.code, 2)
-        self.assertIn("--evidence and --test must be provided together.", stderr.getvalue())
-
-    def test_parse_args_rejects_check_install_combined_with_evaluation_args(self):
+    def test_parse_args_rejects_mixing_request_file_and_direct_flags(self):
         stderr = io.StringIO()
 
         with redirect_stderr(stderr), self.assertRaises(SystemExit) as context:
             cli.parse_args(
                 [
-                    "--check-install",
+                    "--request-file",
+                    "./request.json",
                     "--evidence",
                     "./evidence.json",
-                    "--test",
-                    "./test.py",
+                    "--invoke",
+                    '{"test":"./test-a.py","evaluations":[]}',
                 ]
             )
 
         self.assertEqual(context.exception.code, 2)
         self.assertIn(
-            "--check-install cannot be combined with --evidence, --test, or --test-parameters-file.",
-            stderr.getvalue(),
-        )
-
-    def test_parse_args_rejects_parameter_count_mismatch(self):
-        stderr = io.StringIO()
-
-        with redirect_stderr(stderr), self.assertRaises(SystemExit) as context:
-            cli.parse_args(
-                [
-                    "--evidence",
-                    "./evidence.json",
-                    "--test",
-                    "./test-a.py",
-                    "--test",
-                    "./test-b.py",
-                    "--test-parameters-file",
-                    "./params-a.json",
-                ]
-            )
-
-        self.assertEqual(context.exception.code, 2)
-        self.assertIn(
-            "--test-parameters-file must be omitted or repeated once per --test.",
+            "--request-file cannot be combined with --evidence, --invoke, or --invoke-file.",
             stderr.getvalue(),
         )
 
@@ -111,34 +83,38 @@ class TestCliAdapter(unittest.TestCase):
         self.assertEqual(exit_code, 0)
         self.assertEqual(stdout.getvalue().strip(), "NAPE Evaluator CLI is installed and working.")
 
-    def test_run_cli_prints_json_output(self):
+    def test_run_cli_builds_v2_request_from_invoke(self):
         stdout = io.StringIO()
 
         with patch(
             "nape_evaluator.application.io.cli.evaluate_request",
             return_value=EvaluateEvidenceResponse(
-                count=0,
-                results=[],
-                messages=[],
+                count=1,
+                results=(_completed_result(),),
+                messages=(),
             ),
         ) as mock_use_case, redirect_stdout(stdout):
             exit_code = cli.run_cli(
                 [
                     "--evidence",
                     "./evidence.json",
-                    "--test",
-                    "./test.py",
+                    "--invoke",
+                    '{"test":"./test.py","evaluations":[{"subject":{"name":"coverage","data_type":"number"},"criteria":{"minimum":80}}]}',
                 ]
             )
 
         self.assertEqual(exit_code, 0)
         request = mock_use_case.call_args.args[0]
         self.assertEqual(request.evidence_path, "./evidence.json")
+        self.assertEqual(len(request.test_invocations), 1)
+        self.assertEqual(request.test_invocations[0].test_path, "./test.py")
         self.assertEqual(
-            request.test_invocations,
-            [TestInvocationRequest.ready("./test.py", {})],
+            request.test_invocations[0].evaluations_as_dicts(),
+            [
+                {
+                    "subject": {"name": "coverage", "data_type": "number"},
+                    "criteria": {"minimum": 80},
+                }
+            ],
         )
-        self.assertEqual(
-            stdout.getvalue().strip(),
-            '{"results": [], "evaluator": {"messages": [], "summary": {"count": 0, "ran": 0, "pass": 0, "fail": 0, "inconclusive": 0, "error": 0, "message_count": 0, "message_info": 0, "message_warning": 0, "message_error": 0}}}',
-        )
+        self.assertIn('"true": 1', stdout.getvalue())

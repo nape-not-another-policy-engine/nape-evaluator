@@ -1,0 +1,13 @@
+{
+  "access_grant": {
+    "approver_profile": {
+      "id": "manager-123",
+      "department": "security"
+    },
+    "reviewer_roles": [
+      "manager",
+      "security"
+    ],
+    "revocation_reason": null
+  }
+}

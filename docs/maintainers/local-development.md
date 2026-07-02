@@ -46,7 +46,7 @@ python main.py --check-install
 make docs-smoke
 ```
 
-If you want to run the current typed JSON path manually:
+If you want to run the current JSON path manually:
 
 ```bash
 cd tests/manual
@@ -64,7 +64,7 @@ cd tests/v1_baseline
 bash ./author_test.sh
 ```
 
-That older test expects text-line JSON parsing and is not compatible with the current typed JSON contract.
+That older test expects text-line JSON parsing and is not compatible with the current V2 transport and result contract.
 
 ## Automated Tests
 
@@ -81,7 +81,8 @@ This covers:
 - `--check-install` exclusivity with evaluation arguments
 - CLI contract behavior through subprocess tests
 - direct CLI adapter behavior through unit tests
-- JSON CLI pass behavior
+- request-builder validation
+- JSON true-result behavior
 - JSON inconclusive behavior
 - invalid JSON loader errors
 - JSON, YAML, XML, TXT, and unknown-extension loader behavior
@@ -90,6 +91,7 @@ The current test ownership split is:
 
 - `tests/test_cli_contract.py`: end-to-end CLI contract via `main.py`
 - `tests/test_cli_adapter.py`: parser and transport behavior in `src/nape_evaluator/application/io/cli.py`
+- `tests/test_request_builder.py`: request-builder validation
 - `tests/test_evaluator_use_case.py`: orchestration behavior
 - `tests/test_evidence_gateway_routing.py`: loader routing and metadata behavior
 - `tests/test_text_evidence_loading.py`: text loading and text fallback behavior
@@ -105,8 +107,8 @@ When updating docs, verify:
 
 ```bash
 make docs-smoke
-rg -n "typed evidence|V1 baseline|historical" README.md docs
-rg -n "nape-eval --check-install|--evidence|--test" README.md docs
+rg -n "V1 baseline|historical" README.md docs
+rg -n "nape-eval --check-install|--evidence|--invoke|--request-file" README.md docs
 git diff --check -- README.md docs .gitignore
 ```
 
@@ -125,4 +127,7 @@ These are ignored by `.gitignore`.
 
 `docs/product/v1-evaluator-baseline.md` remains the source for the old all-text contract if you need to compare behavior or plan migrations.
 
-Recommended V2 contract-direction decisions are recorded in `docs/product/v2-policy-direction.md`.
+Current product-level direction is recorded in:
+
+- `docs/product/current-evaluator-reference.md`
+- `docs/product/v2-policy-direction.md`

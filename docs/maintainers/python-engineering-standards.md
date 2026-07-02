@@ -13,9 +13,7 @@ These standards exist to keep `nape-evaluator`:
 - verifiable
 - reviewable
 - documentation-led
-- safe to evolve toward V2
-
-The source inspiration for this document is the Attestify engineering-standards repository, but the rules below are the local standards for this repository.
+- safe to evolve
 
 ## Scope
 
@@ -33,28 +31,14 @@ These standards apply to:
 `nape-evaluator` is a small process-boundary tool. Its main governed seams are:
 
 1. CLI invocation seam
-2. evidence-loading seam
-3. dynamic test-of-detail execution seam
-4. evaluator output seam
-5. package/install seam
-6. documentation and review seam
+2. request validation seam
+3. evidence-loading seam
+4. dynamic test-of-detail execution seam
+5. evaluator output seam
+6. package/install seam
+7. documentation and review seam
 
 These seams are more important than imposing artificial internal layers.
-
-## V2 Structural Direction
-
-The current repository is compact, but V2 work should prefer explicit internal roles once complexity justifies them.
-
-For this repository, the preferred future roles are:
-
-- CLI or IO adapter
-- evaluator orchestration use case
-- evidence-loading support surfaces
-- test-module loading and execution support surfaces
-- output serialization support surfaces
-- explicit gateways only where external dependency seams need to be isolated
-
-These are review and refactor targets, not a claim that the current repo already implements each role cleanly.
 
 ## Source Of Truth Rule
 
@@ -73,13 +57,14 @@ Every public evaluator behavior should have an explicit contract.
 For this repository, that includes at minimum:
 
 - CLI argument behavior
+- request packet behavior
 - typed evidence-loading behavior
-- metadata and caller-owned parameters passed into `evaluate(evidence, test_parameters, metadata)`
+- metadata and caller-owned `evaluations` passed into `evaluate(evidence, evaluations, metadata)`
 - structured JSON output shape
 - evaluator/runtime failure representation
 - packaging expectations for supported file types
 
-Public behavior must not be left implicit if callers, test authors, or future V2 work depend on it.
+Public behavior must not be left implicit if callers, test authors, or future work depend on it.
 
 ## Seam Rule
 
@@ -88,8 +73,9 @@ Bounded seams must remain explicit and reviewable.
 Current seams include:
 
 - command-line inputs into the evaluator process
+- request-builder validation before use-case execution
 - file-extension-based evidence translation into Python objects
-- trusted test-of-detail execution through `evaluate(evidence, test_parameters, metadata)`
+- trusted test-of-detail execution through `evaluate(evidence, evaluations, metadata)`
 - evaluator output through stdout JSON
 
 New features should preserve seam clarity rather than collapse behavior into hidden side effects or convenience shortcuts.
@@ -98,9 +84,9 @@ New features should preserve seam clarity rather than collapse behavior into hid
 
 When evaluator behavior becomes orchestration-heavy, it should be expressed as an explicit use case rather than left embedded in transport parsing.
 
-For this repository, the main use case candidate is:
+For this repository, the main use case is:
 
-- evaluate one evidence file against one or more test-of-detail files and emit the bounded evaluator output
+- evaluate one evidence file against one or more test-of-detail invocations and emit the bounded evaluator output
 
 An evaluator use case should own:
 
@@ -131,20 +117,14 @@ Do not create fake gateways around trivial local behavior merely to mirror a lar
 
 ## Builder And Construction Rule
 
-Do not force Java-style builders into Python.
-
-Use explicit construction helpers only when they materially improve:
+Use explicit construction helpers when they materially improve:
 
 - validation clarity
 - bounded request construction
 - normalization behavior
 - contract readability
 
-Acceptable Python equivalents include:
-
-- validating factory functions
-- explicit request dataclasses
-- construction helpers that finalize bounded input objects before execution
+In this repository, `EvaluateEvidenceRequest.builder().try_build()` is the owned request-seam construction path for caller-owned evaluation input.
 
 Construction support surfaces should remain subordinate to the owned seam or use case, not become free-floating abstractions.
 
@@ -157,15 +137,17 @@ Expected evaluator/runtime failures should:
 - be bounded
 - be explainable
 - be serializable into the documented output contract
-- remain distinguishable from returned test outcomes
+- remain distinguishable from completed test conclusions
 
 Current meaning must remain explicit:
 
-- returned test outcome `"error"` is a test result
+- completed test `conclusion: "error"` is a test result
 - evaluator/runtime failure is an evaluator message
 - blocked execution is visible through `count`, `ran`, and evaluator messages
 
-Raw Python tracebacks are not the intended contract for expected evaluator-boundary failures.
+Malformed caller-owned `evaluations` input should be rejected at the evaluator boundary rather than left to ad hoc test-level failure handling.
+
+Missing or unusable extracted facts remain test-owned evaluation concerns that may lead to `inconclusive`.
 
 ## Python Error-Handling Rule
 
@@ -214,11 +196,9 @@ Test-of-detail files are trusted executable Python code.
 
 Repository docs and reviews must continue to state that:
 
-- the evaluator dynamically imports and executes Python files supplied by `--test`
+- the evaluator dynamically imports and executes Python files supplied through requested `test` paths
 - these files are not sandboxed
 - untrusted test files should not be run in sensitive environments
-
-Future hardening may change execution controls, but the current trust model must stay explicit.
 
 ## Documentation Governance Rule
 
@@ -252,95 +232,3 @@ For this repository, each meaningful bounded behavior should be reviewable in te
 ## Module Size And Decomposition Rule
 
 Module size is governed primarily by bounded responsibility, not raw line count.
-
-Split a Python module when one or more of these become true:
-
-- the module owns more than one bounded responsibility
-- meaningful logical paths for unrelated concerns are mixed together
-- tests must indirectly cover unrelated behavior because no narrower unit exists
-- documentation has to explain several separate seams in one file
-- a reviewer can no longer explain the module’s owned behavior in one short statement
-
-Line count may be a smell, but it is not the primary rule.
-
-For this repository, a large file is acceptable only if its behavior is still bounded and reviewable as one responsibility.
-
-## Test Organization Rule
-
-Tests should be organized by bounded behavior surface, not just by convenience or file type.
-
-Preferred grouping direction for this repository is:
-
-- CLI contract behavior
-- evidence-loading behavior
-- execution-flow behavior
-- output-contract behavior
-
-Fixtures should remain separate from behavioral assertions where practical.
-
-As the repository grows, test modules should reflect seam ownership clearly enough that a reviewer can tell what contract surface each test file verifies.
-
-## Meaningful Logical Path Rule
-
-Testing should cover meaningful logical paths, not just happy paths or syntactic branch counts.
-
-For `nape-evaluator`, meaningful logical paths include:
-
-- valid CLI install check
-- invalid CLI invocation
-- single-test success
-- multi-test success
-- one-test-fails-and-others-continue
-- missing evidence
-- missing test file
-- import failure
-- test execution failure
-- supported structured evidence loading
-- text fallback behavior
-- known unprocessable extension behavior
-
-Behaviorally distinct paths should be explicit in tests or deliberately documented as deferred.
-
-Test growth should also remain bounded. Avoid adding noisy, repetitive tests that do not increase confidence in a distinct logical path or contract surface.
-
-## Determinism Rule
-
-The evaluator should behave deterministically for the same:
-
-- CLI arguments
-- evidence content
-- test-of-detail implementation
-- runtime dependency availability assumptions
-
-If non-deterministic behavior is introduced later, it must be intentional and documented.
-
-## AI-Assisted Development Rule
-
-AI-generated or AI-modified output in this repository must:
-
-- preserve the evaluator contract
-- preserve seam clarity
-- preserve failure semantics
-- preserve or improve meaningful logical-path coverage
-- preserve docs/code alignment
-
-AI-generated output must not:
-
-- invent undocumented behavior
-- silently weaken contracts
-- optimize for brevity over correctness
-- replace repository standards with generic defaults
-
-## When To Add New Maintainer Docs
-
-Add or expand permanent maintainer docs when:
-
-- a new public seam is introduced
-- a new supported evidence format is added
-- output shape changes
-- install/runtime dependency expectations change
-- a new review surface becomes necessary for V2 work
-
-## Review Link
-
-Use [software-review.md](software-review.md) as the repo-specific review checklist derived from these standards.

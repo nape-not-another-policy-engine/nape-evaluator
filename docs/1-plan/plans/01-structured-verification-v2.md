@@ -4,6 +4,10 @@
 
 Expand the evaluator's current flat request/result contract into a clearer V2 structured model without changing the evaluator's core responsibility.
 
+## Status
+
+Completed as proposal-shaping work. Follow-on implementation planning now lives in `docs/1-plan/plans/03-structured-verification-v2-implementation-planning.md`.
+
 ## Baseline
 
 This plan builds on the current implemented evaluator model:
@@ -30,9 +34,11 @@ Current committed behavior:
 
 Current proposal direction:
 
-- caller-owned comparison input is moving toward `expectation`
-- per-test output is moving toward explicit `execution` plus structured `result`
-- `result` is expected to carry `conclusion`, `facts`, `expectations`, and `reason`
+- caller-owned input now uses `test` + `evidence` + `evaluations`
+- each evaluation item uses `subject` plus object-valued `criteria`
+- the aligned test boundary is `evaluate(evidence, evaluations, metadata)`
+- per-test output now moves toward explicit outer `execution` plus one combined structured `result`
+- the aligned `result` direction is `conclusion`, `facts`, and `reason`, while caller-owned `evaluations` is echoed in the outer envelope
 
 ## Scope
 
@@ -61,8 +67,8 @@ Out of scope:
 3. Lock the per-test structured result shape.
    Clarify what belongs to evaluator-owned execution state versus test-owned result content.
 
-4. Clarify fact and expectation representation.
-   Keep machine-readable fact and expectation records understandable for later verification-procedure/report work.
+4. Clarify fact and criteria representation.
+   Keep machine-readable fact records and caller-owned echoed criteria understandable for later verification-procedure/report work.
 
 5. Clarify migration pressure.
    Record what changes from the current flat contract to the proposed V2 shape and what remains the same.
@@ -72,9 +78,8 @@ Out of scope:
 
 ## Open Questions
 
-- When the V2 result becomes structured, does the test continue returning a tuple first and later migrate, or does the contract change in one step?
 - Which fields are echoed from caller input versus derived by the evaluator versus returned by the test?
-- What is the minimum machine-readable structure needed for facts and expectations without overfitting the packet too early?
+- When implementation planning begins, which validation rules should remain evaluator-owned versus test-owned?
 - Which proposal decisions are documentation-only for now versus implementation-ready?
 
 ## Done Criteria
@@ -85,4 +90,5 @@ This plan is ready to close when:
 - the V2 result proposal is coherent and grounded in current behavior
 - before/after records clearly explain the changes from the current contract
 - approved durable decisions have been moved into permanent product/reference/user docs
+- selected V2 test-authoring guidance exists in durable user docs with a scaffold and input-pattern library
 - any remaining implementation work is handed off as explicit follow-up work rather than hidden in proposal text

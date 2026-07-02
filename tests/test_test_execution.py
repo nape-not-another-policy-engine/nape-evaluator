@@ -25,8 +25,8 @@ class TestTestExecution(unittest.TestCase):
             test_path.write_text(
                 "\n".join(
                     [
-                        "def evaluate(evidence, test_parameters, metadata):",
-                        "    return 'pass', 'ok'",
+                        "def evaluate(evidence, evaluations, metadata):",
+                        "    return {'conclusion': 'true', 'facts': [], 'reason': 'ok'}",
                     ]
                 )
                 + "\n",
@@ -36,7 +36,10 @@ class TestTestExecution(unittest.TestCase):
             module = gateway.load_test_of_detail(str(test_path))
 
         self.assertTrue(callable(module.evaluate))
-        self.assertEqual(module.evaluate({}, {}, {}), ("pass", "ok"))
+        self.assertEqual(
+            module.evaluate({}, [], {}),
+            {"conclusion": "true", "facts": [], "reason": "ok"},
+        )
 
     def test_load_test_of_detail_raises_file_not_found_for_missing_path(self):
         gateway = PythonTestOfDetailGateway()

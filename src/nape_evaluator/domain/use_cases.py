@@ -10,16 +10,13 @@ from nape_evaluator.domain.use_case_models import (
     TestInvocationRequest,
 )
 
-VALID_OUTCOMES = {"pass", "fail", "inconclusive", "error"}
 
-
-def contextualize_messages(messages, evidence_file, test_file, test_parameters_source=None):
+def contextualize_messages(messages, evidence_file, test_file):
     contextualized = []
     for message in messages:
         updated = dict(message)
         updated["evidence_file"] = evidence_file
         updated["test_file"] = test_file
-        updated["test_parameters_source"] = test_parameters_source
         contextualized.append(updated)
     return contextualized
 
@@ -31,18 +28,18 @@ def requested_invocation_contexts(request: EvaluateEvidenceRequest):
 def build_result_record(
     request: EvaluateEvidenceRequest,
     invocation: TestInvocationRequest,
-    outcome: str,
-    reason: str,
     executed: bool,
+    result,
 ):
     return {
         "test": invocation.test_path,
-        "evidence_file": request.evidence_path,
-        "test_parameters": invocation.test_parameters,
-        "test_parameters_source": invocation.test_parameters_source,
-        "executed": executed,
-        "outcome": outcome,
-        "reason": reason,
+        "evidence": request.evidence_path,
+        "evaluations": invocation.evaluations_as_dicts(),
+        "execution": {
+            "executed": executed,
+            "status": "completed" if executed else "blocked",
+        },
+        "result": result,
     }
 
 
@@ -65,7 +62,6 @@ def evaluate_request(
                         shared_messages,
                         request.evidence_path,
                         invocation.test_path,
-                        invocation.test_parameters_source,
                     )
                 )
                 messages.append(
@@ -75,16 +71,14 @@ def evaluate_request(
                         invocation.blocked_reason,
                         evidence_file=request.evidence_path,
                         test_file=invocation.test_path,
-                        test_parameters_source=invocation.test_parameters_source,
                     )
                 )
                 results.append(
                     build_result_record(
                         request,
                         invocation,
-                        "error",
-                        invocation.blocked_reason,
                         executed=False,
+                        result=None,
                     )
                 )
                 continue
@@ -92,25 +86,19 @@ def evaluate_request(
                 test_of_detail = test_of_detail_gateway.load_test_of_detail(
                     invocation.test_path
                 )
-                outcome, reason = test_of_detail.evaluate(
+                raw_result = test_of_detail.evaluate(
                     evidence_data,
-                    invocation.test_parameters,
+                    invocation.evaluations_as_dicts(),
                     metadata,
                 )
-                if outcome not in VALID_OUTCOMES:
-                    invalid_outcome = outcome
-                    outcome = "error"
-                    reason = (
-                        f"Test returned unsupported outcome '{invalid_outcome}'. "
-                        "Expected one of: pass, fail, inconclusive, error."
-                    )
                 results.append(
                     build_result_record(
                         request,
                         invocation,
-                        outcome,
-                        reason,
                         executed=True,
+                        result=EvaluateEvidenceResponse.normalize_completed_result(
+                            raw_result
+                        ),
                     )
                 )
                 messages.extend(
@@ -118,206 +106,191 @@ def evaluate_request(
                         shared_messages,
                         request.evidence_path,
                         invocation.test_path,
-                        invocation.test_parameters_source,
                     )
                 )
-            except FileNotFoundError as e:
+            except FileNotFoundError as exc:
                 messages.extend(
                     contextualize_messages(
                         shared_messages,
                         request.evidence_path,
                         invocation.test_path,
-                        invocation.test_parameters_source,
                     )
                 )
                 messages.append(
                     build_message(
                         "error",
                         "test_file_not_found",
-                        "Unable to find the file(s) for evaluation. " + str(e),
+                        "Unable to find the file(s) for evaluation. " + str(exc),
                         evidence_file=request.evidence_path,
                         test_file=invocation.test_path,
-                        test_parameters_source=invocation.test_parameters_source,
                     )
                 )
                 results.append(
                     build_result_record(
                         request,
                         invocation,
-                        "error",
-                        "Unable to find the file(s) for evaluation. " + str(e),
                         executed=False,
+                        result=None,
                     )
                 )
-            except ImportError as e:
+            except ImportError as exc:
                 messages.extend(
                     contextualize_messages(
                         shared_messages,
                         request.evidence_path,
                         invocation.test_path,
-                        invocation.test_parameters_source,
                     )
                 )
                 messages.append(
                     build_message(
                         "error",
                         "test_import_error",
-                        "Failed to import the necessary files. " + str(e),
+                        "Failed to import the necessary files. " + str(exc),
                         evidence_file=request.evidence_path,
                         test_file=invocation.test_path,
-                        test_parameters_source=invocation.test_parameters_source,
                     )
                 )
                 results.append(
                     build_result_record(
                         request,
                         invocation,
-                        "error",
-                        "Failed to import the necessary files. " + str(e),
                         executed=False,
+                        result=None,
                     )
                 )
-            except Exception as e:
+            except Exception as exc:
                 messages.extend(
                     contextualize_messages(
                         shared_messages,
                         request.evidence_path,
                         invocation.test_path,
-                        invocation.test_parameters_source,
                     )
                 )
                 messages.append(
                     build_message(
                         "error",
                         "test_execution_error",
-                        "Failed to execute the evidence evaluation. " + str(e),
+                        "Failed to execute the evidence evaluation. " + str(exc),
                         evidence_file=request.evidence_path,
                         test_file=invocation.test_path,
-                        test_parameters_source=invocation.test_parameters_source,
                     )
                 )
                 results.append(
                     build_result_record(
                         request,
                         invocation,
-                        "error",
-                        "Failed to execute the evidence evaluation. " + str(e),
                         executed=False,
+                        result=None,
                     )
                 )
         return EvaluateEvidenceResponse(
             count=count,
-            results=results,
-            messages=messages,
+            results=tuple(results),
+            messages=tuple(messages),
         )
 
-    except FileNotFoundError as e:
+    except FileNotFoundError as exc:
         requested_invocations = requested_invocation_contexts(request)
         if not requested_invocations:
             return EvaluateEvidenceResponse(
                 count=0,
-                results=[],
-                messages=[
+                results=(),
+                messages=(
                     build_message(
                         "error",
                         "evidence_file_not_found",
-                        "Unable to find the file(s) for evaluation. " + str(e),
+                        "Unable to find the file(s) for evaluation. " + str(exc),
                         evidence_file=request.evidence_path,
                         test_file=None,
-                    )
-                ],
+                    ),
+                ),
             )
         return EvaluateEvidenceResponse(
             count=len(requested_invocations),
-            results=[
+            results=tuple(
                 build_result_record(
                     request,
                     invocation,
-                    "error",
-                    "Unable to find the file(s) for evaluation. " + str(e),
                     executed=False,
+                    result=None,
                 )
                 for invocation in requested_invocations
-            ],
-            messages=[
+            ),
+            messages=tuple(
                 build_message(
                     "error",
                     "evidence_file_not_found",
-                    "Unable to find the file(s) for evaluation. " + str(e),
+                    "Unable to find the file(s) for evaluation. " + str(exc),
                     evidence_file=request.evidence_path,
                     test_file=invocation.test_path,
-                    test_parameters_source=invocation.test_parameters_source,
                 )
                 for invocation in requested_invocations
-            ],
+            ),
         )
-    except EvidenceLoadFailure as e:
+    except EvidenceLoadFailure as exc:
         requested_invocations = requested_invocation_contexts(request)
         if not requested_invocations:
             return EvaluateEvidenceResponse(
                 count=0,
-                results=[],
-                messages=e.messages,
+                results=(),
+                messages=tuple(exc.messages),
             )
         return EvaluateEvidenceResponse(
             count=len(requested_invocations),
-            results=[
+            results=tuple(
                 build_result_record(
                     request,
                     invocation,
-                    "error",
-                    str(e),
                     executed=False,
+                    result=None,
                 )
                 for invocation in requested_invocations
-            ],
-            messages=[
+            ),
+            messages=tuple(
                 dict(
                     message,
                     test_file=invocation.test_path,
-                    test_parameters_source=invocation.test_parameters_source,
                 )
                 for invocation in requested_invocations
-                for message in e.messages
-            ],
+                for message in exc.messages
+            ),
         )
-    except Exception as e:
+    except Exception as exc:
         requested_invocations = requested_invocation_contexts(request)
         if not requested_invocations:
             return EvaluateEvidenceResponse(
                 count=0,
-                results=[],
-                messages=[
+                results=(),
+                messages=(
                     build_message(
                         "error",
                         "evaluator_execution_error",
-                        "Failed to execute the evidence evaluation. " + str(e),
+                        "Failed to execute the evidence evaluation. " + str(exc),
                         evidence_file=request.evidence_path,
                         test_file=None,
-                    )
-                ],
+                    ),
+                ),
             )
         return EvaluateEvidenceResponse(
             count=len(requested_invocations),
-            results=[
+            results=tuple(
                 build_result_record(
                     request,
                     invocation,
-                    "error",
-                    "Failed to execute the evidence evaluation. " + str(e),
                     executed=False,
+                    result=None,
                 )
                 for invocation in requested_invocations
-            ],
-            messages=[
+            ),
+            messages=(
                 build_message(
                     "error",
                     "evaluator_execution_error",
-                    "Failed to execute the evidence evaluation. " + str(e),
+                    "Failed to execute the evidence evaluation. " + str(exc),
                     evidence_file=request.evidence_path,
                     test_file=None,
-                )
-            ],
+                ),
+            ),
         )
 
 
@@ -327,18 +300,26 @@ def evaluate_evidence_against_tests(
     evidence_gateway,
     test_of_detail_gateway,
 ):
-    test_invocations = []
+    raw_tests = []
     for item in test_requests:
         if isinstance(item, TestInvocationRequest):
-            test_invocations.append(item)
+            raw_tests.append(
+                {
+                    "test": item.test_path,
+                    "evaluations": item.evaluations_as_dicts(),
+                }
+            )
         else:
-            test_invocations.append(TestInvocationRequest.ready(item, {}))
+            raw_tests.append({"test": item, "evaluations": []})
 
+    request = (
+        EvaluateEvidenceRequest.builder()
+        .evidence_path(evidence_path)
+        .raw_tests(raw_tests)
+        .try_build()
+    )
     return evaluate_request(
-        EvaluateEvidenceRequest(
-            evidence_path=evidence_path,
-            test_invocations=test_invocations,
-        ),
+        request,
         evidence_gateway,
         test_of_detail_gateway,
     ).to_cli_output()

@@ -30,6 +30,7 @@ If a review is inconclusive, record what evidence is missing.
 - Does the code belong in this repository rather than in a separate runtime, adapter, or larger NAPE CLI concern?
 - Does the change preserve the evaluator’s explicit seams:
   - CLI invocation
+  - request validation
   - evidence loading
   - dynamic test execution
   - structured JSON output
@@ -51,7 +52,7 @@ If a review is inconclusive, record what evidence is missing.
 - Are expected failures bounded and explainable?
 - Are expected evaluator/runtime failures represented through the documented evaluator output contract?
 - Does the change preserve the distinction between:
-  - returned test outcome `"error"`
+  - completed test `conclusion: "error"`
   - evaluator/runtime operational error
 - Are blocked executions still visible through the summary counts and evaluator messages?
 - Does the change avoid introducing raw traceback behavior as the intended contract for expected failures?
@@ -81,6 +82,7 @@ If a review is inconclusive, record what evidence is missing.
 - Are multi-test continuation behaviors tested if touched?
 - Are evidence-loader paths tested if touched?
 - Are CLI invalid-invocation paths tested if touched?
+- Are request-builder validation paths tested if touched?
 - Are tests deterministic and free of unnecessary infrastructure assumptions?
 - Is test organization still clear by seam or behavior surface?
 - Are fixtures and assertions separated cleanly enough to keep review understandable?
@@ -96,7 +98,7 @@ If a review is inconclusive, record what evidence is missing.
 ## 8. Trusted-Code Execution Review
 
 - Does the change preserve the explicit trust model for test-of-detail files?
-- If execution semantics changed, do docs still clearly warn that `--test` executes trusted Python code?
+- If execution semantics changed, do docs still clearly warn that requested test paths execute trusted Python code?
 - Does the change accidentally broaden the execution surface without documentation?
 
 ## 9. Logging And Output Discipline

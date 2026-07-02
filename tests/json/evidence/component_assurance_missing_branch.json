@@ -1,0 +1,14 @@
+{
+  "component": {
+    "release_status": "approved",
+    "feature_enabled": true,
+    "service_owner": "alice",
+    "build_age_days": 14,
+    "measures": [
+      {
+        "metric": "coverage",
+        "value": 85
+      }
+    ]
+  }
+}

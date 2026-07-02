@@ -22,7 +22,7 @@ These standards exist so that:
 - meaningful logical paths are tested rather than assumed
 - public evaluator behavior remains explicit and reviewable
 - docs stay aligned across README, user docs, reference docs, and maintainer docs
-- future V2 work can compare changed behavior against a clear V1/V2 baseline
+- V1 historical material remains clearly separated from the current V2 contract
 
 ## Test Layout Standard
 
@@ -32,6 +32,8 @@ Tests are organized by bounded behavior surface:
   verifies end-to-end CLI behavior through `main.py`
 - `tests/test_cli_adapter.py`
   verifies parser and transport behavior in `src/nape_evaluator/application/io/cli.py`
+- `tests/test_request_builder.py`
+  verifies request-builder validation in `src/nape_evaluator/domain/use_case_models.py`
 - `tests/test_evaluator_use_case.py`
   verifies orchestration behavior in `src/nape_evaluator/domain/use_cases.py`
 - `tests/test_evidence_gateway_routing.py`
@@ -64,14 +66,15 @@ Tests must cover meaningful logical paths for each bounded module. For this repo
 
 | Surface | Required logical paths | Canonical tests |
 | --- | --- | --- |
-| CLI contract | install check, no-arg failure, paired-argument validation, repeated `--test`, repeated `--test-parameters-file`, JSON stdout contract | `tests/test_cli_contract.py`, `tests/test_cli_adapter.py` |
+| CLI contract | install check, no-arg failure, direct-mode validation, `--request-file` behavior, JSON stdout contract | `tests/test_cli_contract.py`, `tests/test_cli_adapter.py` |
+| Request builder | evidence validation, top-level `tests` validation, subject/data-type/criteria validation, compatibility validation | `tests/test_request_builder.py` |
 | Evidence gateway | routing and metadata | `tests/test_evidence_gateway_routing.py` |
 | Evidence gateway | text loading and text fallback | `tests/test_text_evidence_loading.py` |
 | Evidence gateway | JSON, XML, and YAML behavior | `tests/test_structured_evidence_loading.py` |
 | Evidence gateway | PDF behavior | `tests/test_pdf_evidence_loading.py` |
 | Evidence gateway | known unprocessable extensions | `tests/test_unprocessable_evidence.py` |
 | Test-of-detail gateway | dynamic module load success, missing file, import-spec failure | `tests/test_test_execution.py` |
-| Use case orchestration | single-test success, multi-test success, continue-after-failure, parameter pass-through, blocked parameter invocation, evidence load failure, missing test file, import failure, evaluator execution failure, message contextualization | `tests/test_evaluator_use_case.py` |
+| Use case orchestration | single-test success, multi-test success, completed-result normalization, evidence load failure, missing test file, import failure, evaluator execution failure, message contextualization | `tests/test_evaluator_use_case.py` |
 | Output contract | result summary counts, evaluator message summary counts, final JSON nesting | `tests/test_output_contract.py` |
 
 Behaviorally distinct paths should not be left implicit in integration-only coverage if a bounded unit test can verify them directly.
@@ -102,8 +105,9 @@ Public behavior is not considered documented if it appears only in:
 When any of these surfaces change, update the matching permanent docs in the same change:
 
 - CLI flags or argument rules
+- request packet shapes
 - supported evidence types or fallback behavior
-- metadata or caller-owned parameter fields passed into `evaluate(evidence, test_parameters, metadata)`
+- metadata or caller-owned fields passed into `evaluate(evidence, evaluations, metadata)`
 - output JSON shape
 - trusted-code execution semantics
 - install path or runtime dependencies

@@ -1,6 +1,6 @@
 # Quickstart
 
-This quickstart shows the current typed-evidence evaluator contract.
+This quickstart shows the current V2 evaluator contract.
 
 ## 1. Create Evidence
 
@@ -18,25 +18,55 @@ Create `author_verification.json`:
 Create `verify_author_complete.py`:
 
 ```python
-def evaluate(evidence, test_parameters, metadata):
+def evaluate(evidence, evaluations, metadata):
     if metadata.get("evidence_type") != "json":
-        return "error", "The evidence metadata does not indicate JSON input."
+        return {
+            "conclusion": "error",
+            "facts": [],
+            "reason": "This test expects JSON evidence.",
+        }
+
+    expected_status = "complete"
+    if evaluations:
+        expected_status = evaluations[0]["criteria"]["equals"]
 
     status = evidence.get("status")
+    fact = {
+        "name": "status",
+        "value": status,
+        "value_type": "text",
+        "status": "found" if status not in (None, "") else "not_found",
+    }
 
-    if status == "complete":
-        return "pass", "The author has achieved the status of complete."
-    if status is None or status == "":
-        return "inconclusive", "The expected data field 'status' does not contain a value."
-    return "fail", f"The author has not achieved the status of complete, their current status is '{status}'."
+    if fact["status"] != "found":
+        return {
+            "conclusion": "inconclusive",
+            "facts": [fact],
+            "reason": "The expected data field 'status' does not contain a value.",
+        }
+
+    if status == expected_status:
+        return {
+            "conclusion": "true",
+            "facts": [fact],
+            "reason": "The author has achieved the expected status.",
+        }
+
+    return {
+        "conclusion": "false",
+        "facts": [fact],
+        "reason": f"The author status is '{status}', not '{expected_status}'.",
+    }
 ```
 
-For `.json` evidence, `nape-eval` passes `evidence` as a parsed Python object, `test_parameters` as `{}` when no parameter file is supplied, and `metadata` with `evidence_type` and `schema_version`.
+For `.json` evidence, `nape-eval` passes `evidence` as a parsed Python object, `evaluations` as the caller-owned evaluation array, and `metadata` with `evidence_type` and `schema_version`.
 
 ## 3. Run The Evaluator
 
 ```bash
-nape-eval --evidence ./author_verification.json --test ./verify_author_complete.py
+nape-eval \
+  --evidence ./author_verification.json \
+  --invoke '{"test":"./verify_author_complete.py","evaluations":[{"subject":{"name":"status","data_type":"text"},"criteria":{"equals":"complete"}}]}'
 ```
 
 Expected output:
@@ -46,12 +76,34 @@ Expected output:
   "results": [
     {
       "test": "./verify_author_complete.py",
-      "evidence_file": "./author_verification.json",
-      "test_parameters": {},
-      "executed": true,
-      "outcome": "pass",
-      "reason": "The author has achieved the status of complete.",
-      "test_parameters_source": null
+      "evidence": "./author_verification.json",
+      "evaluations": [
+        {
+          "subject": {
+            "name": "status",
+            "data_type": "text"
+          },
+          "criteria": {
+            "equals": "complete"
+          }
+        }
+      ],
+      "execution": {
+        "executed": true,
+        "status": "completed"
+      },
+      "result": {
+        "conclusion": "true",
+        "facts": [
+          {
+            "name": "status",
+            "value": "complete",
+            "value_type": "text",
+            "status": "found"
+          }
+        ],
+        "reason": "The author has achieved the expected status."
+      }
     }
   ],
   "evaluator": {
@@ -59,8 +111,8 @@ Expected output:
     "summary": {
       "count": 1,
       "ran": 1,
-      "pass": 1,
-      "fail": 0,
+      "true": 1,
+      "false": 0,
       "inconclusive": 0,
       "error": 0,
       "message_count": 0,
@@ -72,7 +124,7 @@ Expected output:
 }
 ```
 
-For full output rules, including blocked-test behavior, `executed`, and evaluator messages, see `cli-reference.md`.
+For full CLI rules and blocked-execution behavior, see `cli-reference.md`.
 
 ## 4. Check Install
 
@@ -88,4 +140,4 @@ NAPE Evaluator CLI is installed and working.
 
 ## Historical Note
 
-The V1 baseline passed every evidence file as text lines. If you need the older contract for migration review, see `../product/v1-evaluator-baseline.md`.
+The V1 baseline used `--test` and tuple-returning tests. If you need the older contract for migration review, see `../product/v1-evaluator-baseline.md`.

@@ -1,11 +1,11 @@
 # NAPE Evaluator Documentation
 
-This folder documents the `nape-eval` CLI, its contract with the NAPE CLI, the current typed-evidence behavior, and the historical V1 baseline.
+This folder documents the `nape-eval` CLI, its contract with the NAPE CLI, the current V2 behavior, and the historical V1 baseline.
 
 ## Start Here
 
 - New users: read [installation](user/installation.md), then [quickstart](user/quickstart.md).
-- Test-of-detail authors: read [test-of-detail authoring](user/test-of-detail-authoring.md).
+- Test-of-detail authors: read [test-of-detail authoring](user/test-of-detail-authoring.md), then [V2 test authoring](user/v2-test-authoring/README.md).
 - CLI users: read [CLI reference](user/cli-reference.md).
 - Contract readers: read [evaluator contract](reference/evaluator-contract.md), [evidence formats](reference/evidence-formats.md), and [source traceability](reference/source-traceability.md).
 - Maintainers: read [architecture](maintainers/architecture.md), [local development](maintainers/local-development.md), [Python engineering standards](maintainers/python-engineering-standards.md), then [software review](maintainers/software-review.md).
@@ -15,7 +15,9 @@ This folder documents the `nape-eval` CLI, its contract with the NAPE CLI, the c
 
 ## Current Documentation Position
 
-These docs treat committed `main` behavior as the current typed-evidence contract. The V1 baseline document is retained as a historical reference for migration and compatibility review.
+These docs treat committed `main` behavior as the current V2 contract.
+
+The V1 baseline document is retained as a historical reference for migration and compatibility review.
 
 ## Folder Guide
 
@@ -26,6 +28,10 @@ Product-level purpose, current scope, historical V1 baseline, and known limitati
 `user/`
 
 Task-oriented installation, quickstart, CLI, and test authoring docs.
+
+`user/v2-test-authoring/`
+
+Detailed V2 authoring guidance, scaffold material, and evaluation-input pattern examples.
 
 `reference/`
 

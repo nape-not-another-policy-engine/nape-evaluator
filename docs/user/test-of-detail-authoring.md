@@ -1,50 +1,96 @@
 # Test-Of-Detail Authoring
 
-A test-of-detail file is a Python file loaded by `nape-eval`.
+A test-of-detail file is a trusted Python file loaded by `nape-eval`.
+
+This guide describes the current committed V2 authoring contract.
 
 ## Required Function
 
 Define:
 
 ```python
-def evaluate(evidence, test_parameters, metadata):
-    return "pass", "Reason text"
+def evaluate(evidence, evaluations, metadata):
+    return {
+        "conclusion": "true",
+        "facts": [],
+        "reason": "Reason text",
+    }
 ```
 
-The function must return two values:
+The function must return one object with:
 
-- `outcome`
+- `conclusion`
+- `facts`
 - `reason`
 
-## Test Composition
+Accepted `conclusion` values are:
 
-A test-of-detail is usually composed of:
+- `true`
+- `false`
+- `inconclusive`
+- `error`
+
+## Authoring Model
+
+A test-of-detail usually includes:
 
 - optional imports needed by the test logic
-- one `evaluate(evidence, test_parameters, metadata)` function
-- evidence field extraction
-- decision logic that maps evidence to `pass`, `fail`, `inconclusive`, or `error`
-- one human-readable reason string returned with the outcome
-- optional caller-owned parameter checks against `test_parameters`
+- one public `evaluate(evidence, evaluations, metadata)` function
+- evidence-field extraction
+- fact establishment
+- policy logic that uses caller-owned `evaluations`
+- one combined returned result object
 
 Small example:
 
 ```python
-def evaluate(evidence, test_parameters, metadata):
+def evaluate(evidence, evaluations, metadata):
     if metadata.get("evidence_type") != "json":
-        return "error", "The evidence metadata does not indicate JSON input."
+        return {
+            "conclusion": "error",
+            "facts": [],
+            "reason": "This test expects JSON evidence.",
+        }
+
+    evaluation_by_name = {
+        item["subject"]["name"]: item
+        for item in evaluations
+    }
+    status_rules = evaluation_by_name["status"]["criteria"]
+    expected_status = status_rules["equals"]
 
     status = evidence.get("status")
-    if status == "complete":
-        return "pass", "The author has achieved the status of complete."
-    if status in (None, ""):
-        return "inconclusive", "The expected data field 'status' does not contain a value."
-    return "fail", f"The author has not achieved the status of complete, their current status is '{status}'."
+    fact = {
+        "name": "status",
+        "value": status,
+        "value_type": "text",
+        "status": "found" if status not in (None, "") else "not_found",
+    }
+
+    if fact["status"] != "found":
+        return {
+            "conclusion": "inconclusive",
+            "facts": [fact],
+            "reason": "The expected data field 'status' does not contain a value.",
+        }
+
+    if status == expected_status:
+        return {
+            "conclusion": "true",
+            "facts": [fact],
+            "reason": "Status matches the expected value.",
+        }
+
+    return {
+        "conclusion": "false",
+        "facts": [fact],
+        "reason": f"Status is '{status}', not '{expected_status}'.",
+    }
 ```
 
 ## Evidence Input
 
-The evaluator passes evidence into `evaluate(evidence, test_parameters, metadata)` based on the evidence file extension:
+The evaluator passes evidence into `evaluate(evidence, evaluations, metadata)` based on file extension:
 
 - JSON: Python object from `json.load`
 - XML: `xml.etree.ElementTree` root element
@@ -52,164 +98,139 @@ The evaluator passes evidence into `evaluate(evidence, test_parameters, metadata
 - PDF: extracted text lines
 - TXT or unknown: text lines
 
-Example JSON input:
-
-```python
-{
-    "author": "Bill Bensing",
-    "status": "complete",
-}
-```
-
-If the evidence is JSON, read it directly as a Python object:
-
-```python
-def evaluate(evidence, test_parameters, metadata):
-    if evidence.get("status") == "complete":
-        return "pass", "Status is complete."
-    return "fail", "Status is not complete."
-```
-
-The metadata object currently contains the third evaluator-supplied argument:
+The metadata object currently includes:
 
 - `metadata["evidence_type"]`
 - `metadata["schema_version"]`
 
-## Test Parameters Input
-
-The evaluator always passes `test_parameters` as a dict.
-
-Current rules:
-
-- if no caller-supplied parameters were provided, `test_parameters` is `{}`
-- if caller-supplied parameters were provided, they come from a top-level JSON object
-- direct CLI usage binds parameter files through repeated `--test-parameters-file` arguments matched by position to repeated `--test` arguments
-
-Example parameter file:
-
-```json
-{
-  "minCoverage": 80
-}
-```
-
-Example test:
-
-```python
-def evaluate(evidence, test_parameters, metadata):
-    if metadata.get("evidence_type") != "json":
-        return "error", "This test expects JSON evidence."
-
-    min_coverage = test_parameters.get("minCoverage")
-    if not isinstance(min_coverage, (int, float)):
-        return "error", "This test requires numeric test parameter 'minCoverage'."
-
-    measures = evidence.get("component", {}).get("measures", [])
-    coverage_value = None
-    for measure in measures:
-        if measure.get("metric") == "coverage":
-            coverage_value = float(measure.get("value", 0))
-            break
-
-    if coverage_value is None:
-        return "inconclusive", "The 'coverage' metric is missing from the evidence."
-    if coverage_value >= min_coverage:
-        return "pass", f"Coverage is {coverage_value}%, which meets the required {min_coverage}%."
-    return "fail", f"Coverage is {coverage_value}%, which is below the required {min_coverage}%."
-```
-
-## Defensive Programming With Metadata
-
 Use `metadata` to reject inputs your test was not written to evaluate.
+
+## Evaluation Input
+
+The evaluator validates the outer request before test execution and then passes `evaluations` as an array of accepted caller-owned evaluation items.
 
 Example:
 
-```python
-def evaluate(evidence, test_parameters, metadata):
-    if metadata.get("evidence_type") != "json":
-        return "error", "This test expects JSON evidence."
-
-    if metadata.get("schema_version") != "2":
-        return "error", "This test only supports evaluator schema version 2."
-
-    status = evidence.get("status")
-    if status == "complete":
-        return "pass", "Status is complete."
-    if status in (None, ""):
-        return "inconclusive", "The expected data field 'status' does not contain a value."
-    return "fail", f"Status is {status}."
+```json
+[
+  {
+    "subject": {
+      "name": "coverage",
+      "data_type": "number"
+    },
+    "criteria": {
+      "minimum": 80
+    }
+  }
+]
 ```
 
-This is the intended place to handle expected contract mismatches, such as:
+Current first-pass `subject.data_type` values are:
 
-- wrong evidence type
-- unsupported schema version
-- missing required fields
-- evidence shape that the test knows how to recognize and reject
+- `text`
+- `integer`
+- `number`
+- `boolean`
+- `date`
+- `datetime`
+- `duration`
+- `array`
+- `object`
+- `null`
 
-Use `test_parameters` the same way for caller-owned expectations:
+Current first-pass `criteria` keys are:
 
-- missing required parameter keys
-- wrong parameter type for a known key
-- known out-of-range or unsupported parameter values
+- `minimum`
+- `maximum`
+- `equals`
+- `allowed_values`
+- `disallowed_values`
+- `required`
 
-Return result-level `error` when the test understands the mismatch and can explain it clearly.
+The evaluator rejects unsupported shapes and incompatible type/criteria combinations before your test runs.
 
-## Exception Handling Guidance
+## Fact Records
 
-Prefer returning `error` only for expected, domain-known failures that your test understands and wants to explain clearly.
+Use a stable fact shape in returned results:
 
-Examples:
+```python
+{
+    "name": "coverage",
+    "value": 85.0,
+    "value_type": "number",
+    "unit": "percent",
+    "status": "found",
+}
+```
 
-- unsupported `metadata["evidence_type"]`
-- unsupported `metadata["schema_version"]`
-- known missing structure in the evidence payload
-- missing or malformed required `test_parameters`
+Required keys:
 
-Do not add broad `except Exception` wrappers unless you are converting a very specific failure into a better domain message.
+- `name`
+- `value`
+- `value_type`
+- `status`
 
-The evaluator process boundary already catches unhandled exceptions and converts them into evaluator output:
+Optional keys:
 
-- the failing invocation still produces a result item with `executed: false`
-- the failure is reported in `evaluator.messages`
-- the failure increments `evaluator.summary.message_error`
+- `unit`
 
-That means the CLI contract stays stable even when a test raises unexpectedly, but test authors should not assume every failure becomes a returned `("error", "reason")` tuple.
+Recommended statuses:
 
-## Recommended Outcome Use
+- `found`
+- `not_found`
+- `invalid`
 
-Use `pass` when the evidence satisfies the test.
+## Defensive Programming
 
-Use `fail` when the evidence is present and valid but does not satisfy the test.
+Evaluator-owned validation already checks:
 
-Use `inconclusive` when the evidence is missing expected fields or cannot support a decision.
+- top-level request shape
+- each invocation `test` plus `evaluations`
+- `subject.name`
+- `subject.data_type`
+- `criteria` object shape
+- basic type compatibility and no-coercion rules
 
-Use `error` when the test itself cannot run as intended.
+Your test should still validate:
 
-Use returned `error` for contract-aware, intentional test decisions such as:
+- expected `metadata["evidence_type"]`
+- expected `metadata["schema_version"]`
+- whether the evidence contains extractable facts
+- whether extracted facts are usable for the test logic
 
-- unsupported `metadata["evidence_type"]`
-- unsupported `metadata["schema_version"]`
-- evidence that is present but shaped in a way the test explicitly recognizes as unusable
+Use returned `error` for contract-aware test-level problems you can explain clearly.
 
-If a test returns any unsupported outcome value, the evaluator converts that result to `error` and reports that the returned outcome was unsupported.
+Use `inconclusive` when you cannot establish the facts needed to reach a decision.
 
-Do not rely on uncaught exceptions as a substitute for returned `error`, because the evaluator records those as operational failures rather than test result outcomes.
+## Exception Handling
+
+Prefer returning structured `error` only for expected test-known failures.
+
+Do not add broad `except Exception` wrappers unless you are intentionally converting a specific failure into a better domain message.
+
+If your test raises unexpectedly:
+
+- the evaluator blocks that invocation
+- `results[*].execution.executed` becomes `false`
+- `results[*].result` becomes `null`
+- the failure is reported through `evaluator.messages`
+
+That is different from returning `{"conclusion": "error", ...}` from a completed test.
 
 ## Authoring Rules
 
 - Keep tests deterministic.
-- Return a concise human-readable reason.
+- Return a concise human-readable `reason`.
 - Do not print extra output from the test file.
 - Do not depend on local machine state unless that state is part of the evidence.
-- Handle missing fields explicitly.
-- Use `metadata` for expected contract checks before deeper evidence access.
-- Use `test_parameters` for explicit caller-owned validation before applying business rules.
-- Let unexpected execution errors propagate unless you are intentionally converting a known failure into a clearer `error` reason.
+- Handle missing facts explicitly.
+- Keep evaluator-owned validation concerns separate from test-owned extraction and policy logic.
 - Treat test files as executable code; do not publish or run tests that perform unrelated filesystem, network, credential, or destructive operations.
+
+## Recommended Next Reading
+
+For scaffolding, progression from hardcoded to dynamic inputs, example selection by difficulty and domain, fact extraction, fail-fast versus fail-slow establishment, and example evaluation patterns, continue in `v2-test-authoring/README.md`.
 
 ## Historical Note
 
-The V1 baseline passed every evidence file as text lines. Tests written for that older contract may need migration if they parse structured content inside `evaluate(...)`.
-
-The current CLI runs one evidence file against one or more test-of-detail files per invocation, with optional repeated `--test-parameters-file` inputs for caller-owned parameterization.
+The V1 baseline used tuple-returning `evaluate(...)` functions and older `--test` transport. Use `../product/v1-evaluator-baseline.md` only for migration comparison.

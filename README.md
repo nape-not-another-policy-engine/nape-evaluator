@@ -1,37 +1,61 @@
 # NAPE Evaluator
 
-The NAPE Evaluator (`nape-eval`) applies one or more test-of-detail Python files to one evidence file and prints a JSON result object. It is the evaluator process invoked by the NAPE CLI during `nape collect report`.
+The NAPE Evaluator (`nape-eval`) applies one or more trusted Python test-of-detail files to one evidence file and prints a structured JSON result object. It is the evaluator process invoked by the NAPE CLI during `nape collect report`.
 
 ## Current Contract
 
-`nape-eval` evaluates one evidence file with one or more test files:
+`nape-eval` evaluates one evidence file with one or more requested test invocations.
 
-```bash
-nape-eval --evidence ./author_verification.json --test ./verify_author_complete.py
-```
-
-It can also pair each repeated `--test` with an optional repeated `--test-parameters-file` in the same order:
+Direct mode:
 
 ```bash
 nape-eval \
-  --evidence ./sonar_metrics.json \
-  --test ./code_cover_80.py \
-  --test-parameters-file ./code_cover_80.parameters.json
+  --evidence ./author_verification.json \
+  --invoke '{"test":"./verify_author_complete.py","evaluations":[{"subject":{"name":"status","data_type":"text"},"criteria":{"equals":"complete"}}]}'
 ```
 
-Expected stdout:
+Full-request mode:
+
+```bash
+nape-eval --request-file ./request.json
+cat request.json | nape-eval --request-file -
+```
+
+Expected stdout shape:
 
 ```json
 {
   "results": [
     {
       "test": "./verify_author_complete.py",
-      "evidence_file": "./author_verification.json",
-      "test_parameters": {},
-      "executed": true,
-      "outcome": "pass",
-      "reason": "The author has achieved the status of complete.",
-      "test_parameters_source": null
+      "evidence": "./author_verification.json",
+      "evaluations": [
+        {
+          "subject": {
+            "name": "status",
+            "data_type": "text"
+          },
+          "criteria": {
+            "equals": "complete"
+          }
+        }
+      ],
+      "execution": {
+        "executed": true,
+        "status": "completed"
+      },
+      "result": {
+        "conclusion": "true",
+        "facts": [
+          {
+            "name": "status",
+            "value": "complete",
+            "value_type": "text",
+            "status": "found"
+          }
+        ],
+        "reason": "The author has achieved the expected status."
+      }
     }
   ],
   "evaluator": {
@@ -39,8 +63,8 @@ Expected stdout:
     "summary": {
       "count": 1,
       "ran": 1,
-      "pass": 1,
-      "fail": 0,
+      "true": 1,
+      "false": 0,
       "inconclusive": 0,
       "error": 0,
       "message_count": 0,
@@ -52,7 +76,7 @@ Expected stdout:
 }
 ```
 
-The current evaluator loads evidence by file extension before calling `evaluate(evidence, test_parameters, metadata)`:
+The current evaluator loads evidence by file extension before calling `evaluate(evidence, evaluations, metadata)`:
 
 - `.json`: parsed JSON object
 - `.xml`: XML root element
@@ -60,49 +84,43 @@ The current evaluator loads evidence by file extension before calling `evaluate(
 - `.pdf`: extracted text lines
 - `.txt` and unknown extensions: text lines
 
-This is a breaking change from the historical V1 contract, which passed raw text lines for every evidence file. The V1 baseline remains documented in `docs/product/v1-evaluator-baseline.md`.
-
 The current metadata contract is intentionally small:
 
 - `metadata["evidence_type"]`
 - `metadata["schema_version"]`
 
-The current test-parameter contract is also intentionally small:
+The current caller-owned input contract is:
 
-- `test_parameters` is always a dict at the test call boundary
-- if no parameter file is supplied, `test_parameters` is `{}` at runtime
-- when a parameter file is supplied, it must decode to a top-level JSON object
+- top-level request uses `evidence` plus `tests`
+- each requested test packet uses `test` plus `evaluations`
+- each evaluation item uses `subject` plus `criteria`
 
 Per-test results include:
 
 - `test`
-- `evidence_file`
-- `test_parameters`
-- `test_parameters_source`
-- `executed`
-- `outcome`
-- `reason`
-
-Evaluator messages include `test_parameters_source`, which is either the supplied parameter-file path or `null`.
+- `evidence`
+- `evaluations`
+- `execution`
+- `result`
 
 Result and evaluator failures are reported separately:
 
-- `results[*].executed == true` means the test function completed
-- `results[*].executed == false` means the requested invocation was blocked before the test completed
-- `results[*].outcome == "error"` with `executed == true` means a test ran and returned an `error` outcome
+- `results[*].execution.executed == true` means the test function completed
+- `results[*].execution.executed == false` means the requested invocation was blocked before the test completed
+- `results[*].result.conclusion == "error"` means a completed test returned a test-level error result
 - `evaluator.messages[*].level == "error"` means the evaluator/runtime hit an operational failure
 - if `evaluator.summary.ran` is less than `evaluator.summary.count`, one or more requested tests were blocked before completing execution
 
-Unsupported returned outcomes are treated as test contract errors:
+Invalid completed-test result contracts are treated as completed test contract errors:
 
 - the test still counts in `evaluator.summary.ran`
-- the result is normalized to `results[*].outcome == "error"`
-- the reason explains that the test returned an unsupported outcome value
+- the result is normalized to `result.conclusion == "error"`
+- the reason explains that the test returned an invalid result contract
 
 ## Start Here
 
 - New users: [Installation](docs/user/installation.md), then [Quickstart](docs/user/quickstart.md)
-- Test authors: [Test-of-detail authoring](docs/user/test-of-detail-authoring.md)
+- Test authors: [Test-of-detail authoring](docs/user/test-of-detail-authoring.md), then [V2 test authoring](docs/user/v2-test-authoring/README.md)
 - CLI reference: [CLI reference](docs/user/cli-reference.md)
 - Contract details: [Evaluator contract](docs/reference/evaluator-contract.md)
 - Evidence formats: [Evidence formats](docs/reference/evidence-formats.md)

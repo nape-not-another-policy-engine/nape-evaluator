@@ -5,13 +5,13 @@ This document proposes a V2 input model for `nape-evaluator` that separates:
 - caller-owned request input
 - evaluator-owned execution metadata
 - loaded evidence content passed into the test
-- caller-owned expectation input passed into the test
+- test-owned extraction and evaluation logic
 
 It is a design proposal, not a statement about current implementation behavior.
 
 This proposal extends the current evaluator model recorded in `current-evaluator-reference.md`. It does not replace the evaluator's existing core responsibility.
 
-This proposal supersedes `test-parameter-exploration.md` as the current V2 input-design proposal. That earlier document remains useful as historical exploratory input.
+This proposal supersedes `test-parameter-exploration.md` as the active V2 input-design proposal.
 
 ## Purpose
 
@@ -19,757 +19,764 @@ Use this document to:
 
 - define a clearer V2 structured input contract
 - align the input model with the V2 structured result proposal
-- keep caller-owned expectation input separate from evaluator-owned metadata
+- keep caller-owned evaluation input separate from evaluator-owned metadata
 - make it easier to explain what the caller provides versus what the evaluator derives
 - expand the current request contract without redefining the evaluator's core execution model
 
-## How To Do Before/After Recording
+## Baseline This Proposal Preserves
 
-When this proposal changes terminology, structure, or contract shape, record the update in a consistent before/after format.
-
-Use this pattern:
-
-1. record the exact scope of the change
-2. record the `Before` term, field, or snippet
-3. record the `After` term, field, or snippet
-4. record the rationale for the change
-5. record any intentional non-change that remains open
-
-Rules:
-
-- keep current-implementation examples intact when they are serving as baseline context
-- apply the updated terminology consistently across the proposed V2 sections
-- normalize recorded `After` snippets to the current proposed terminology if a later terminology change affects them
-- if a related field is intentionally not renamed yet, say so explicitly rather than leaving the difference unexplained
-
-## Cataloged Design Inputs For This Revision
-
-This revision catalogs the following design inputs and maps each one to a recorded proposal update or proposal section.
-
-1. The input should be a structured request item, because the output/result contract echoes some of that caller-owned input back.
-   Addressed by Update `2026-07-01-4` and the `Current Recommended V2 View` section.
-2. The caller needs to provide the test locator, evidence locator, and expectation input for one requested evaluation.
-   Addressed by Update `2026-07-01-4` and the `Current Recommended Input Item` section.
-3. The caller-owned comparison input should be named `expectation`, not `test_parameters`.
-   Addressed by Update `2026-07-01-1`.
-4. The test-of-detail call boundary should be `evaluate(evidence, expectation, metadata)`.
-   Addressed by Update `2026-07-01-2`.
-5. Evaluator-owned metadata should not be part of the caller input item.
-   Addressed by Update `2026-07-01-3`.
-6. The input packet should not carry comparison operators or rule logic; that stays in the Python test.
-   Addressed by Update `2026-07-01-5`.
-7. Expectation input should remain the caller-provided object shape for now, not a normalized expectation-record array.
-   Addressed by Update `2026-07-01-6`.
-8. Expectation keys should preserve caller-provided names such as `minCoverage`.
-   Addressed by Update `2026-07-01-6` and the `Expectation Value Direction` section.
-9. Expectation values should be JSON-compatible so the input stays predictable across transports.
-   Addressed by the `Expectation Value Direction` section.
-10. The unit of input in this proposal is one requested test execution; top-level batch or manifest input is deferred.
-    Addressed by the `Current Recommended V2 View` section and the `Open Design Questions` section.
-11. The `evidence` argument received by the test is loaded evidence content, not a pre-extracted fact payload.
-    Addressed by Update `2026-07-01-7` and the `Current Recommended Evaluator Call Boundary` section.
-12. This proposal must be read as an extension of the implemented evaluator contract, not as a clean-sheet redesign.
-    Addressed by Update `2026-07-01-8` and the `Current Fundamentals This Proposal Preserves` section.
-
-## Current Recommended V2 View
-
-This section consolidates the accepted recommendations in this document into one coherent proposal snapshot.
-
-If any historical `Before` or `After` snippet below differs from this section, use this section as the current proposed V2 input contract.
-
-### Accepted Decisions
-
-- the unit of input is one requested test execution
-- the caller-owned input item uses `test`, `evidence`, and `expectation`
-- `test` and `evidence` are caller-supplied locators
-- `expectation` is the caller-supplied free-form expectation object
-- the evaluator loads evidence, derives metadata, and calls `evaluate(evidence, expectation, metadata)`
-- the test extracts facts from loaded evidence content during evaluation
-- `metadata` is evaluator-owned and is not part of the caller input item
-- the input packet carries no comparison operators or business-rule logic
-- expectation keys preserve caller-provided names such as `minCoverage`
-- batch, manifest, and aggregate request shapes are out of scope for this proposal
-
-## Current Fundamentals This Proposal Preserves
-
-These current implementation fundamentals still apply while this proposal expands the input shape:
+The following current implementation fundamentals still apply while this proposal expands the input shape:
 
 - the evaluator remains claim-agnostic
 - the evaluator still accepts one shared evidence input and one or more requested test invocations
 - the evaluator still loads evidence before any test runs
-- the evaluator still derives evaluator-owned metadata separately from caller-owned comparison input
+- the evaluator still derives evaluator-owned metadata separately from caller-owned input
 - the Python test still extracts facts from loaded evidence during execution
 - the Python test still owns comparison logic and human-readable reasoning
 - the evaluator still owns transport, execution blocking, messages, and summary behavior
 
-The proposed V2 input work should therefore be read as a cleaner representation of today's invocation input, not as a replacement for the current evaluator model.
+The proposed V2 input work should therefore be read as a structured expansion of today's invocation input, not as a redesign of the evaluator's core role.
 
-### Current Recommended Input Item: Full Caller-Owned Request For One Test Execution
+## External Terminology Basis
 
-What this is:
+This proposal uses assurance-oriented terminology as substantiation for the newer input shape.
 
-This is the complete caller-owned request item for one requested test execution.
+Relevant external references:
 
-It is the external input unit because the caller needs to provide:
+- IAASB publication page for ISAE 3000 (Revised):
+  https://www.iaasb.org/publications/international-standard-assurance-engagements-isae-3000-revised-assurance-engagements-other-audits-or
+- IAASB PDF for ISAE 3000 (Revised):
+  https://www.iaasb.org/_flysystem/azure-private/publications/files/ISAE%203000%20Revised%20-%20for%20IAASB.pdf
 
-- which test should run
-- which evidence should be loaded
-- which expectation input should be supplied to the test
+Why these references matter:
 
-How it came about:
+- ISAE 3000 uses `criteria` as the benchmark used to measure or evaluate an underlying subject matter
+- ISAE 3000 uses `subject matter information` for the outcome of applying criteria to an underlying subject matter
+- that terminology is closer to `subject` plus `criteria` than to `expectation`
 
-This shape came from the accepted decision to normalize the caller request around one test execution at a time, while keeping evaluator-owned metadata outside the caller packet.
+This proposal is not adopting the full standards wording literally.
 
-```json
-{
-  "test": "./code_cover_80.py",
-  "evidence": "./sonar_metrics.json",
-  "expectation": {
-    "minCoverage": 80
-  }
-}
-```
+Instead, it uses product-facing terms that stay close to assurance terminology while remaining readable for implementers:
 
-### Current Recommended Evaluator Call Boundary: What The Test Actually Receives
+- `evaluations`
+- `subject`
+- `criteria`
 
-What this is:
+## Current Selected V2 Direction
 
-This is the effective call boundary after the evaluator has accepted the caller input, loaded the evidence, and derived evaluator-owned metadata.
+This section is the current source of truth for the selected V2 input direction.
 
-It shows the three arguments the test actually receives:
+### Selected Decisions
 
-- `evidence`
-- `expectation`
-- `metadata`
+- the outer caller-owned request shape is `test` + `evidence` + `evaluations`
+- `test` and `evidence` remain plain string locators in the first pass
+- `evaluations` is a caller-owned array of one or more evaluation items
+- each `evaluations[*]` item contains:
+  - one `subject`
+  - one object-valued `criteria`
+- that one `criteria` object may contain multiple compatible first-pass criteria keys
+- `subject` and `criteria` are the selected contract names
+- the first-pass `subject` object is limited to:
+  - `name`
+  - `data_type`
+- `subject.name` is a normalized machine-readable string
+- `subject.data_type` uses a bounded vocabulary
+- first-pass `criteria` is object-only; scalar shorthand is not supported
+- first-pass supported `criteria` keys are:
+  - `minimum`
+  - `maximum`
+  - `equals`
+  - `allowed_values`
+  - `disallowed_values`
+  - `required`
+- evaluator-owned `metadata` remains outside the caller-owned request packet
+- evaluator validation should reject malformed or incompatible input before test execution
+- no-coercion rules are strict across transports, including CLI-originated input
+- the outer result envelope should echo `test`, `evidence`, and the full accepted `evaluations` array
 
-Here, `evidence` means the loaded evidence content for the supplied evidence input. It is not a pre-extracted fact payload.
-
-How it came about:
-
-This shape came from the accepted decision to keep caller-owned expectation input separate from evaluator-owned metadata, while still passing both explicitly into the test and leaving fact extraction inside the test implementation.
-
-```python
-loaded_evidence_content = ...  # loaded from the provided evidence input
-
-evaluate(
-    evidence=loaded_evidence_content,
-    expectation={
-        "minCoverage": 80
-    },
-    metadata={
-        "evidence_type": "json",
-        "schema_version": "2",
-    },
-)
-```
-
-### Current Recommended Metadata Boundary: Evaluator-Owned, Not Caller-Owned
-
-What this is:
-
-This is the evaluator-owned context that may be passed into the test, but is not supplied by the caller as part of the structured input item.
-
-How it came about:
-
-This shape came from the accepted decision to keep the caller request focused on requested evaluation input, while reserving execution context such as evidence typing and schema version for the evaluator.
-
-```json
-{
-  "evidence_type": "json",
-  "schema_version": "2"
-}
-```
-
-## Recorded Before/After Updates
-
-### Update 2026-07-01-1: Rename caller-owned input field from `test_parameters` to `expectation`
-
-Scope:
-
-- proposed V2 caller input only
-- proposed V2 examples and proposed V2 explanations in this document
-
-Before:
+### Current Recommended Outer Request
 
 ```json
 {
   "test": "./code_cover_80.py",
   "evidence": "./sonar_metrics.json",
-  "test_parameters": {
-    "minCoverage": 80
-  }
-}
-```
-
-After:
-
-```json
-{
-  "test": "./code_cover_80.py",
-  "evidence": "./sonar_metrics.json",
-  "expectation": {
-    "minCoverage": 80
-  }
-}
-```
-
-Rationale:
-
-- `expectation` is the stronger domain term for caller-owned comparison input
-- it aligns the input terminology with the current V2 result proposal
-
-Intentional non-change:
-
-- current baseline examples in this document may still use `test_parameters` when describing current behavior
-
-### Update 2026-07-01-2: Standardize the test call boundary to `evaluate(evidence, expectation, metadata)`
-
-Scope:
-
-- proposed V2 test call boundary only
-- proposed V2 examples and proposed V2 explanations in this document
-
-Before:
-
-```python
-def evaluate(evidence, test_parameters, metadata):
-    ...
-```
-
-After:
-
-```python
-def evaluate(evidence, expectation, metadata):
-    ...
-```
-
-Rationale:
-
-- the second argument should use the same caller-owned input term as the external structured input item
-- this keeps the call boundary aligned with the current V2 result proposal
-
-Intentional non-change:
-
-- this revision does not change the meaning or ownership of `metadata`
-
-### Update 2026-07-01-3: Keep evaluator-owned `metadata` outside the caller input item
-
-Scope:
-
-- proposed V2 caller input only
-- proposed V2 examples and proposed V2 explanations in this document
-
-Before:
-
-```json
-{
-  "test": "./code_cover_80.py",
-  "evidence": "./sonar_metrics.json",
-  "expectation": {
-    "minCoverage": 80
-  },
-  "metadata": {
-    "evidence_type": "json",
-    "schema_version": "2"
-  }
-}
-```
-
-After:
-
-```json
-{
-  "test": "./code_cover_80.py",
-  "evidence": "./sonar_metrics.json",
-  "expectation": {
-    "minCoverage": 80
-  }
-}
-```
-
-Rationale:
-
-- `metadata` is evaluator-owned execution context, not caller-owned request input
-- keeping it out of the input packet keeps ownership and validation boundaries clearer
-
-Intentional non-change:
-
-- the evaluator may still derive and pass metadata into the test
-
-### Update 2026-07-01-4: Normalize the caller input around one requested test execution
-
-Scope:
-
-- proposed V2 caller input only
-- proposed V2 examples and proposed V2 explanations in this document
-
-Before:
-
-```bash
-nape-eval \
-  --evidence ./sonar_metrics.json \
-  --test ./code_cover_80.py \
-  --test-parameters-file ./code_cover_80.parameters.json
-```
-
-After:
-
-```json
-{
-  "test": "./code_cover_80.py",
-  "evidence": "./sonar_metrics.json",
-  "expectation": {
-    "minCoverage": 80
-  }
-}
-```
-
-Rationale:
-
-- the CLI is one transport, but it is not the cleanest contract expression for V2
-- the structured request item makes the caller-owned input explicit and easier to align with the output/result model
-
-Intentional non-change:
-
-- this revision does not define a top-level batch or manifest request envelope
-
-### Update 2026-07-01-5: Keep comparison logic out of the caller input packet
-
-Scope:
-
-- proposed V2 caller input only
-- proposed V2 examples and proposed V2 explanations in this document
-
-Before:
-
-```json
-{
-  "test": "./code_cover_80.py",
-  "evidence": "./sonar_metrics.json",
-  "expectation": {
-    "name": "minCoverage",
-    "operator": "gte",
-    "value": 80
-  }
-}
-```
-
-After:
-
-```json
-{
-  "test": "./code_cover_80.py",
-  "evidence": "./sonar_metrics.json",
-  "expectation": {
-    "minCoverage": 80
-  }
-}
-```
-
-Rationale:
-
-- comparison operators and business-rule logic belong in the Python test-of-detail implementation
-- the caller input should express what is being provided, not how the evaluator should compare it
-
-Intentional non-change:
-
-- this revision does not change how the test internally compares extracted facts against expectation values
-
-### Update 2026-07-01-6: Keep the input `expectation` object free-form and preserve caller-provided keys
-
-Scope:
-
-- proposed V2 caller input only
-- proposed V2 examples and proposed V2 explanations in this document
-
-Before:
-
-```json
-{
-  "test": "./code_cover_80.py",
-  "evidence": "./sonar_metrics.json",
-  "expectations": [
+  "evaluations": [
     {
-      "name": "minCoverage",
-      "value": 80,
-      "value_type": "number"
+      "subject": {
+        "name": "coverage",
+        "data_type": "number"
+      },
+      "criteria": {
+        "required": true,
+        "minimum": 80
+      }
     }
   ]
 }
 ```
 
-After:
-
-```json
-{
-  "test": "./code_cover_80.py",
-  "evidence": "./sonar_metrics.json",
-  "expectation": {
-    "minCoverage": 80
-  }
-}
-```
-
-Rationale:
-
-- normalized expectation records belong to the result side, not the caller input side
-- the caller input should preserve the expectation object shape and key names as provided
-
-Intentional non-change:
-
-- this revision does not prevent future structured input envelopes if a later V2 step justifies them
-
-### Update 2026-07-01-7: Clarify that `evidence` passed into the test is loaded evidence content, not pre-extracted facts
-
-Scope:
-
-- proposed V2 test call boundary only
-- proposed V2 examples and proposed V2 explanations in this document
-
-Before:
-
-```python
-evaluate(
-    evidence={
-        "component": {
-            "measures": [
-                {"metric": "coverage", "value": "85.0"}
-            ]
-        }
-    },
-    expectation={
-        "minCoverage": 80
-    },
-    metadata={
-        "evidence_type": "json",
-        "schema_version": "2",
-    },
-)
-```
-
-After:
-
-```python
-loaded_evidence_content = ...  # loaded from the provided evidence input
-
-evaluate(
-    evidence=loaded_evidence_content,
-    expectation={
-        "minCoverage": 80
-    },
-    metadata={
-        "evidence_type": "json",
-        "schema_version": "2",
-    },
-)
-```
-
-Rationale:
-
-- the test receives loaded evidence content, not a pre-extracted fact object
-- fact extraction belongs inside the test-of-detail implementation
-- the input proposal should not imply a specific evidence shape before the test runs
-
-Intentional non-change:
-
-- this revision does not change the evaluator-owned responsibility for loading evidence before calling the test
-
-### Update 2026-07-01-8: Re-anchor the proposal as an expansion of the current implemented evaluator contract
-
-Scope:
-
-- proposal framing and interpretation only
-- proposed V2 explanations in this document
-
-Before:
-
-```text
-This document can be read as a standalone redesign of evaluator input shape.
-```
-
-After:
-
-```text
-This document extends the implemented evaluator model recorded in current-evaluator-reference.md and only expands the caller-owned input shape.
-```
-
-Rationale:
-
-- the current evaluator already has a stable execution model that should remain the baseline for V2 evolution
-- the proposal work is about clarifying and enriching input shape, not replacing the evaluator's core responsibility
-
-Intentional non-change:
-
-- this revision does not alter the current proposal direction to rename caller-owned comparison input from test_parameters to expectation
-
-## Problem
-
-The current evaluator input is still too transport-oriented.
-
-Today, the caller typically expresses intent through CLI flags such as:
-
-```bash
-nape-eval \
-  --evidence ./sonar_metrics.json \
-  --test ./code_cover_80.py \
-  --test-parameters-file ./code_cover_80.parameters.json
-```
-
-That is enough to run the evaluator, but it is not enough to express the input contract cleanly as:
-
-- one structured request item for one requested test execution
-- a clear split between caller-owned input and evaluator-owned metadata
-- an input shape that aligns with the current V2 result proposal
-
-## Core Observation
-
-The caller does not provide loaded evidence objects or evaluator-owned metadata.
-
-The caller provides:
-
-- where the test is
-- where the evidence is
-- what expectation input should be supplied
-
-The evaluator owns:
-
-- loading the evidence
-- deriving metadata
-- calling the test with `evaluate(evidence, expectation, metadata)`
-- letting the test extract facts from the loaded evidence during evaluation
-
-V2 should represent those ownership boundaries directly.
-
-## Recommended V2 Design Direction
-
-### 1. Use one structured caller input item per requested test execution
-
-The design assumption for V2 should be:
-
-- one structured input item represents one requested test execution
-
-That input item should carry:
-
-- `test`
-- `evidence`
-- `expectation`
-
-### 2. Keep caller-owned input separate from evaluator-owned metadata
-
-Caller input answers:
-
-- which test should run?
-- which evidence should be loaded?
-- what expectation input should the test receive?
-
-Evaluator-owned metadata answers:
-
-- what evidence type was loaded?
-- what schema version or evaluator contract version applies?
-
-These should not be encoded in the same caller input packet.
-
-### 3. Keep expectation input declarative, not procedural
-
-The caller input should focus on:
-
-- supplied expectation values
-- caller-provided expectation keys
-
-The caller input should not carry:
-
-- comparison operators
-- rule logic
-- evaluator-owned execution metadata
-
-## Proposed Input Shape
-
-The recommended V2 input shape is:
-
-```json
-{
-  "test": "./code_cover_80.py",
-  "evidence": "./sonar_metrics.json",
-  "expectation": {
-    "minCoverage": 80
-  }
-}
-```
-
-## Proposed Meaning Of Each Section
+## Meaning Of Each Top-Level Field
 
 ### Test
 
 `test` is the caller-supplied locator for the test-of-detail to run.
 
-Current recommended direction:
+First-pass direction:
 
-- use a simple string locator for now
+- use a simple string locator
 - do not introduce a structured test locator object yet
 
 ### Evidence
 
 `evidence` is the caller-supplied locator for the evidence input to load.
 
-Current recommended direction:
+First-pass direction:
 
-- use a simple string locator for now
+- use a simple string locator
 - do not introduce a structured evidence locator object yet
 
-### Expectation
+### Evaluations
 
-`expectation` is the caller-supplied expectation input object.
+`evaluations` is the caller-owned list of evaluation items to be applied during one requested test execution.
 
-Current recommended direction:
+Each evaluation item declares:
 
-- keep it as the caller-provided object shape
-- do not normalize it into an array of expectation records in the input contract
-- preserve caller-provided keys such as `minCoverage`
-- allow the result contract to echo some or all of this outer expectation if that remains part of the paired result proposal
+- the `subject` being evaluated
+- the `criteria` to apply to that subject
+
+First-pass direction:
+
+- keep the structure explicit and declarative
+- do not collapse evaluation items into a looser free-form comparison object
 
 ### Metadata
 
-`metadata` is evaluator-owned context and is not part of the caller input item.
+`metadata` is evaluator-owned context and is not part of the caller-owned request.
 
-Current recommended direction:
+First-pass direction:
 
-- derive it inside the evaluator
+- derive metadata inside the evaluator
 - pass it separately into the test
 - do not require the caller to provide it in the structured input contract
 
-## Expectation Value Direction
+## Evaluation Item Model
 
-The safest starting point is to treat `expectation` as a JSON-compatible mapping.
-
-Example:
+Each `evaluations[*]` item has this first-pass shape:
 
 ```json
 {
-  "minCoverage": 80,
-  "allowedStatuses": ["complete", "approved"],
-  "requireBranchCoverage": true,
-  "owner": null,
-  "coveragePolicy": {
-    "minLineCoverage": 80,
-    "minBranchCoverage": 70
+  "subject": {
+    "name": "coverage",
+    "data_type": "number"
+  },
+  "criteria": {
+    "required": true,
+    "minimum": 80
   }
 }
 ```
 
-Recommended allowed value classes:
+### Subject
 
-- string
-- integer
-- number
-- boolean
-- null
-- array of JSON-compatible values
-- object/map of JSON-compatible values
+The `subject` object identifies what the test is expected to extract and what type that extracted value should have.
 
-Recommended direction:
+First-pass fields:
 
-- pass expectation values as plain Python dict/list/scalar values
-- do not auto-wrap them into dynamic attribute objects
-- keep caller-provided keys unchanged
+- `name`
+- `data_type`
 
-## Input/Output Alignment
+Selected first-pass direction:
 
-The current V2 direction is that the result/output contract may echo some of the caller-owned input.
+- do not add subject variants in the first pass beyond a single named typed subject object
+- defer fields such as `unit`, `path_hint`, `description`, `required`, and collection-shape details unless they become necessary in a later V2 step
 
-At minimum, the paired result proposal currently aligns around:
+### Subject Name
 
-- `test`
+`subject.name` is a normalized machine-readable string.
+
+Selected working rule for this proposal revision:
+
+- use lowercase `snake_case`
+- allow ASCII letters, digits, and underscore
+- begin with a letter
+- end with an alphanumeric character
+- require the caller to submit an already-normalized ASCII name
+- reject non-conforming names instead of silently rewriting or transliterating them
+
+Examples:
+
+- `coverage`
+- `branch_coverage`
+- `build_age_days`
+
+Invalid examples:
+
+- `Coverage`
+- `branch-coverage`
+- `80_coverage`
+- `branch coverage`
+- `coverage_`
+- `covérage`
+
+### Subject Data Type
+
+`subject.data_type` uses this bounded vocabulary:
+
+- `text`
+- `integer`
+- `number`
+- `boolean`
+- `date`
+- `datetime`
+- `duration`
+- `array`
+- `object`
+- `null`
+
+Definitions and examples:
+
+- `text`
+  Definition:
+  A string value whose meaning is textual rather than numeric, temporal, or structural.
+  Examples:
+  - `"approved"`
+  - `"A-12345"`
+  - `"coverage_exception"`
+  Notes:
+  - use `text` for identifiers, labels, codes, and free-form strings
+  - do not use `text` for values that the test is expected to compare numerically or temporally
+
+- `integer`
+  Definition:
+  A whole-number numeric value with no fractional component.
+  Examples:
+  - `0`
+  - `3`
+  - `42`
+  Notes:
+  - use `integer` when whole-number semantics matter
+  - examples include counts, retry limits, or an exact number of days when fractional values are not valid
+
+- `number`
+  Definition:
+  A numeric value that may include a fractional component.
+  Examples:
+  - `80`
+  - `80.0`
+  - `99.95`
+  Notes:
+  - use `number` when decimal or fractional values are allowed
+  - `number` may also accept whole numbers, but its semantic difference from `integer` is that fractions are permitted
+  Differentiation from `integer`:
+  - `integer` means fractions are not valid
+  - `number` means fractions are valid, even if a particular example happens to be whole
+  Recommendation:
+  - keep both `integer` and `number`; do not collapse them
+
+- `boolean`
+  Definition:
+  A true/false value.
+  Examples:
+  - `true`
+  - `false`
+  Notes:
+  - use `boolean` for binary conditions such as enabled/disabled, present/not present, or pass-through flags
+  - do not substitute strings such as `"true"` or `"false"`
+
+- `date`
+  Definition:
+  A calendar date without a time-of-day component.
+  Examples:
+  - `"2026-07-01"`
+  - `"2026-12-31"`
+  Notes:
+  - use `date` when only the calendar date matters
+  - recommended representation is ISO 8601 date format `YYYY-MM-DD`
+  Differentiation from `datetime`:
+  - `date` has no time-of-day or timezone semantics
+  - `datetime` includes a specific point in time
+
+- `datetime`
+  Definition:
+  A timestamp or point in time with date and time components.
+  Examples:
+  - `"2026-07-01T14:30:00Z"`
+  - `"2026-07-01T10:30:00-04:00"`
+  Notes:
+  - use `datetime` when time-of-day or timezone matters
+  - recommended representation is ISO 8601 datetime format
+  Differentiation from `date`:
+  - use `date` for calendar-only comparisons
+  - use `datetime` for temporal precision beyond the calendar day
+
+- `duration`
+  Definition:
+  A length of time rather than a calendar date or timestamp.
+  Examples:
+  - `"P30D"`
+  - `"PT4H"`
+  - `"P1DT12H"`
+  Notes:
+  - use `duration` for elapsed-time constraints such as retention periods, timeouts, or age windows
+  - recommended representation is ISO 8601 duration format
+  Differentiation from `integer` and `number`:
+  - use `duration` when the value means elapsed time as a typed concept
+  - use `integer` or `number` only when the value is a plain numeric quantity and any time unit is handled separately
+
+- `array`
+  Definition:
+  An ordered list of JSON-compatible values.
+  Examples:
+  - `["complete", "approved"]`
+  - `[80, 85, 90]`
+  - `[{"name": "coverage"}, {"name": "branch_coverage"}]`
+  Notes:
+  - use `array` when multiplicity and order are relevant or when the subject naturally returns a list
+  - element typing is not yet separately modeled in this first pass
+
+- `object`
+  Definition:
+  A JSON object or mapping with named fields.
+  Examples:
+  - `{"line": 80, "branch": 70}`
+  - `{"status": "approved", "owner": "security_team"}`
+  Notes:
+  - use `object` when the subject is a structured value with named properties
+  - nested object shape is not yet separately modeled in this first pass
+  Differentiation from `array`:
+  - `object` is keyed by field names
+  - `array` is an ordered list
+
+- `null`
+  Definition:
+  An explicit null value.
+  Examples:
+  - `null`
+  Notes:
+  - use `null` only when the absence of a value is itself the value being evaluated
+  - this should not be confused with a missing field or an extraction failure
+  Differentiation from missing or invalid:
+  - `null` means the subject value is explicitly present as null
+  - missing means the subject was not present
+  - invalid means the subject was present but unusable for the required type
+
+Representation note:
+
+- these definitions describe the intended semantic category of the extracted subject value
+- domain semantics such as `percent`, `days`, `bytes`, or `uri` should be modeled separately from `data_type`
+
+## Criteria Model
+
+`criteria` is an object-valued packet that carries the caller-supplied evaluation benchmarks for one `subject`.
+
+Selected first-pass direction:
+
+- `criteria` is object-only
+- scalar shorthand is not supported in the first pass
+- if shorthand is ever added later, it should be transport sugar only after the canonical object model is stable
+
+### Supported First-Pass Criteria Keys
+
+- `minimum`
+- `maximum`
+- `equals`
+- `allowed_values`
+- `disallowed_values`
+- `required`
+
+Selected first-pass direction:
+
+- allow multi-key `criteria` objects only for compatible combinations
+- allow `allowed_values` and `disallowed_values` together only when they are non-contradictory
+- comparison-oriented criteria such as `minimum`, `maximum`, `equals`, `allowed_values`, and `disallowed_values` implicitly require the subject to be present and usable
+- `required: true` means the subject must be successfully extracted and present
+- `required: true` does not by itself mean non-empty, non-null, or otherwise valid for deeper structural rules
+- if `required: true` appears together with another comparison-oriented criterion, treat it as explicit but redundant rather than invalid
+- use `equals: null` for “must be null”
+- use `disallowed_values: [null]` for “must not be null”
+- do not introduce a dedicated null criterion in the first pass
+
+Examples:
+
+```json
+{
+  "criteria": {
+    "minimum": 80
+  }
+}
+```
+
+```json
+{
+  "criteria": {
+    "minimum": 80,
+    "maximum": 90
+  }
+}
+```
+
+```json
+{
+  "criteria": {
+    "allowed_values": ["approved", "complete"],
+    "disallowed_values": ["deprecated"]
+  }
+}
+```
+
+```json
+{
+  "criteria": {
+    "equals": null
+  }
+}
+```
+
+### Deferred Criteria Variants
+
+The following variants are intentionally not first-pass input criteria:
+
+- `required_keys`
+- `allowed_keys`
+- `disallowed_keys`
+- `contains_all`
+- `contains_any`
+- `contains_none`
+- `allow_empty`
+- `must_be_null`
+- `must_be_non_null`
+- compound boolean logic
+- weighted scoring
+- procedural operators
+- custom evaluator expressions
+
+Equivalence notes:
+
+- `must_be_null`
+  Clean first-pass equivalent:
+  - use `equals: null`
+
+- `must_be_non_null`
+  Partial approximation:
+  - for scalar-style subjects, use `disallowed_values: [null]`
+
+- `contains_none`
+  Partial approximation:
+  - for a scalar subject, `disallowed_values` expresses the same intent
+
+The remaining deferred variants do not have a clean first-pass equivalent.
+
+## Recommended Test Call Boundary
+
+This proposal now recommends that the test-of-detail receive:
+
+```python
+evaluate(evidence, evaluations, metadata)
+```
+
+Meaning:
+
 - `evidence`
-- outer `expectation`
+  The loaded evidence content provided by the evaluator
+- `evaluations`
+  The caller-owned `evaluations` array for this requested test execution
+- `metadata`
+  Evaluator-owned execution context
 
-The input contract and result contract should stay compatible on those outer fields even when the inner test-owned `result` payload becomes more structured than the input.
+Example:
 
-## Example: Coverage Input Reframed For V2
+```python
+loaded_evidence_content = ...  # loaded from the provided evidence input
 
-Caller-owned structured input:
+evaluate(
+    evidence=loaded_evidence_content,
+    evaluations=[
+        {
+            "subject": {
+                "name": "coverage",
+                "data_type": "number",
+            },
+            "criteria": {
+                "required": True,
+                "minimum": 80,
+            },
+        }
+    ],
+    metadata={
+        "evidence_type": "json",
+        "schema_version": "2",
+    },
+)
+```
+
+Rationale:
+
+- it aligns the test call boundary with the selected caller-owned `evaluations` model
+- it keeps evaluator-owned metadata separate from caller-owned evaluation input
+- it avoids silently collapsing a caller-provided evaluation array into some other ad hoc structure
+- this test call boundary is now an approved direction for the V2 input proposal
+
+## Validation And No-Coercion
+
+The evaluator should validate the caller-owned request packet before calling the test.
+
+This validation should be strict.
+
+The evaluator should reject:
+
+- malformed request structure
+- malformed `subject` objects
+- unsupported `subject.data_type` values
+- malformed `criteria` objects
+- unsupported `criteria` keys
+- incompatible `subject.data_type` and `criteria` combinations
+- ambiguous typed input that would require coercion
+
+No-coercion examples:
+
+- if `subject.data_type` is `number`, `"80"` should not silently coerce to `80`
+- if `subject.data_type` is `boolean`, `"true"` should not silently coerce to `true`
+- if `subject.data_type` is `date`, `"07/01/2026"` should not silently coerce to `"2026-07-01"`
+
+## Type Invariants, Compatibility Rules, And Examples
+
+This section consolidates:
+
+- type invariants
+- compatibility rules
+- valid examples
+- invalid examples
+
+### Invariants
+
+- `test` must be present
+- `evidence` must be present
+- `evaluations` must be present and must be an array
+- each `evaluations[*]` item must contain exactly:
+  - one `subject`
+  - one `criteria`
+- `subject.name` must be a normalized machine-readable string
+- `subject.data_type` must be one of the bounded allowed values
+- `criteria` must be an object
+- `criteria` must contain at least one supported first-pass key
+- multi-key `criteria` objects are allowed only for compatible combinations
+- any comparison-oriented criterion implies that the fact must be present and usable, even when `required: true` is omitted
+
+### Compatibility Matrix
+
+| `subject.data_type` | Supported first-pass `criteria` variants |
+| --- | --- |
+| `text` | `equals`, `allowed_values`, `disallowed_values`, `required` |
+| `integer` | `minimum`, `maximum`, `equals`, `allowed_values`, `disallowed_values`, `required` |
+| `number` | `minimum`, `maximum`, `equals`, `allowed_values`, `disallowed_values`, `required` |
+| `boolean` | `equals`, `allowed_values`, `disallowed_values`, `required` |
+| `date` | `minimum`, `maximum`, `equals`, `allowed_values`, `disallowed_values`, `required` |
+| `datetime` | `minimum`, `maximum`, `equals`, `allowed_values`, `disallowed_values`, `required` |
+| `duration` | `minimum`, `maximum`, `equals`, `allowed_values`, `disallowed_values`, `required` |
+| `array` | `equals`, `required` |
+| `object` | `equals`, `required` |
+| `null` | `equals`, `required` |
+
+Conservative first-pass note:
+
+- `array`, `object`, and `null` intentionally have a narrower first-pass compatibility surface than scalar types such as `text`, `integer`, and `number`
+- this proposal does not yet support richer first-pass logic for:
+  - array membership rules
+  - object key rules
+  - emptiness rules
+  - structural shape validation
+- this keeps the first-pass criteria model bounded and predictable
+- for `null`, `required: true` should be read narrowly as “the subject must be successfully extracted and present, and may then be evaluated as null”
+- use `required: true` with `null` carefully, because “present with value null” is different from “missing”
+
+### Valid Examples
+
+Numeric threshold:
 
 ```json
 {
   "test": "./code_cover_80.py",
   "evidence": "./sonar_metrics.json",
-  "expectation": {
-    "minCoverage": 80
+  "evaluations": [
+    {
+      "subject": {
+        "name": "coverage",
+        "data_type": "number"
+      },
+      "criteria": {
+        "required": true,
+        "minimum": 80
+      }
+    }
+  ]
+}
+```
+
+Text inclusion:
+
+```json
+{
+  "test": "./status_check.py",
+  "evidence": "./release.json",
+  "evaluations": [
+    {
+      "subject": {
+        "name": "release_status",
+        "data_type": "text"
+      },
+      "criteria": {
+        "allowed_values": ["approved", "complete"]
+      }
+    }
+  ]
+}
+```
+
+Null requirement:
+
+```json
+{
+  "test": "./owner_check.py",
+  "evidence": "./release.json",
+  "evaluations": [
+    {
+      "subject": {
+        "name": "exception_owner",
+        "data_type": "null"
+      },
+      "criteria": {
+        "equals": null
+      }
+    }
+  ]
+}
+```
+
+### Invalid Examples
+
+Scalar shorthand for `criteria`:
+
+```json
+{
+  "test": "./code_cover_80.py",
+  "evidence": "./sonar_metrics.json",
+  "evaluations": [
+    {
+      "subject": {
+        "name": "coverage",
+        "data_type": "number"
+      },
+      "criteria": 80
+    }
+  ]
+}
+```
+
+Invalid because:
+
+- `criteria` must be an object
+
+Unsupported `subject.name` shape:
+
+```json
+{
+  "subject": {
+    "name": "Branch Coverage",
+    "data_type": "number"
   }
 }
 ```
 
-Evaluator-owned call boundary:
+Invalid because:
 
-```python
-loaded_evidence_content = ...  # loaded from the provided evidence input
+- `subject.name` is not normalized machine-readable `snake_case`
 
-def evaluate(evidence, expectation, metadata):
-    min_coverage = expectation.get("minCoverage")
-    ...
-```
-
-Example evaluator-owned metadata:
+Ambiguous typed input with coercion pressure:
 
 ```json
 {
-  "evidence_type": "json",
-  "schema_version": "2"
+  "subject": {
+    "name": "coverage",
+    "data_type": "number"
+  },
+  "criteria": {
+    "equals": "80"
+  }
 }
 ```
 
-## Why This Is Better
+Invalid because:
 
-This gives V2:
+- `"80"` is text, not a number
+- the evaluator should reject this instead of silently coercing it
 
-- a cleaner caller input contract than transport-specific CLI flags alone
-- a direct alignment point with the current structured result proposal
-- clearer ownership boundaries between caller input and evaluator metadata
-- a simpler rule that the caller provides `test`, `evidence`, and `expectation`
-- a clearer call boundary for test authors using `evaluate(evidence, expectation, metadata)`
+Incompatible criteria combination:
 
-## Recommended Test Call Contract
+```json
+{
+  "criteria": {
+    "equals": 80,
+    "allowed_values": [70, 90]
+  }
+}
+```
 
-The strongest current recommendation is:
+Invalid because:
 
-- keep the caller input contract separate from the test call contract
-- define the caller input item as `test`, `evidence`, and `expectation`
-- keep the test call boundary as `evaluate(evidence, expectation, metadata)`
+- the criteria combination is contradictory
 
-Recommended direction:
+## Input/Output Alignment
 
-- evaluator owns the caller input parsing and evidence loading
-- test-of-detail receives loaded `evidence`, caller-owned `expectation`, and evaluator-owned `metadata`
+The current V2 direction is that the outer result envelope should echo:
 
-## Migration Direction
+- `test`
+- `evidence`
+- the full accepted `evaluations` array
 
-This proposal is intentionally V2-oriented and may justify breaking changes.
+This is the current recommended traceability rule for the paired result proposal.
 
-Recommended migration direction:
+## Follow-Up Dependency On The Result Proposal
 
-1. define the structured caller input item first
-2. keep the CLI as one transport that can populate that input item
-3. align the result proposal around any caller-owned fields that should be echoed back
-4. update test authoring docs to teach `evaluate(evidence, expectation, metadata)`
-5. evaluate batch or manifest-level structured input only after the per-test input item is stable
+The input proposal is now far enough along to establish the caller-owned V2 request shape.
 
-## Open Design Questions
+The paired result proposal still needs a follow-up revision to stay aligned on:
 
-The main questions still needing explicit review are:
+- how per-evaluation outcomes are represented when one test receives an `evaluations` array
+- how `subject` and `criteria` are echoed or normalized in result packets
+- how one test-level execution maps to one or more evaluation-level outcomes in the result model
 
-1. Should the outer caller input remain one per-test item only, or should V2 later add a top-level list/manifest request shape?
-2. Should `test` and `evidence` remain plain string locators, or should they later become structured locator objects?
-3. Should the evaluator validate expectation values strictly as JSON-compatible before calling the test?
-4. How much of the caller input should the outer result envelope echo back?
+This is a follow-up dependency, not a reason to keep the input proposal in its earlier `expectation`-based form.
+
+## Remaining Follow-Up Points
+
+The main remaining work after this revision is no longer basic input-shape discovery.
+
+It is:
+
+1. align the paired V2 result proposal to the selected `evaluations` / `subject` / `criteria` model
+2. update any user or reference docs that still teach the earlier `expectation`-based proposal language
+3. tighten validation details later, after items 1 and 2 above, if implementation-grade precision is needed:
+   - exact rejection rules for contradictory multi-key `criteria`
+   - whether `allowed_values` / `disallowed_values` element typing must exactly match `subject.data_type`
+   - whether `equals` on `array` / `object` means exact structural equality only
+4. update test authoring docs to teach `evaluate(evidence, evaluations, metadata)`
+5. decide whether later V2 work should add:
+   - structured test locators
+   - structured evidence locators
+   - manifest-style outer request containers
+   - richer structural criteria variants
 
 ## Current Recommendation
 
 The strongest current recommendation is:
 
-- use the `Current Recommended V2 View` section as the source of truth for the current proposed input contract
-- use one structured caller input item per requested test execution
-- keep the caller input item to `test`, `evidence`, and `expectation`
-- keep `expectation` as the caller-provided object shape
-- preserve caller-provided expectation keys such as `minCoverage`
-- keep evaluator-owned `metadata` outside the caller input item
-- keep the test call boundary as `evaluate(evidence, expectation, metadata)`
-- keep comparison operators and business-rule logic inside the Python test-of-detail implementation
+- use `test` + `evidence` + `evaluations` as the V2 caller-owned request shape
+- use `subject` and `criteria` as the contract names inside each evaluation item
+- define each `evaluations[*]` item as one `subject` plus one object-valued `criteria` packet
+- allow that one `criteria` object to contain multiple compatible first-pass criteria keys
+- keep the first-pass `subject` object minimal
+- keep `criteria` declarative, structured, and object-only rather than procedural
+- keep `test` and `evidence` as plain string locators in the first pass
+- validate `subject.data_type`, `criteria`, and their compatibility strictly before test execution
+- keep evaluator-owned `metadata` outside the caller-owned request packet
+- keep richer evaluation logic inside the Python test-of-detail implementation

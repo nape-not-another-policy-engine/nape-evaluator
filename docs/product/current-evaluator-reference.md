@@ -2,15 +2,13 @@
 
 This document records what `nape-evaluator` does today in committed code.
 
-Use it as the current-behavior baseline when reviewing V2 input/output expansion proposals. It is not a proposal document.
-
 ## Purpose
 
 Use this document to:
 
 - show the current evaluator flow as implemented
-- separate current behavior from V2 proposal work
-- anchor V2 input/output changes to the existing evaluator model rather than a clean-sheet redesign
+- anchor user, reference, and maintainer docs to the active runtime contract
+- separate current runtime behavior from older historical contract material
 
 ## Source Of Truth
 
@@ -25,76 +23,92 @@ This reference is grounded in:
 - `tests/test_cli_contract.py`
 - `tests/test_evaluator_use_case.py`
 - `tests/test_output_contract.py`
+- `tests/test_request_builder.py`
 
 ## Current Evaluator Model
 
 The current evaluator model is:
 
 1. accept one evidence path
-2. accept one or more requested test invocations
-3. optionally accept one parameter file per requested test invocation
+2. accept one or more requested test packets
+3. validate caller-owned request structure before execution
 4. load the evidence once
 5. derive evaluator-owned metadata once
-6. load and execute each requested test invocation independently
-7. emit one outer result item per requested test invocation
+6. load and execute each requested test independently
+7. emit one outer result item per requested test
 8. emit evaluator-owned messages and summary data alongside those result items
-
-This means the evaluator already has a stable outer execution model. The current V2 input/output work is an expansion of that model, not a replacement of it.
 
 ## Current CLI Transport
 
 Current supported CLI inputs:
 
 - `--check-install`
-- `--evidence <file>`
-- repeated `--test <python-file>`
-- repeated `--test-parameters-file <json-file>` matched by position to repeated `--test`
+- direct invocation mode:
+  - `--evidence <file>`
+  - repeated `--invoke <json-object>`
+  - repeated `--invoke-file <json-file>`
+- full-request mode:
+  - `--request-file <path-or->`
 
-Current CLI example:
+Current CLI examples:
 
 ```bash
 nape-eval \
-  --evidence ./sonar_metrics.json \
-  --test ./code_cover_80.py \
-  --test-parameters-file ./code_cover_80.parameters.json \
-  --test ./coverage_floor.py \
-  --test-parameters-file ./coverage_floor.parameters.json
+  --evidence ./author_verification.json \
+  --invoke '{"test":"./verify_author_complete.py","evaluations":[{"subject":{"name":"status","data_type":"text"},"criteria":{"equals":"complete"}}]}'
+```
+
+```bash
+nape-eval --request-file ./request.json
+```
+
+```bash
+cat request.json | nape-eval --request-file -
 ```
 
 Current CLI validation rules:
 
 - `--check-install` cannot be combined with evaluation arguments
-- `--evidence` and `--test` must be provided together
-- `--test-parameters-file` cannot be used without both `--evidence` and `--test`
-- if parameter files are supplied, they must be repeated once per `--test`
+- direct invocation mode requires `--evidence`
+- direct invocation mode requires at least one `--invoke` or `--invoke-file`
+- `--request-file` cannot be combined with `--evidence`, `--invoke`, or `--invoke-file`
+- `--request-file -` means read the full request packet from stdin
 
 ## Current Request Model
 
-The CLI builds:
-
-- one `EvaluateEvidenceRequest`
-- one `TestInvocationRequest` per requested `--test`
-
-Today the request model is still path-oriented:
+The evaluator now uses a verified builder-only request seam:
 
 ```python
-EvaluateEvidenceRequest(
-    evidence_path="./sonar_metrics.json",
-    test_invocations=[
-        TestInvocationRequest.ready(
-            test_path="./code_cover_80.py",
-            test_parameters={"minCoverage": 80},
-            test_parameters_source="./code_cover_80.parameters.json",
-        )
-    ],
+request = (
+    EvaluateEvidenceRequest.builder()
+    .evidence_path("./author_verification.json")
+    .raw_tests(
+        [
+            {
+                "test": "./verify_author_complete.py",
+                "evaluations": [
+                    {
+                        "subject": {"name": "status", "data_type": "text"},
+                        "criteria": {"equals": "complete"},
+                    }
+                ],
+            }
+        ]
+    )
+    .try_build()
 )
 ```
 
 Important current behavior:
 
-- omitted parameter files become `{}` for that invocation
-- parameter-file load or decode failures block only the affected invocation when possible
-- blocked parameter-file invocations keep the requested test path but may carry `test_parameters=None`
+- request validation happens before the use-case execution seam is crossed
+- malformed caller-owned request packets are rejected by request-builder validation
+- top-level full-request packets use:
+  - `evidence`
+  - `tests`
+- each requested test packet uses:
+  - `test`
+  - `evaluations`
 
 ## Current Evidence Loading
 
@@ -117,20 +131,18 @@ Current known unprocessable extensions are blocked before test execution:
 - common media formats such as `.mp3`, `.mp4`, `.mov`, `.avi`
 - executable or opaque binary formats such as `.exe`, `.bin`
 
-When an unprocessable extension is detected, the evaluator emits message code `unprocessable_evidence_type` and requested invocations become blocked.
-
 ## Current Test Call Boundary
 
 After evidence loading, the evaluator imports each requested Python test file and calls:
 
 ```python
-evaluate(evidence, test_parameters, metadata)
+evaluate(evidence, evaluations, metadata)
 ```
 
 Current argument ownership:
 
 - `evidence`: evaluator-loaded evidence content
-- `test_parameters`: caller-owned parameter dict
+- `evaluations`: caller-owned evaluation input
 - `metadata`: evaluator-owned execution metadata
 
 Current metadata keys:
@@ -147,60 +159,110 @@ Current evaluator assumptions:
 - the evaluator is claim-agnostic
 - the evaluator does not own comparison logic
 - the Python test extracts the needed facts from `evidence`
-- the Python test applies its own comparison logic against `test_parameters`
-- the Python test returns a two-item tuple `(outcome, reason)`
+- the Python test applies its own reasoning against caller-owned `evaluations`
+- the Python test returns one structured result object
 
-Current accepted returned outcomes:
+## Current Test Result Contract
 
-- `pass`
-- `fail`
-- `inconclusive`
-- `error`
-
-If the test returns any other outcome, the evaluator converts that returned value to result-level `error` with an explanatory reason.
-
-## Current Outer Result Item
-
-Today the evaluator emits one result item per requested test invocation.
-
-Current successful shape:
+Completed tests must return:
 
 ```json
 {
-  "test": "./code_cover_80.py",
-  "evidence_file": "./sonar_metrics.json",
-  "test_parameters": {
-    "minCoverage": 80
-  },
-  "test_parameters_source": "./code_cover_80.parameters.json",
-  "executed": true,
-  "outcome": "pass",
-  "reason": "Coverage is 85.0%, which meets the required 80%."
+  "conclusion": "true",
+  "facts": [],
+  "reason": "Reason text"
 }
 ```
 
-Current blocked-execution shape:
+Current accepted completed-test conclusions:
+
+- `true`
+- `false`
+- `inconclusive`
+- `error`
+
+If a completed test returns an invalid result contract, the evaluator normalizes that completed invocation to:
+
+- `result.conclusion = "error"`
+- `result.facts = []`
+- `result.reason = "...invalid result contract..."`
+
+That is treated as a completed test-level contract error, not as an evaluator execution failure.
+
+## Current Outer Result Item
+
+Today the evaluator emits one result item per requested test.
+
+Current completed shape:
 
 ```json
 {
-  "test": "./code_cover_80.py",
-  "evidence_file": "./image.png",
-  "test_parameters": {
-    "minCoverage": 80
+  "test": "./verify_author_complete.py",
+  "evidence": "./author_verification.json",
+  "evaluations": [
+    {
+      "subject": {
+        "name": "status",
+        "data_type": "text"
+      },
+      "criteria": {
+        "equals": "complete"
+      }
+    }
+  ],
+  "execution": {
+    "executed": true,
+    "status": "completed"
   },
-  "test_parameters_source": "./code_cover_80.parameters.json",
-  "executed": false,
-  "outcome": "error",
-  "reason": "Evidence file extension '.png' is not supported for evaluation."
+  "result": {
+    "conclusion": "true",
+    "facts": [
+      {
+        "name": "status",
+        "value": "complete",
+        "value_type": "text",
+        "status": "found"
+      }
+    ],
+    "reason": "The author has achieved the status of complete."
+  }
+}
+```
+
+Current blocked shape:
+
+```json
+{
+  "test": "./verify_author_complete.py",
+  "evidence": "./missing.json",
+  "evaluations": [
+    {
+      "subject": {
+        "name": "status",
+        "data_type": "text"
+      },
+      "criteria": {
+        "equals": "complete"
+      }
+    }
+  ],
+  "execution": {
+    "executed": false,
+    "status": "blocked"
+  },
+  "result": null
 }
 ```
 
 Important current semantics:
 
-- every requested test invocation gets a `results[*]` row
-- `executed` tells whether the test actually ran to completion
-- `outcome` is still a flat string returned by the current contract
-- `reason` is the current human-readable explanation field
+- every requested test gets a `results[*]` row
+- `execution.executed` tells whether the Python test completed
+- `execution.status` is:
+  - `completed`
+  - `blocked`
+- completed tests always carry structured `result`
+- blocked tests always carry `result: null`
 
 ## Current Evaluator Output Envelope
 
@@ -208,26 +270,14 @@ Today the evaluator prints:
 
 ```json
 {
-  "results": [
-    {
-      "test": "./code_cover_80.py",
-      "evidence_file": "./sonar_metrics.json",
-      "test_parameters": {
-        "minCoverage": 80
-      },
-      "test_parameters_source": "./code_cover_80.parameters.json",
-      "executed": true,
-      "outcome": "pass",
-      "reason": "Coverage is 85.0%, which meets the required 80%."
-    }
-  ],
+  "results": [],
   "evaluator": {
     "messages": [],
     "summary": {
-      "count": 1,
-      "ran": 1,
-      "pass": 1,
-      "fail": 0,
+      "count": 0,
+      "ran": 0,
+      "true": 0,
+      "false": 0,
       "inconclusive": 0,
       "error": 0,
       "message_count": 0,
@@ -243,28 +293,28 @@ Today the evaluator prints:
 
 Current summary behavior:
 
-- `count`: number of requested test invocations
-- `ran`: number of result items with `executed == true`
-- `pass`, `fail`, `inconclusive`, `error`: counts from executed result outcomes only
+- `count`: number of requested tests
+- `ran`: number of result items with `execution.executed == true`
+- `true`, `false`, `inconclusive`, `error`: counts from completed test results only
 - `message_count`, `message_info`, `message_warning`, `message_error`: counts from evaluator-generated notices only
 
 Important current distinction:
 
-- `evaluator.summary.error` means a test ran and returned outcome `error`
+- `evaluator.summary.error` means a completed test returned conclusion `error`
 - `evaluator.summary.message_error` means the evaluator/runtime reported an operational problem
 
-If `ran < count`, one or more requested invocations were blocked before successful execution.
+If `ran < count`, one or more requested tests were blocked before successful execution.
 
 ## Current Failure Ownership
 
 Today the evaluator distinguishes between:
 
-- test-owned returned outcomes
+- test-owned completed conclusions
 - evaluator-owned operational failures
 
 Evaluator-owned failures still produce:
 
-- a blocked outer result item for each affected requested invocation
+- a blocked outer result item for each affected requested test
 - one or more evaluator messages describing the operational problem
 
 Examples of current evaluator-owned failures:
@@ -275,18 +325,14 @@ Examples of current evaluator-owned failures:
 - test file not found
 - test import error
 - unexpected exception during test execution
-- parameter-file load or decode failure
 
-## What Still Applies While Expanding V2 Input/Output
+## Historical Note
 
-The following current fundamentals still apply unless explicitly changed later:
+Older evaluator contracts used:
 
-- the evaluator remains claim-agnostic
-- the evaluator still executes one shared evidence input against one or more requested tests
-- evidence is still loaded by the evaluator before test execution
-- evaluator-owned metadata remains separate from caller-owned comparison input
-- the Python test still owns fact extraction, comparison logic, and human-readable reasoning
-- the evaluator still owns transport, invocation execution status, messages, and summary data
-- per-test output is still anchored around one outer result item per requested invocation
+- repeated `--test`
+- repeated `--test-parameters-file`
+- `evaluate(evidence, test_parameters, metadata)`
+- flat `outcome` / `reason` result rows
 
-That means current V2 input/output work should be read as an expansion of the existing request/result model, not as a redesign of the evaluator's core responsibility.
+That contract is no longer the current runtime behavior.

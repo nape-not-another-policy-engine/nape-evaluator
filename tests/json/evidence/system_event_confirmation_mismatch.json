@@ -1,0 +1,18 @@
+{
+  "system_confirmation": {
+    "interconnection": {
+      "approval_id": "ic-2026-07-02-003"
+    },
+    "event": {
+      "event_id": "evt-4403"
+    },
+    "origin_system": {
+      "confirmed_event_ids": ["evt-4403"],
+      "reported_state": "active"
+    },
+    "receiving_system": {
+      "confirmed_event_ids": [],
+      "reported_state": "degraded"
+    }
+  }
+}

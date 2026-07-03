@@ -1,0 +1,8 @@
+{
+  "application_release": {
+    "application_id": "payments-api",
+    "mfa_required": false,
+    "critical_vulnerability_count": 0,
+    "deployment_approval_present": true
+  }
+}

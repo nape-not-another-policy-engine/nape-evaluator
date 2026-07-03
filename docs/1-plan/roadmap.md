@@ -28,7 +28,502 @@ The following baseline work is already in place and should be treated as prerequ
 
 ## Workstreams
 
-There is no active workstream right now.
+### Plan 31: Domain Example Pack Wave 16 Selection And Scoping
+
+Status:
+
+- active
+
+Purpose:
+
+- select and scope the sixteenth domain-rich example pack so the next implementation wave starts from an explicit materially different assurance family
+
+Plan:
+
+- `docs/1-plan/plans/31-domain-example-pack-wave-16-selection-and-scoping.md`
+
+Handoff:
+
+- `docs/1-plan/handoffs/31-domain-example-pack-wave-16-selection-and-scoping.md`
+
+Primary dependencies:
+
+- `docs/product/current-evaluator-reference.md`
+- `docs/user/v2-test-authoring/domain-examples.md`
+- `docs/user/v2-test-authoring/domain-packs-overview.md`
+- `docs/user/v2-test-authoring/authoring-examples-index.md`
+- `tests/json/test_pattern_library.py`
+- `tests/json/evidence/`
+- `tests/json/test_of_detail/`
+
+### Plan 30: Domain Example Pack Implementation Wave 15
+
+Status:
+
+- complete
+
+Purpose:
+
+- implement the fifteenth domain-rich example pack as executable V2 fixtures and docs, starting with healthcare patient-data export governance assurance
+
+Plan:
+
+- `docs/1-plan/plans/30-domain-example-pack-implementation-wave-15.md`
+
+Handoff:
+
+- `docs/1-plan/handoffs/30-domain-example-pack-implementation-wave-15.md`
+
+Primary dependencies:
+
+- `docs/product/current-evaluator-reference.md`
+- `docs/user/v2-test-authoring/domain-examples.md`
+- `docs/user/v2-test-authoring/domain-packs-overview.md`
+- `docs/user/v2-test-authoring/authoring-examples-index.md`
+- `tests/json/test_pattern_library.py`
+- `tests/json/evidence/`
+- `tests/json/test_of_detail/`
+
+### Plan 29: Domain Example Pack Implementation Wave 14
+
+Status:
+
+- complete
+
+Purpose:
+
+- implement the fourteenth domain-rich example pack as executable V2 fixtures and docs, starting with aviation or maintenance return-to-service assurance
+
+Plan:
+
+- `docs/1-plan/plans/29-domain-example-pack-implementation-wave-14.md`
+
+Handoff:
+
+- `docs/1-plan/handoffs/29-domain-example-pack-implementation-wave-14.md`
+
+Primary dependencies:
+
+- `docs/product/current-evaluator-reference.md`
+- `docs/user/v2-test-authoring/domain-examples.md`
+- `docs/user/v2-test-authoring/domain-packs-overview.md`
+- `docs/user/v2-test-authoring/authoring-examples-index.md`
+- `tests/json/test_pattern_library.py`
+- `tests/json/evidence/`
+- `tests/json/test_of_detail/`
+
+### Plan 28: Domain Example Pack Implementation Wave 13
+
+Status:
+
+- complete
+
+Purpose:
+
+- implement the thirteenth domain-rich example pack as executable V2 fixtures and docs, starting with fleet or telematics reconciliation assurance
+
+Plan:
+
+- `docs/1-plan/plans/28-domain-example-pack-implementation-wave-13.md`
+
+Handoff:
+
+- `docs/1-plan/handoffs/28-domain-example-pack-implementation-wave-13.md`
+
+Primary dependencies:
+
+- `docs/product/current-evaluator-reference.md`
+- `docs/user/v2-test-authoring/domain-examples.md`
+- `docs/user/v2-test-authoring/domain-packs-overview.md`
+- `docs/user/v2-test-authoring/authoring-examples-index.md`
+- `tests/json/test_pattern_library.py`
+- `tests/json/evidence/`
+- `tests/json/test_of_detail/`
+
+### Plan 27: Domain Example Pack Implementation Wave 12
+
+Status:
+
+- complete
+
+Purpose:
+
+- implement the twelfth domain-rich example pack as executable V2 fixtures and docs, starting with public-sector or mission access review assurance
+
+Plan:
+
+- `docs/1-plan/plans/27-domain-example-pack-implementation-wave-12.md`
+
+Handoff:
+
+- `docs/1-plan/handoffs/27-domain-example-pack-implementation-wave-12.md`
+
+Primary dependencies:
+
+- `docs/product/current-evaluator-reference.md`
+- `docs/user/v2-test-authoring/domain-examples.md`
+- `docs/user/v2-test-authoring/domain-packs-overview.md`
+- `docs/user/v2-test-authoring/authoring-examples-index.md`
+- `tests/json/test_pattern_library.py`
+- `tests/json/evidence/`
+- `tests/json/test_of_detail/`
+
+### Plan 26: Domain Example Pack Implementation Wave 11
+
+Status:
+
+- complete
+
+Purpose:
+
+- implement the eleventh domain-rich example pack as executable V2 fixtures and docs, starting with application verification assurance
+
+Plan:
+
+- `docs/1-plan/plans/26-domain-example-pack-implementation-wave-11.md`
+
+Handoff:
+
+- `docs/1-plan/handoffs/26-domain-example-pack-implementation-wave-11.md`
+
+Primary dependencies:
+
+- `docs/product/current-evaluator-reference.md`
+- `docs/user/v2-test-authoring/domain-examples.md`
+- `docs/user/v2-test-authoring/domain-packs-overview.md`
+- `docs/user/v2-test-authoring/authoring-examples-index.md`
+- `tests/json/test_pattern_library.py`
+- `tests/json/evidence/`
+- `tests/json/test_of_detail/`
+
+### Plan 25: Domain Example Pack Implementation Wave 10
+
+Status:
+
+- complete
+
+Purpose:
+
+- implement the tenth domain-rich example pack as executable V2 fixtures and docs, starting with IT / OT boundary verification assurance
+
+Plan:
+
+- `docs/1-plan/plans/25-domain-example-pack-implementation-wave-10.md`
+
+Handoff:
+
+- `docs/1-plan/handoffs/25-domain-example-pack-implementation-wave-10.md`
+
+Primary dependencies:
+
+- `docs/product/current-evaluator-reference.md`
+- `docs/user/v2-test-authoring/domain-examples.md`
+- `docs/user/v2-test-authoring/domain-packs-overview.md`
+- `docs/user/v2-test-authoring/authoring-examples-index.md`
+- `tests/json/test_pattern_library.py`
+- `tests/json/evidence/`
+- `tests/json/test_of_detail/`
+
+### Plan 24: Domain Example Pack Implementation Wave 9
+
+Status:
+
+- complete
+
+Purpose:
+
+- implement the ninth domain-rich example pack as executable V2 fixtures and docs, starting with system-of-systems event confirmation assurance
+
+Plan:
+
+- `docs/1-plan/plans/24-domain-example-pack-implementation-wave-9.md`
+
+Handoff:
+
+- `docs/1-plan/handoffs/24-domain-example-pack-implementation-wave-9.md`
+
+Primary dependencies:
+
+- `docs/product/current-evaluator-reference.md`
+- `docs/user/v2-test-authoring/domain-examples.md`
+- `docs/user/v2-test-authoring/domain-packs-overview.md`
+- `docs/user/v2-test-authoring/authoring-examples-index.md`
+- `tests/json/test_pattern_library.py`
+- `tests/json/evidence/`
+- `tests/json/test_of_detail/`
+
+### Plan 23: Domain Example Pack Implementation Wave 8
+
+Status:
+
+- complete
+
+Purpose:
+
+- implement the eighth domain-rich example pack as executable V2 fixtures and docs, starting with food or cold-chain exception assurance
+
+Plan:
+
+- `docs/1-plan/plans/23-domain-example-pack-implementation-wave-8.md`
+
+Handoff:
+
+- `docs/1-plan/handoffs/23-domain-example-pack-implementation-wave-8.md`
+
+Primary dependencies:
+
+- `docs/product/current-evaluator-reference.md`
+- `docs/user/v2-test-authoring/domain-examples.md`
+- `docs/user/v2-test-authoring/domain-packs-overview.md`
+- `docs/user/v2-test-authoring/authoring-examples-index.md`
+- `tests/json/test_pattern_library.py`
+- `tests/json/evidence/`
+- `tests/json/test_of_detail/`
+
+### Plan 22: Domain Example Pack Implementation Wave 7
+
+Status:
+
+- complete
+
+Purpose:
+
+- implement the seventh domain-rich example pack as executable V2 fixtures and docs, starting with pharmaceutical or laboratory regulated quality release assurance
+
+Plan:
+
+- `docs/1-plan/plans/22-domain-example-pack-implementation-wave-7.md`
+
+Handoff:
+
+- `docs/1-plan/handoffs/22-domain-example-pack-implementation-wave-7.md`
+
+Primary dependencies:
+
+- `docs/product/current-evaluator-reference.md`
+- `docs/user/v2-test-authoring/domain-examples.md`
+- `docs/user/v2-test-authoring/domain-packs-overview.md`
+- `docs/user/v2-test-authoring/authoring-examples-index.md`
+- `tests/json/test_pattern_library.py`
+- `tests/json/evidence/`
+- `tests/json/test_of_detail/`
+
+### Plan 21: Domain Example Pack Implementation Wave 6
+
+Status:
+
+- complete
+
+Purpose:
+
+- implement the sixth domain-rich example pack as executable V2 fixtures and docs, starting with medical device release packet assurance
+
+Plan:
+
+- `docs/1-plan/plans/21-domain-example-pack-implementation-wave-6.md`
+
+Handoff:
+
+- `docs/1-plan/handoffs/21-domain-example-pack-implementation-wave-6.md`
+
+Primary dependencies:
+
+- `docs/product/current-evaluator-reference.md`
+- `docs/user/v2-test-authoring/domain-examples.md`
+- `docs/user/v2-test-authoring/domain-packs-overview.md`
+- `docs/user/v2-test-authoring/authoring-examples-index.md`
+- `tests/json/test_pattern_library.py`
+- `tests/json/evidence/`
+- `tests/json/test_of_detail/`
+
+### Plan 20: Domain Example Pack Implementation Wave 5
+
+Status:
+
+- complete
+
+Purpose:
+
+- implement the fifth domain-rich example pack as executable V2 fixtures and docs, starting with payment or settlement reconciliation assurance
+
+Plan:
+
+- `docs/1-plan/plans/20-domain-example-pack-implementation-wave-5.md`
+
+Handoff:
+
+- `docs/1-plan/handoffs/20-domain-example-pack-implementation-wave-5.md`
+
+Primary dependencies:
+
+- `docs/product/current-evaluator-reference.md`
+- `docs/user/v2-test-authoring/domain-examples.md`
+- `docs/user/v2-test-authoring/domain-packs-overview.md`
+- `docs/user/v2-test-authoring/authoring-examples-index.md`
+- `tests/json/test_pattern_library.py`
+- `tests/json/evidence/`
+- `tests/json/test_of_detail/`
+
+### Plan 19: Domain Pack Overview And Closure Review
+
+Status:
+
+- complete
+
+Purpose:
+
+- consolidate the four implemented domain packs into one durable overview and perform a closure review for naming, evidence-shape consistency, reader routing, and pack progression before selecting wave 5
+
+Plan:
+
+- `docs/1-plan/plans/19-domain-pack-overview-and-closure-review.md`
+
+Handoff:
+
+- `docs/1-plan/handoffs/19-domain-pack-overview-and-closure-review.md`
+
+Primary dependencies:
+
+- `docs/product/current-evaluator-reference.md`
+- `docs/user/v2-test-authoring/README.md`
+- `docs/user/v2-test-authoring/authoring-examples-index.md`
+- `docs/user/v2-test-authoring/domain-examples.md`
+- `tests/json/evidence/`
+- `tests/json/test_of_detail/`
+
+### Plan 18: Domain Example Pack Implementation Wave 4
+
+Status:
+
+- complete
+
+Purpose:
+
+- implement the fourth domain-rich example pack as executable V2 fixtures and docs, starting with manufacturing maintenance release and work-order assurance
+
+Plan:
+
+- `docs/1-plan/plans/18-domain-example-pack-implementation-wave-4.md`
+
+Handoff:
+
+- `docs/1-plan/handoffs/18-domain-example-pack-implementation-wave-4.md`
+
+Primary dependencies:
+
+- `docs/product/current-evaluator-reference.md`
+- `docs/user/v2-test-authoring/domain-examples.md`
+- `docs/user/v2-test-authoring/authoring-examples-index.md`
+- `tests/json/test_pattern_library.py`
+- `tests/json/evidence/`
+- `tests/json/test_of_detail/`
+
+### Plan 17: Domain Example Pack Implementation Wave 3
+
+Status:
+
+- complete
+
+Purpose:
+
+- implement the third domain-rich example pack as executable V2 fixtures and docs, starting with transportation inspection freshness assurance
+
+Plan:
+
+- `docs/1-plan/plans/17-domain-example-pack-implementation-wave-3.md`
+
+Handoff:
+
+- `docs/1-plan/handoffs/17-domain-example-pack-implementation-wave-3.md`
+
+Primary dependencies:
+
+- `docs/product/current-evaluator-reference.md`
+- `docs/user/v2-test-authoring/domain-examples.md`
+- `docs/user/v2-test-authoring/authoring-examples-index.md`
+- `tests/json/test_pattern_library.py`
+- `tests/json/evidence/`
+- `tests/json/test_of_detail/`
+
+### Plan 16: Domain Example Pack Implementation Wave 2
+
+Status:
+
+- complete
+
+Purpose:
+
+- implement the second domain-rich example pack as executable V2 fixtures and docs, starting with utility and field restore drill assurance
+
+Plan:
+
+- `docs/1-plan/plans/16-domain-example-pack-implementation-wave-2.md`
+
+Handoff:
+
+- `docs/1-plan/handoffs/16-domain-example-pack-implementation-wave-2.md`
+
+Primary dependencies:
+
+- `docs/product/current-evaluator-reference.md`
+- `docs/user/v2-test-authoring/domain-examples.md`
+- `docs/user/v2-test-authoring/authoring-examples-index.md`
+- `tests/json/test_pattern_library.py`
+- `tests/json/evidence/`
+- `tests/json/test_of_detail/`
+
+### Plan 15: Domain Example Pack Implementation Wave 1
+
+Status:
+
+- complete
+
+Purpose:
+
+- implement the first domain-rich example pack as executable V2 fixtures and docs, starting with privileged access approval and review assurance
+
+Plan:
+
+- `docs/1-plan/plans/15-domain-example-pack-implementation-wave-1.md`
+
+Handoff:
+
+- `docs/1-plan/handoffs/15-domain-example-pack-implementation-wave-1.md`
+
+Primary dependencies:
+
+- `docs/product/current-evaluator-reference.md`
+- `docs/user/v2-test-authoring/domain-examples.md`
+- `docs/user/v2-test-authoring/authoring-examples-index.md`
+- `tests/json/test_pattern_library.py`
+- `tests/json/evidence/`
+- `tests/json/test_of_detail/`
+
+### Plan 14: Domain Example Pack Research And Mapping
+
+Status:
+
+- complete
+
+Purpose:
+
+- research high-risk assurance domains across industries and build a structured map of verticals, company types, and representative test-of-detail example candidates so future example packs reflect real operating environments rather than generic placeholders
+
+Plan:
+
+- `docs/1-plan/plans/14-domain-example-pack-research-and-mapping.md`
+
+Handoff:
+
+- `docs/1-plan/handoffs/14-domain-example-pack-research-and-mapping.md`
+
+Primary dependencies:
+
+- `docs/product/current-evaluator-reference.md`
+- `docs/user/v2-test-authoring/domain-examples.md`
+- `docs/user/v2-test-authoring/authoring-examples-index.md`
+- `docs/user/v2-test-authoring/evidence-format-authoring.md`
+- `docs/reference/evidence-formats.md`
 
 ### Plan 13: Evidence Format Example Deepening
 

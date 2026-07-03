@@ -1,0 +1,8 @@
+{
+  "it_ot_boundary": {
+    "asset_group": "substation-west-2",
+    "remote_access_enabled": true,
+    "internet_exposed_controller_count": 0,
+    "boundary_control_status": "segmented"
+  }
+}

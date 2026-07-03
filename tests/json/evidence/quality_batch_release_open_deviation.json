@@ -1,0 +1,9 @@
+{
+  "quality_batch_release": {
+    "release_id": "qa-release-2026-07-02-003",
+    "batch_identifier": "batch-qa-4403",
+    "batch_release_status": "on_hold",
+    "quality_reviewer_present": true,
+    "deviation_closed": false
+  }
+}

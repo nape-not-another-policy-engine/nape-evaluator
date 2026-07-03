@@ -1,0 +1,10 @@
+{
+  "privileged_access_review": {
+    "request_id": "pa-1001",
+    "requester_identifier": "user-100",
+    "target_account_identifier": "admin-db-prod-01",
+    "request_status": "approved",
+    "approver_identifier": "manager-123",
+    "last_review_timestamp": "2026-06-20T12:00:00Z"
+  }
+}

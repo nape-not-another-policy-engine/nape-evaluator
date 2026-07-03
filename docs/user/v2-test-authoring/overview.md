@@ -17,6 +17,7 @@ Use this folder based on the question you are trying to answer:
 | should I fail fast or fail slow when facts cannot be established? | [Fact Establishment Patterns](fact-establishment-patterns.md) |
 | what `subject` / `criteria` input shape should I use? | [Evaluation Input Patterns](evaluation-input-patterns.md) |
 | which executable fixture should I copy first? | [Authoring Examples Index](authoring-examples-index.md) |
+| which domain-rich example pack should I study first? | [Domain Packs Overview](domain-packs-overview.md) |
 | how do I scale into typed, structural, multi-subject, or derived-fact tests? | [Advanced Authoring Patterns](advanced-authoring-patterns.md) |
 | what assurance domains are good starter anchors? | [Domain Examples](domain-examples.md) |
 

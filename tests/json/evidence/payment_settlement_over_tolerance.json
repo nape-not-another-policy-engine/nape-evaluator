@@ -1,0 +1,10 @@
+{
+  "payment_settlement": {
+    "settlement_batch_id": "batch-2026-07-02-002",
+    "transaction_id": "txn-44020",
+    "currency": "USD",
+    "transaction_approval_status": "approved",
+    "reconciliation_status": "completed",
+    "settlement_difference_amount": 18.75
+  }
+}

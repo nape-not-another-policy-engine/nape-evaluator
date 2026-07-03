@@ -1,0 +1,8 @@
+{
+  "line_restart": {
+    "line_identifier": "line-7",
+    "maintenance_release_status": "approved",
+    "work_order_complete": true,
+    "restart_authorization_status": "blocked"
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "system_confirmation": {
+    "interconnection": {
+      "approval_id": ""
+    },
+    "event": {
+      "event_id": "evt-4402"
+    },
+    "origin_system": {
+      "confirmed_event_ids": ["evt-4402"],
+      "reported_state": "synchronized"
+    },
+    "receiving_system": {
+      "confirmed_event_ids": ["evt-4402"],
+      "reported_state": "synchronized"
+    }
+  }
+}

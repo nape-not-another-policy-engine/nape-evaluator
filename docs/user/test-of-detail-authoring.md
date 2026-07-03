@@ -239,6 +239,7 @@ Use this route based on what you need next:
 - for the recommended Python structure, go to [Scaffold Guide](v2-test-authoring/scaffold.md)
 - for format-specific extraction against JSON, XML, YAML, text, or PDF evidence, go to [Evidence Format Authoring](v2-test-authoring/evidence-format-authoring.md)
 - for fixture selection by difficulty or domain, go to [Authoring Examples Index](v2-test-authoring/authoring-examples-index.md)
+- for the curated implemented domain packs, go to [Domain Packs Overview](v2-test-authoring/domain-packs-overview.md)
 - for fact extraction and establishment guidance, go to [Fact Extraction](v2-test-authoring/fact-extraction.md) and [Fact Establishment Patterns](v2-test-authoring/fact-establishment-patterns.md)
 - for richer typed, structural, multi-subject, or derived-fact logic, go to [Advanced Authoring Patterns](v2-test-authoring/advanced-authoring-patterns.md)
 

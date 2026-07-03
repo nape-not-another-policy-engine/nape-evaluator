@@ -1,0 +1,9 @@
+{
+  "device_release": {
+    "release_id": "md-release-2026-07-02-003",
+    "device_family": "remote-monitor-x2",
+    "release_review_status": "pending",
+    "sbom_present": true,
+    "critical_vulnerability_count": 2
+  }
+}

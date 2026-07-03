@@ -22,6 +22,7 @@ Use the docs in this folder in the way that matches your current need:
 
 - if you are new and want the hand-held path, start with [Authoring Progression](authoring-progression.md)
 - if you already know the contract and want a fixture to copy, start with [Authoring Examples Index](authoring-examples-index.md)
+- if you want the implemented domain packs explained as one curated set, start with [Domain Packs Overview](domain-packs-overview.md)
 - if you want the recommended internal Python structure, start with [Scaffold Guide](scaffold.md)
 - if you need help choosing `subject` / `criteria` shapes, start with [Evaluation Input Patterns](evaluation-input-patterns.md)
 - if you need help extracting facts from JSON, XML, YAML, text, or PDF evidence, start with [Evidence Format Authoring](evidence-format-authoring.md)
@@ -37,8 +38,9 @@ Use the docs in this folder in the way that matches your current need:
 6. [Fact Establishment Patterns](fact-establishment-patterns.md)
 7. [Evaluation Input Patterns](evaluation-input-patterns.md)
 8. [Authoring Examples Index](authoring-examples-index.md)
-9. [Advanced Authoring Patterns](advanced-authoring-patterns.md)
-10. [Domain Examples](domain-examples.md)
+9. [Domain Packs Overview](domain-packs-overview.md)
+10. [Advanced Authoring Patterns](advanced-authoring-patterns.md)
+11. [Domain Examples](domain-examples.md)
 
 ## Included Template
 

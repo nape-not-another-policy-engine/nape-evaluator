@@ -1,0 +1,8 @@
+{
+  "cold_chain_exception": {
+    "shipment_id": "cold-chain-2026-07-02-002",
+    "temperature_excursion_count": 0,
+    "chain_of_custody_complete": false,
+    "exception_closed": true
+  }
+}

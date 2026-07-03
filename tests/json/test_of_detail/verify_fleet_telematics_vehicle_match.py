@@ -1,0 +1,112 @@
+def evaluate(evidence, evaluations, metadata):
+    metadata_error = _validate_metadata(metadata, evidence)
+    if metadata_error is not None:
+        return metadata_error
+
+    evaluation_index = _index_evaluations(evaluations)
+    match_evaluation = evaluation_index.get("telematics_vehicle_match")
+    if match_evaluation is None:
+        return _build_inconclusive_result(
+            "This test requires a telematics_vehicle_match evaluation with an equals criterion."
+        )
+
+    expected_value = _read_boolean_equals(match_evaluation)
+    if expected_value is None:
+        return _build_inconclusive_result(
+            "This test requires telematics_vehicle_match criteria.equals to be boolean."
+        )
+
+    match_fact = _extract_vehicle_match_fact(evidence)
+    if match_fact["status"] != "found":
+        return _build_inconclusive_result(
+            [match_fact],
+            "Unable to evaluate because the telematics_vehicle_match fact could not be established.",
+        )
+
+    return _evaluate_equals(match_fact, expected_value)
+
+
+def _validate_metadata(metadata, evidence):
+    if metadata.get("evidence_type") != "json":
+        return _build_inconclusive_result("This test expects JSON evidence.")
+    if metadata.get("schema_version") != "2":
+        return _build_inconclusive_result(
+            "This test only supports evaluator schema version 2."
+        )
+    if not isinstance(evidence, dict):
+        return _build_inconclusive_result(
+            "This test expects JSON evidence as a dictionary."
+        )
+    return None
+
+
+def _index_evaluations(evaluations):
+    indexed = {}
+    for item in evaluations:
+        subject = item.get("subject", {})
+        name = subject.get("name")
+        if isinstance(name, str):
+            indexed[name] = item
+    return indexed
+
+
+def _read_boolean_equals(evaluation):
+    value = evaluation.get("criteria", {}).get("equals")
+    if isinstance(value, bool):
+        return value
+    return None
+
+
+def _extract_vehicle_match_fact(evidence):
+    packet = evidence.get("fleet_telematics", {})
+    trip_vehicle = packet.get("trip_record", {}).get("vehicle_identifier")
+    telematics_vehicle = packet.get("telematics", {}).get("vehicle_identifier")
+    if not isinstance(trip_vehicle, str) or not trip_vehicle:
+        return {
+            "name": "telematics_vehicle_match",
+            "value": None,
+            "value_type": "boolean",
+            "status": "not_found",
+        }
+    if not isinstance(telematics_vehicle, str) or not telematics_vehicle:
+        return {
+            "name": "telematics_vehicle_match",
+            "value": None,
+            "value_type": "boolean",
+            "status": "not_found",
+        }
+    return {
+        "name": "telematics_vehicle_match",
+        "value": trip_vehicle == telematics_vehicle,
+        "value_type": "boolean",
+        "status": "found",
+    }
+
+
+def _evaluate_equals(match_fact, expected_value):
+    actual = match_fact["value"]
+    if actual == expected_value:
+        return {
+            "conclusion": "true",
+            "facts": [match_fact],
+            "reason": (
+                f"telematics_vehicle_match is {actual}, which matches the expected value."
+            ),
+        }
+    return {
+        "conclusion": "false",
+        "facts": [match_fact],
+        "reason": (
+            f"telematics_vehicle_match is {actual}, which does not match the expected value {expected_value}."
+        ),
+    }
+
+
+def _build_inconclusive_result(arg1, arg2=None):
+    facts = [] if arg2 is None else arg1
+    reason = arg1 if arg2 is None else arg2
+    return {
+        "conclusion": "inconclusive",
+        "facts": facts,
+        "reason": reason,
+    }

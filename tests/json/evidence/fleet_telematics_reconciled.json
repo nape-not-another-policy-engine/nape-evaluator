@@ -1,0 +1,13 @@
+{
+  "fleet_telematics": {
+    "trip_record": {
+      "trip_id": "trip-4401",
+      "vehicle_identifier": "veh-17",
+      "reported_state": "in_service"
+    },
+    "telematics": {
+      "vehicle_identifier": "veh-17",
+      "reported_state": "in_service"
+    }
+  }
+}

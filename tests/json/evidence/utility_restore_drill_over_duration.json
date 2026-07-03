@@ -1,0 +1,8 @@
+{
+  "restore_drill": {
+    "asset_group": "substation-west",
+    "restore_drill_status": "successful",
+    "restore_drill_duration": "PT2H30M",
+    "restore_drill_timestamp": "2026-06-20T12:00:00Z"
+  }
+}

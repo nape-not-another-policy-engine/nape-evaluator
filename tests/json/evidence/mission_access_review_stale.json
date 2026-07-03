@@ -1,0 +1,8 @@
+{
+  "mission_access_review": {
+    "principal_id": "mission-user-19",
+    "mission_access_status": "authorized",
+    "mission_access_approval_present": true,
+    "mission_access_review_timestamp": "2026-05-10T12:00:00Z"
+  }
+}

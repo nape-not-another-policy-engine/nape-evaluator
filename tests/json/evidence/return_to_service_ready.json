@@ -1,0 +1,8 @@
+{
+  "return_to_service": {
+    "asset_id": "aircraft-17",
+    "maintenance_release_status": "approved",
+    "hazard_closure_status": "closed",
+    "calibration_current": true
+  }
+}

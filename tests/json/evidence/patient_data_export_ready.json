@@ -1,0 +1,8 @@
+{
+  "patient_data_export": {
+    "data_export_ticket_present": true,
+    "data_export_approval_present": true,
+    "retention_execution_status": "completed",
+    "export_destination": "research_partner_sftp"
+  }
+}

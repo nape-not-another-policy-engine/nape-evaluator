@@ -191,9 +191,42 @@ def _decode_request_file(request_file: str):
     return _decode_json_file(request_file, f"request file {request_file}")
 
 
-def build_request_from_args(args):
+def _decode_request_file_with_raw(request_file: str):
+    try:
+        if request_file == "-":
+            raw = sys.stdin.buffer.read()
+            source_label = "stdin request JSON"
+        else:
+            source_label = f"request file {request_file}"
+            with open(request_file, "rb") as handle:
+                raw = handle.read()
+        return json.loads(raw.decode("utf-8")), raw
+    except FileNotFoundError as exc:
+        raise CliInvocationError(
+            "request_file_not_found",
+            f"Unable to find request file {request_file}. {exc}",
+        )
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        if request_file == "-":
+            message = f"Failed to decode stdin request JSON. {exc}"
+        else:
+            message = f"Failed to decode {source_label} as JSON. {exc}"
+        raise CliInvocationError(
+            "request_json_decode_error",
+            message,
+        )
+    except Exception as exc:
+        raise CliInvocationError(
+            "request_file_load_error",
+            f"Failed to load {source_label}. {exc}",
+            stack_trace=traceback.format_exc(),
+        )
+
+
+def build_request_from_args(args, request_packet=None):
     if args.request_file:
-        request_packet = _decode_request_file(args.request_file)
+        if request_packet is None:
+            request_packet = _decode_request_file(args.request_file)
         if not isinstance(request_packet, dict):
             raise CliInvocationError(
                 "invalid_request_packet",
@@ -246,7 +279,25 @@ def run_cli(argv=None):
             print("NAPE Evaluator CLI is installed and working.")
             return 0
 
-        request = build_request_from_args(args)
+        request_packet = None
+        request_raw = None
+        if args.request_file:
+            request_packet, request_raw = _decode_request_file_with_raw(
+                args.request_file
+            )
+            from nape_evaluator.v2 import (
+                is_versioned_request,
+                process_versioned_json,
+                serialize_response,
+            )
+
+            if is_versioned_request(request_packet):
+                response = process_versioned_json(request_raw)
+                sys.stdout.buffer.write(serialize_response(response))
+                sys.stdout.buffer.flush()
+                return 0
+
+        request = build_request_from_args(args, request_packet=request_packet)
 
         print(
             json.dumps(

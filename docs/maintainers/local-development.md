@@ -51,6 +51,12 @@ If you only need the repository-runtime portion:
 make release-validate-local
 ```
 
+If you only need to verify the generated current contract projection:
+
+```bash
+make verify-current-contract-projection
+```
+
 If you only need the fresh-virtual-environment clean-install portion:
 
 ```bash
@@ -126,6 +132,10 @@ The current test ownership split is:
 - `tests/test_unprocessable_evidence.py`: blocked binary-format behavior
 - `tests/test_test_execution.py`: test-of-detail gateway implementation behavior
 - `tests/test_output_contract.py`: output shaping behavior
+
+The retired Step-6 contract-source observer and its focused suite are retained
+in [central I0-I4 history](../../../../1-attestify-product-workspace-docs/0-plans/attestify-oci/history/i0-i4/repositories/nape-evaluator/historical/step6-contract-source-observer/README.md).
+They are historical audit evidence, not current automated tests.
 
 ## Documentation Verification
 

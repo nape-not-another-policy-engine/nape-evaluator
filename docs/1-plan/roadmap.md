@@ -28,6 +28,17 @@ The following baseline work is already in place and should be treated as prerequ
 
 ## Workstreams
 
+### Completed I0-I4 Evaluator Boundary
+
+The versioned Action-invocation V2 provider and its I0-I4 consumer boundary
+are complete. Repository-local Plans 32 and 33 and their handoffs are
+preserved byte-for-byte in [central I0-I4 history](../../../../1-attestify-product-workspace-docs/0-plans/attestify-oci/history/i0-i4/README.md).
+
+The NAPE Evaluator remains OCI-agnostic: it executes one prepared Test of
+Detail against frozen inputs and returns the governed result. Current source,
+current generated projections, provider tests, and release validation remain
+the acceptance authority; the relocated records are audit provenance.
+
 ### Plan 31: Domain Example Pack Wave 16 Selection And Scoping
 
 Status:

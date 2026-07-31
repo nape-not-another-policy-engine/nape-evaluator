@@ -1,4 +1,4 @@
-.PHONY: build-release pip-install pip-uninstall pypi-publish clean docs-smoke release-validate-local release-validate-clean-install release-validate
+.PHONY: build-release pip-install pip-uninstall pypi-publish clean docs-smoke verify-current-contract-projection release-validate-local release-validate-clean-install release-validate
 
 PROJECT_NAME = nape
 BINARY_OUTPUT_DIR = binary-output
@@ -41,7 +41,12 @@ docs-smoke:
 	bash ./scripts/docs_smoke.sh
 	@echo "\n\033[1;96m NAPE Evaluator - Docs Smoke - COMPLETE! \033[0m\n"
 
-release-validate-local:
+verify-current-contract-projection:
+	@echo "\n\033[1;96m Verifying the current generated contract projection \033[0m\n"
+	python3 contracts/attestify-nape-evaluator-action-invocation-v2/tools/verify_projection.py
+	@echo "\n\033[1;96m NAPE Evaluator - Current Contract Projection - VERIFIED! \033[0m\n"
+
+release-validate-local: verify-current-contract-projection
 	@echo "\n\033[1;96m Running local release validation \033[0m\n"
 	python3 -m unittest discover
 	$(MAKE) docs-smoke

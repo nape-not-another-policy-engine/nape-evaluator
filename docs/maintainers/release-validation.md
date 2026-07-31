@@ -54,6 +54,9 @@ make release-validate-local
 ```
 
 This validates the current repository runtime shape through `python3 main.py`.
+Before unit and runtime validation, the Make target independently verifies the
+generated read-only Step-7 contract projection, its pin, every governed byte,
+and its closed file inventory.
 
 ### 2. Clean-Install Validation
 
@@ -100,6 +103,19 @@ Before wider V2 rollout, the minimum recommendation is:
 If clean-install validation cannot be run in a genuinely fresh environment, do not describe the release as clean-install validated.
 
 Call it local preflight only.
+
+## Historical Conformance Evidence
+
+The retired Step-6 opaque-byte source observer is preserved in
+[central I0-I4 history](../../../../1-attestify-product-workspace-docs/0-plans/attestify-oci/history/i0-i4/repositories/nape-evaluator/historical/step6-contract-source-observer/README.md). It verifies a superseded
+46-vector/47-payload Product Specification snapshot and is not part of current
+test discovery or release acceptance.
+
+Historical records remain available for audit. Current acceptance is governed
+by `make verify-current-contract-projection`, current provider tests, and the
+release-validation matrix above. Do not run the historical observer against
+the current Product Specification tree or interpret the resulting identity
+failure as an Evaluator product defect.
 
 ## Current Script
 
